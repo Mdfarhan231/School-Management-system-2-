@@ -1,174 +1,132 @@
-<div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, 'Noto Sans', 'Liberation Sans', sans-serif; line-height:1.6; color:#111827; max-width: 980px;">
+<h1 align=center>Under Construction<\h1>
+🎯 Project Goal: School Management System
 
-  <div style="padding:18px 20px; border:1px solid #E5E7EB; border-radius:14px; background: linear-gradient(135deg, #EEF2FF 0%, #ECFEFF 100%);">
-    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-      <div>
-        <div style="font-size:22px; font-weight:800; letter-spacing:-0.02em;">🎯 Project Goal</div>
-        <div style="margin-top:4px; font-size:14px; color:#374151;">
-          A <b>School Management System</b> built with a separate <b>Frontend</b> and <b>Backend API</b>.
-        </div>
-      </div>
+The goal of this project is to build a complete **School Management System** using a modern full-stack architecture with:
 
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <span style="background:#111827; color:#fff; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700;">Frontend: React / Next.js</span>
-        <span style="background:#16A34A; color:#fff; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700;">Backend: Laravel API</span>
-      </div>
-    </div>
-  </div>
+* **Frontend:** React / Next.js
+* **Backend:** Laravel (RESTful API)
 
-  <div style="margin-top:18px; display:grid; grid-template-columns: 1fr; gap:14px;">
-    
-    <!-- Architecture -->
-    <div style="border:1px solid #E5E7EB; border-radius:14px; overflow:hidden;">
-      <div style="padding:12px 14px; background:#F9FAFB; border-bottom:1px solid #E5E7EB;">
-        <div style="font-size:16px; font-weight:800;">🏗️ Architecture</div>
-      </div>
-      <div style="padding:14px 16px;">
-        <ul style="margin:0; padding-left:18px;">
-          <li><b>Frontend (React/Next.js):</b> User interface, forms, dashboards, and API integration.</li>
-          <li><b>Backend (Laravel API):</b> Validates user data, handles authentication, and manages all business logic.</li>
-        </ul>
-      </div>
-    </div>
+This system is designed to manage student, teacher, academic, and financial operations efficiently while following real-world software development practices.
 
-    <!-- Frontend Authentication -->
-    <div style="border:1px solid #E5E7EB; border-radius:14px; overflow:hidden;">
-      <div style="padding:12px 14px; background:#F9FAFB; border-bottom:1px solid #E5E7EB;">
-        <div style="font-size:16px; font-weight:800;">🔐 Frontend Authentication</div>
-      </div>
-      <div style="padding:14px 16px;">
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-          <span style="background:#EEF2FF; color:#3730A3; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700;">Registration</span>
-          <span style="background:#ECFDF5; color:#065F46; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700;">Login</span>
-          <span style="background:#FFF7ED; color:#9A3412; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700;">Validation</span>
-        </div>
+---
 
-        <div style="margin-bottom:10px;">
-          <div style="font-weight:800; margin-bottom:6px;">✅ Registration with:</div>
-          <ul style="margin:0; padding-left:18px;">
-            <li><b>Mobile number</b> and <b>Email</b></li>
-          </ul>
-        </div>
+# 🏗️ System Architecture
 
-        <div style="margin-bottom:10px;">
-          <div style="font-weight:800; margin-bottom:6px;">🔒 Password rules:</div>
-          <ol style="margin:0; padding-left:18px;">
-            <li>Minimum <b>8 characters</b></li>
-            <li>Must include: <b>1 uppercase</b>, <b>1 lowercase</b>, <b>1 digit</b>, <b>1 special character</b></li>
-          </ol>
-        </div>
+The project is divided into two separate repositories:
 
-        <div style="margin-bottom:10px;">
-          <div style="font-weight:800; margin-bottom:6px;">🔑 Login with:</div>
-          <ul style="margin:0; padding-left:18px;">
-            <li><b>Mobile number</b> <i>or</i> <b>Email</b></li>
-            <li><b>Password</b></li>
-          </ul>
-        </div>
+### 🔹 Frontend (React / Next.js)
 
-        <div style="padding:10px 12px; border:1px dashed #D1D5DB; border-radius:12px; background:#FFFFFF;">
-          <b>Backend Verification:</b> Laravel API validates the submitted data and authenticates the user securely.
-        </div>
-      </div>
-    </div>
+Responsible for:
 
-    <!-- After Signup/Login -->
-    <div style="border:1px solid #E5E7EB; border-radius:14px; overflow:hidden;">
-      <div style="padding:12px 14px; background:#F9FAFB; border-bottom:1px solid #E5E7EB;">
-        <div style="font-size:16px; font-weight:800;">👥 After Signup & Login (Frontend)</div>
-      </div>
-      <div style="padding:14px 16px;">
-        <ul style="margin:0; padding-left:18px;">
-          <li><b>Students</b> and <b>Teachers</b> can view the information they provided during signup.</li>
-          <li>User-friendly dashboards and profile sections for quick access.</li>
-        </ul>
-      </div>
-    </div>
+* User Interface (UI)
+* Authentication forms
+* Dashboard and user views
+* API integration
+* Responsive design
 
-    <!-- Class & Sections -->
-    <div style="border:1px solid #E5E7EB; border-radius:14px; overflow:hidden;">
-      <div style="padding:12px 14px; background:#F9FAFB; border-bottom:1px solid #E5E7EB;">
-        <div style="font-size:16px; font-weight:800;">🏫 Class Structure</div>
-      </div>
-      <div style="padding:14px 16px;">
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <div style="flex:1; min-width:240px; border:1px solid #E5E7EB; border-radius:12px; padding:12px;">
-            <div style="font-weight:800; margin-bottom:6px;">📚 Classes (4 Levels)</div>
-            <ul style="margin:0; padding-left:18px;">
-              <li>Class 1</li>
-              <li>Class 2</li>
-              <li>Class 3</li>
-              <li>Class 4</li>
-            </ul>
-          </div>
+### 🔹 Backend (Laravel API)
 
-          <div style="flex:1; min-width:240px; border:1px solid #E5E7EB; border-radius:12px; padding:12px;">
-            <div style="font-weight:800; margin-bottom:6px;">🧩 Sections & Shift</div>
-            <ul style="margin:0; padding-left:18px;">
-              <li><b>Sections:</b> A, B, C</li>
-              <li><b>Shift:</b> Day / Morning</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
+Responsible for:
 
-    <!-- Exam Management -->
-    <div style="border:1px solid #E5E7EB; border-radius:14px; overflow:hidden;">
-      <div style="padding:12px 14px; background:#F9FAFB; border-bottom:1px solid #E5E7EB;">
-        <div style="font-size:16px; font-weight:800;">📝 Exam Management</div>
-      </div>
-      <div style="padding:14px 16px;">
-        <ul style="margin:0; padding-left:18px;">
-          <li><b>Exam timetable</b></li>
-          <li><b>Mark setup</b></li>
-          <li><b>Mark distribution</b></li>
-          <li><b>Transcript</b></li>
-        </ul>
-      </div>
-    </div>
+* Data validation
+* Authentication & authorization
+* Business logic
+* Database management
+* Secure REST API endpoints
 
-    <!-- Basic Account -->
-    <div style="border:1px solid #E5E7EB; border-radius:14px; overflow:hidden;">
-      <div style="padding:12px 14px; background:#F9FAFB; border-bottom:1px solid #E5E7EB;">
-        <div style="font-size:16px; font-weight:800;">💳 Basic Accounts</div>
-      </div>
-      <div style="padding:14px 16px;">
-        <ul style="margin:0; padding-left:18px;">
-          <li><b>Student fees</b> (by class)</li>
-          <li><b>Admission</b></li>
-          <li><b>Admission fee setup</b></li>
-        </ul>
-      </div>
-    </div>
+---
 
-    <!-- Tech Stack -->
-    <div style="border:1px solid #E5E7EB; border-radius:14px; overflow:hidden;">
-      <div style="padding:12px 14px; background:#F9FAFB; border-bottom:1px solid #E5E7EB;">
-        <div style="font-size:16px; font-weight:800;">🧰 Tech Stack</div>
-      </div>
-      <div style="padding:14px 16px;">
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <div style="flex:1; min-width:260px; border:1px solid #E5E7EB; border-radius:12px; padding:12px;">
-            <div style="font-weight:800; margin-bottom:6px;">Frontend</div>
-            <ul style="margin:0; padding-left:18px;">
-              <li>React</li>
-              <li>Next.js</li>
-            </ul>
-          </div>
-          <div style="flex:1; min-width:260px; border:1px solid #E5E7EB; border-radius:12px; padding:12px;">
-            <div style="font-weight:800; margin-bottom:6px;">Backend</div>
-            <ul style="margin:0; padding-left:18px;">
-              <li>Laravel (REST API)</li>
-            </ul>
-          </div>
-        </div>
+# 🔐 Authentication System
 
-        <div style="margin-top:12px; padding:10px 12px; background:#F3F4F6; border-radius:12px; color:#374151;">
-          <b>Note:</b> This README section describes the planned modules and features for the School Management System.
-        </div>
-      </div>
-    </div>
+### 📝 Registration
 
-  </div>
-</div>
+Users can register using:
+
+* Mobile number
+* Email address
+
+### 🔒 Password Requirements
+
+* Minimum **8 characters**
+* At least **1 uppercase letter**
+* At least **1 lowercase letter**
+* At least **1 digit**
+* At least **1 special character**
+
+### 🔑 Login
+
+Users can log in using:
+
+* Mobile number **or**
+* Email address
+* Password
+
+The **Laravel backend API** verifies and authenticates all credentials securely.
+
+---
+
+# 👥 User Dashboard
+
+After successful signup and login:
+
+* Students and teachers can view the information they provided during registration.
+* Users can access their personal dashboard.
+* Secure session management is maintained by the backend.
+
+---
+
+# 🏫 Class Management
+
+The system includes:
+
+### 📚 Classes (4 Levels)
+
+* Class 1
+* Class 2
+* Class 3
+* Class 4
+
+### 🧩 Sections
+
+* Section A
+* Section B
+* Section C
+
+### 🌅 Shift
+
+* Day
+* Morning
+
+---
+
+# 📝 Exam Management
+
+The system supports:
+
+* Exam timetable creation
+* Mark setup configuration
+* Mark distribution management
+* Transcript generation
+
+---
+
+# 💳 Basic Accounts Management
+
+Financial features include:
+
+* Student fees management (by class)
+* Admission process
+* Admission fee setup
+
+---
+
+# 🚀 Learning Objectives
+
+This project aims to:
+
+* Practice full-stack development
+* Implement secure authentication
+* Build scalable RESTful APIs
+* Integrate frontend and backend systems
+* Follow clean and maintainable architecture
+* Simulate real-world school management workflows
