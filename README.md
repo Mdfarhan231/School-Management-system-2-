@@ -1,4 +1,4 @@
-<h1 align=center>Under Construction<\h1>
+<h1 align=center>Under Construction</h1>
 🎯 Project Goal: School Management System
 
 The goal of this project is to build a complete **School Management System** using a modern full-stack architecture with:
