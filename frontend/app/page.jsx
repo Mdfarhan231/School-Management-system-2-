@@ -1,19 +1,3 @@
-/**
- * File Path: frontend/app/page.jsx
- *
- * This file builds the FULL Homepage:
- * 1) Top Info Bar (phone/email)
- * 2) Header (logo + school name + small buttons)
- * 3) Navbar (menu links)
- * 4) Portal Buttons
- * 5) Slider (2 images slideshow)
- * 6) Footer (3 columns like your screenshot)
- *
- * Why "use client"?
- * - The slider uses React state & auto-play timer (useState/useEffect)
- * - That needs client-side rendering
- */
-
 "use client";
 
 import Image from "next/image";
@@ -22,14 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 
 
 export default function HomePage() {
-  /* -----------------------------------------
+  /* 
      SLIDER DATA (Body Section)
-     -----------------------------------------
-     - These images must exist in:
-       frontend/public/slides/slide-1.jpg
-       frontend/public/slides/slide-2.jpg
-     - If you want more slides later, add more objects here.
-  */
+   */
   const slides = useMemo(
     () => [
       { src: "/slides/slide-1.png", alt: "School image 1", caption: "From Outside" },
@@ -43,11 +22,8 @@ export default function HomePage() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   /* -----------------------------------------
-     AUTO PLAY LOGIC (why we use useEffect)
-     -----------------------------------------
-     - Every 4 seconds slide changes automatically
-     - Cleanup needed to stop timer when component unmounts
-  */
+     AUTO PLAY LOGIC (4second)
+     */
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % slides.length);
@@ -63,20 +39,20 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-slate-100">
-      {/* ======================================================
-          1) TOP INFO BAR
+      {/* 
+           TOP INFO BAR
           - Shows phone + email (top dark strip)
-         ====================================================== */}
+          */}
       <TopInfoBar />
 
-      {/* ======================================================
+      {/* 
           2) HEADER + NAVBAR + PORTALS
-         ====================================================== */}
+          */}
       <HeaderAndNavbar />
 
-      {/* ======================================================
+      {/* 
           3) BODY SLIDER
-         ====================================================== */}
+         = */}
       <section className="mx-auto max-w-6xl px-4 py-10">
         <div className="overflow-hidden rounded-xl bg-white shadow">
           <div className="relative h-[260px] w-full sm:h-[520px]">
@@ -134,9 +110,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ======================================================
-          4) FOOTER
-         ====================================================== */}
+     
       <Footer />
     </main>
   );
@@ -167,7 +141,7 @@ function TopInfoBar() {
   );
 }
 
-/* ==========================================================
+/* 
    COMPONENT: HeaderAndNavbar
    - Called by HomePage
    - Contains:
@@ -175,7 +149,7 @@ function TopInfoBar() {
      2) NOTICE bar
      3) Navbar links
      4) Portal buttons row
-   ========================================================== */
+   */
 function HeaderAndNavbar() {
   return (
     <header>
@@ -252,11 +226,11 @@ function HeaderAndNavbar() {
   );
 }
 
-/* ==========================================================
+/* 
    COMPONENT: NavItem
    - Used by HeaderAndNavbar -> Navbar
    - Reusable Link style for menu items
-   ========================================================== */
+   */
 function NavItem({ href, icon, label }) {
   return (
     <Link
@@ -269,10 +243,10 @@ function NavItem({ href, icon, label }) {
   );
 }
 
-/* ==========================================================
+/* 
    COMPONENT: PillButton
    - Used by HeaderAndNavbar -> Portal Buttons row
-   ========================================================== */
+   */
 function PillButton({ href, label, color }) {
   return (
     <Link
@@ -284,11 +258,11 @@ function PillButton({ href, label, color }) {
   );
 }
 
-/* ==========================================================
+/* 
    COMPONENT: Footer
    - Called by HomePage at the bottom
    - Layout matches your screenshot: logo + quick links + contact + visitors
-   ========================================================== */
+ */
 function Footer() {
   return (
     <footer className="bg-[#283546] text-slate-200">
@@ -379,11 +353,11 @@ function Footer() {
   );
 }
 
-/* ==========================================================
+/* 
    COMPONENT: SocialIcon
    - simple placeholder circle buttons
    - later can replace with real icons
-   ========================================================== */
+  */
 function SocialIcon({ label }) {
   return (
     <button
