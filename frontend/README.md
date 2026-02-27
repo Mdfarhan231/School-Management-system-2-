@@ -1,3 +1,29 @@
+<h1>Homepage</h1>
+
+![image alt](https://github.com/Mdfarhan231/School-Management-system-2-/blob/main/global.png?raw=true)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
