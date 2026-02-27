@@ -1,4 +1,4 @@
-<h1>Homepage</h1>
+<h1 align="center">Homepage</h1>
 
 ![image alt](https://github.com/Mdfarhan231/School-Management-system-2-/blob/main/global.png?raw=true)
 
