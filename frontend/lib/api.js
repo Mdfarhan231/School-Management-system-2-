@@ -1,0 +1,35 @@
+const API_BASE = "http://127.0.0.1:8000/api";
+
+export async function apiRequest(endpoint, method = "POST", body = {}, token = null) {
+  const headers = {
+    Accept: "application/json",
+  };
+
+  if (method !== "GET") {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    method,
+    headers,
+    body: method === "GET" ? undefined : JSON.stringify(body),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    if (data.errors) {
+      const firstKey = Object.keys(data.errors)[0];
+      const firstMessage = data.errors[firstKey]?.[0];
+      throw new Error(firstMessage || "Request failed");
+    }
+
+    throw new Error(data.message || "Request failed");
+  }
+
+  return data;
+}
