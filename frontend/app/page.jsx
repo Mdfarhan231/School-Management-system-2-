@@ -15,7 +15,7 @@ export default function HomePage() {
       { src: "/slides/slide-2.png", alt: "School image 2", caption: "Campus View" },
     ],
     []
-    
+  
   );
 
   // active slide index (0 or 1 for 2 slides)
@@ -26,7 +26,7 @@ export default function HomePage() {
      */
   useEffect(() => {
     const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % slides.length);
+      setActiveIndex((prev) =>  (prev + 1) % slides.length);
     }, 4000);
 
     return () => clearInterval(timer);
@@ -220,6 +220,8 @@ function HeaderAndNavbar() {
           <PillButton href="/teacher/login" label="Teacher Portal" color="bg-emerald-500" />
           <PillButton href="/admin/login" label="Admin login" color="bg-orange-400" />
           <PillButton href="/student/login" label="Student Portal" color="bg-rose-500" />
+          {/* <PillButton href="/teacher/login" label="Teacher Portal" color="bg-emerald-500" />
+          <PillButton href="/student/login" label="Student Portal" color="bg-rose-500" /> */}
         </div>
       </div>
     </header>
@@ -301,22 +303,22 @@ function Footer() {
               </Link>
             </li>
             <li>
-              <Link className="hover:text-white" href="/about">
+              <Link className="hover:text-white" href="/">
                 › About Us
               </Link>
             </li>
             <li>
-              <Link className="hover:text-white" href="/contact">
+              <Link className="hover:text-white" href="/">
                 › Contact Us
               </Link>
             </li>
             <li>
-              <Link className="hover:text-white" href="/admission">
+              <Link className="hover:text-white" href="/">
                 › Admission
               </Link>
             </li>
             <li>
-              <Link className="hover:text-white" href="/notice">
+              <Link className="hover:text-white" href="/">
                 › Notices
               </Link>
             </li>
