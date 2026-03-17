@@ -12,7 +12,7 @@ return [
         'http://127.0.0.1:3000',
         'http://172.26.240.1:3000',
         'http://192.168.0.105:3000',
-        env('FRONTEND_URL'),
+        'https://school-management-system-2-sigma.vercel.app',
     ],
 
     'allowed_origins_patterns' => [],
