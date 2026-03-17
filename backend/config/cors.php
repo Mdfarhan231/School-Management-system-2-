@@ -3,11 +3,13 @@
 
 return [
 
-    'paths' => ['*'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => [
+        'https://school-management-system-2-sigma.vercel.app',
+    ],
 
     'allowed_origins_patterns' => [],
 
@@ -20,7 +22,6 @@ return [
     'supports_credentials' => false,
 
 ];
-
 // return [
 
 //     'paths' => ['api/*', 'sanctum/csrf-cookie'],
