@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
@@ -14,6 +14,11 @@ export default function AdminLoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // ✅ This will show API in browser console
+  useEffect(() => {
+    console.log("API URL:", API);
+  }, [API]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
