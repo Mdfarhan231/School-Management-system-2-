@@ -1,15 +1,12 @@
-
 <?php
 
 return [
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
-        'https://school-management-system-2-sigma.vercel.app',
-    ],
+    'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],
 
@@ -22,28 +19,3 @@ return [
     'supports_credentials' => false,
 
 ];
-// return [
-
-//     'paths' => ['api/*', 'sanctum/csrf-cookie'],
-
-//     'allowed_methods' => ['*'],
-
-//     'allowed_origins' => [
-//         'http://localhost:3000',
-//         'http://127.0.0.1:3000',
-//         'http://172.26.240.1:3000',
-//         'http://192.168.0.105:3000',
-//         'https://school-management-system-2-sigma.vercel.app',
-//     ],
-
-//     'allowed_origins_patterns' => [],
-
-//     'allowed_headers' => ['*'],
-
-//     'exposed_headers' => [],
-
-//     'max_age' => 0,
-
-//     'supports_credentials' => false,
-
-// ];
