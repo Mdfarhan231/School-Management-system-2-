@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const API = process.env.NEXT_PUBLIC_API_URL;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -27,7 +28,7 @@ export default function AdminLoginPage() {
     setError("");
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/admin/login", {
+      const res = await fetch(`${API}/admin/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
