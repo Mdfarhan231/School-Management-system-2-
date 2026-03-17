@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\StudentAuthController;
 use App\Http\Controllers\Api\ExamRoutineController;
 use App\Http\Controllers\Api\StudentMarkController;
 use App\Http\Controllers\Api\TeacherAttendanceController;
+//for check the db connection for render to supabase
+use Illuminate\Support\Facades\DB;
 
 // use App\Http\Controllers\Api\MarkSetupController;
 // use App\Http\Controllers\Api\MarkDistributionController;
@@ -80,4 +82,21 @@ Route::post('/attendance/students', [TeacherAttendanceController::class, 'studen
 Route::post('/attendance/store', [TeacherAttendanceController::class, 'store']);
 Route::post('/attendance/history', [TeacherAttendanceController::class, 'history']);
 Route::get('/student/attendance/{studentId}', [TeacherAttendanceController::class, 'studentHistory']);
+
+
+//for check the db connection for render to supabase
+Route::get('/db-test', function () {
+    try {
+        return response()->json([
+            'success' => true,
+            'users_count' => DB::table('users')->count(),
+            'classes_count' => DB::table('classes')->count(),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});
 
