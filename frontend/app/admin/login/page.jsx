@@ -27,11 +27,18 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError("");
 
+    if (!API) {
+      setError("API URL is missing.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`${API}/admin/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
         body: JSON.stringify(formData),
       });
@@ -40,7 +47,6 @@ export default function AdminLoginPage() {
 
       if (!res.ok) {
         setError(data.message || "Login failed");
-        setLoading(false);
         return;
       }
 
