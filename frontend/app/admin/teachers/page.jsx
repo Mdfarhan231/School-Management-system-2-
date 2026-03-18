@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { apiRequest } from "@/lib/api";
 
 export default function TeachersPage() {
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -25,13 +28,11 @@ export default function TeachersPage() {
     fetchTeachers();
   }, []);
 
+  // ✅ FETCH TEACHERS
   const fetchTeachers = async () => {
     try {
       setTableLoading(true);
-
-      const res = await fetch("http://127.0.0.1:8000/api/teachers");
-      const data = await res.json();
-
+      const data = await apiRequest("/teachers");
       setTeachers(data);
     } catch (err) {
       console.error("Failed to fetch teachers:", err);
@@ -45,6 +46,7 @@ export default function TeachersPage() {
     window.location.href = "/admin/login";
   };
 
+  // ✅ HANDLE INPUT
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
@@ -82,6 +84,7 @@ export default function TeachersPage() {
     });
   };
 
+  // ⚠️ SUBMIT (FormData → keep fetch)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -99,7 +102,7 @@ export default function TeachersPage() {
         submitData.append("picture", formData.picture);
       }
 
-      const res = await fetch("http://127.0.0.1:8000/api/teachers", {
+      const res = await fetch(`${API_BASE}/teachers`, {
         method: "POST",
         body: submitData,
       });
@@ -108,10 +111,10 @@ export default function TeachersPage() {
 
       if (!res.ok) {
         setError(data.message || "Failed to add teacher");
-        setLoading(false);
         return;
       }
 
+      // reset form
       setFormData({
         name: "",
         email: "",
@@ -122,9 +125,7 @@ export default function TeachersPage() {
       });
 
       const fileInput = document.getElementById("teacherPicture");
-      if (fileInput) {
-        fileInput.value = "";
-      }
+      if (fileInput) fileInput.value = "";
 
       fetchTeachers();
     } catch (err) {
@@ -134,29 +135,22 @@ export default function TeachersPage() {
     }
   };
 
+  // ✅ DELETE
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/teachers/${id}`, {
-        method: "DELETE",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.message || "Delete failed");
-        return;
-      }
-
+      await apiRequest(`/teachers/${id}`, "DELETE");
       fetchTeachers();
     } catch (err) {
-      alert("Server error while deleting");
+      alert(err.message || "Delete failed");
     }
   };
 
+  // ✅ IMAGE URL
   const getTeacherImage = (picture) => {
     if (!picture) return "/teacher-demo.png";
-    return `http://127.0.0.1:8000/teachers/${picture}`;
+    return `${API_BASE.replace("/api", "")}/teachers/${picture}`;
   };
+
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">

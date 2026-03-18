@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 export default function TeacherExamRoutinePage() {
   const router = useRouter();
@@ -24,15 +25,14 @@ export default function TeacherExamRoutinePage() {
     fetchTeacherRoutine(parsedTeacher.teacher_id);
   }, [router]);
 
+  // ✅ UPDATED
   const fetchTeacherRoutine = async (teacherId) => {
     try {
-      const res = await fetch(
-        `http://127.0.0.1:8000/api/teacher/exam-routines/${teacherId}`
-      );
-      const data = await res.json();
-      setRoutines(data);
+      const data = await apiRequest(`/teacher/exam-routines/${teacherId}`);
+      setRoutines(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch teacher exam routines:", error);
+      setRoutines([]);
     } finally {
       setLoading(false);
     }
@@ -50,6 +50,7 @@ export default function TeacherExamRoutinePage() {
       </main>
     );
   }
+
 
   return (
     <main className="min-h-screen bg-[#e5e7eb]">

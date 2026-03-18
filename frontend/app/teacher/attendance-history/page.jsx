@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 export default function TeacherAttendanceHistoryPage() {
   const router = useRouter();
-  const API = "http://127.0.0.1:8000/api";
 
   const [teacher, setTeacher] = useState(null);
   const [classes, setClasses] = useState([]);
@@ -35,11 +35,11 @@ export default function TeacherAttendanceHistoryPage() {
 
   const fetchClasses = async () => {
     try {
-      const res = await fetch(`${API}/classes`);
-      const data = await res.json();
+      const data = await apiRequest("/classes");
       setClasses(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch classes:", error);
+      setClasses([]);
     }
   };
 
@@ -47,16 +47,7 @@ export default function TeacherAttendanceHistoryPage() {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API}/attendance/history`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(filters),
-      });
-
-      const data = await res.json();
+      const data = await apiRequest("/attendance/history", "POST", filters);
       setRows(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch attendance history:", error);
@@ -78,6 +69,7 @@ export default function TeacherAttendanceHistoryPage() {
       </main>
     );
   }
+
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">

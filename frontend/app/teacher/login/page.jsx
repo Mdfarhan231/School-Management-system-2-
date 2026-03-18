@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 export default function TeacherLoginPage() {
   const router = useRouter();
@@ -22,40 +23,26 @@ export default function TeacherLoginPage() {
     }));
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  // ✅ UPDATED
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  try {
-    const res = await fetch("http://127.0.0.1:8000/api/teacher/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify(formData)
-    });
+    try {
+      const data = await apiRequest("/teacher/login", "POST", formData);
 
-    const data = await res.json();
+      localStorage.setItem("teacher", JSON.stringify(data.teacher));
 
-    if (!res.ok) {
-      setError(data.message || "Login failed");
+      router.push("/teacher/dashboard");
+
+    } catch (err) {
+      setError(err.message || "Login failed");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    localStorage.setItem("teacher", JSON.stringify(data.teacher));
-
-    router.push("/teacher/dashboard");
-
-  } catch (err) {
-    setError("Server error. Please try again.");
-  }
-
-  setLoading(false);
-};
+  };
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">

@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 export default function StudentAttendancePage() {
   const router = useRouter();
-  const API = "http://127.0.0.1:8000/api";
 
   const [student, setStudent] = useState(null);
   const [rows, setRows] = useState([]);
@@ -28,9 +28,10 @@ export default function StudentAttendancePage() {
   const fetchAttendance = async (studentId) => {
     try {
       setLoading(true);
-      const res = await fetch(`${API}/student/attendance/${studentId}`);
-      const data = await res.json();
+
+      const data = await apiRequest(`/student/attendance/${studentId}`);
       setRows(Array.isArray(data) ? data : []);
+
     } catch (error) {
       console.error("Failed to fetch student attendance:", error);
       setRows([]);
@@ -51,6 +52,7 @@ export default function StudentAttendancePage() {
       </main>
     );
   }
+
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 export default function TeacherSignupPage() {
   const router = useRouter();
@@ -26,51 +27,44 @@ export default function TeacherSignupPage() {
     }));
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  // ✅ UPDATED
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  setLoading(true);
-  setError("");
-  setSuccess("");
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
-  try {
-    const res = await fetch("http://127.0.0.1:8000/api/teacher/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify(formData)
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setError(data.message || "Signup failed");
+    // ✅ validation (important)
+    if (formData.password !== formData.confirm_password) {
+      setError("Passwords do not match");
       setLoading(false);
       return;
     }
 
-    setSuccess("Account created successfully");
+    try {
+      const data = await apiRequest("/teacher/signup", "POST", formData);
 
-    setFormData({
-      teacher_id: "",
-      email: "",
-      phone: "",
-      password: "",
-      confirm_password: ""
-    });
+      setSuccess(data.message || "Account created successfully");
 
-    setTimeout(() => {
-      router.push("/teacher/login");
-    }, 1200);
+      setFormData({
+        teacher_id: "",
+        email: "",
+        phone: "",
+        password: "",
+        confirm_password: "",
+      });
 
-  } catch (err) {
-    setError("Server error. Please try again.");
-  }
+      setTimeout(() => {
+        router.push("/teacher/login");
+      }, 1200);
 
-  setLoading(false);
-};
+    } catch (err) {
+      setError(err.message || "Signup failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">

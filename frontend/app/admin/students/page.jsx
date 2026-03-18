@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { apiRequest } from "@/lib/api";
 
 export default function StudentsPage() {
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
   const [formData, setFormData] = useState({
     name: "",
     father_name: "",
@@ -46,20 +49,20 @@ export default function StudentsPage() {
     return "B";
   }, [formData.roll]);
 
+  // ✅ FETCH CLASSES
   const fetchClasses = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/classes");
-      const data = await res.json();
+      const data = await apiRequest("/classes");
       setClasses(data);
     } catch (err) {
       console.error("Failed to fetch classes:", err);
     }
   };
 
+  // ✅ FETCH SUBJECTS
   const fetchSubjects = async (classId) => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/classes/${classId}/subjects`);
-      const data = await res.json();
+      const data = await apiRequest(`/classes/${classId}/subjects`);
       setSubjects(data);
     } catch (err) {
       console.error("Failed to fetch subjects:", err);
@@ -67,11 +70,11 @@ export default function StudentsPage() {
     }
   };
 
+  // ✅ FETCH STUDENTS
   const fetchStudents = async () => {
     try {
       setTableLoading(true);
-      const res = await fetch("http://127.0.0.1:8000/api/students");
-      const data = await res.json();
+      const data = await apiRequest("/students");
       setStudents(data);
     } catch (err) {
       console.error("Failed to fetch students:", err);
@@ -80,11 +83,7 @@ export default function StudentsPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("admin");
-    window.location.href = "/admin/login";
-  };
-
+  // ✅ HANDLE INPUT CHANGE
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
@@ -116,6 +115,7 @@ export default function StudentsPage() {
     }));
   };
 
+  // ✅ SUBMIT (FormData → keep fetch)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -149,7 +149,7 @@ export default function StudentsPage() {
         submitData.append("picture", formData.picture);
       }
 
-      const res = await fetch("http://127.0.0.1:8000/api/students", {
+      const res = await fetch(`${API_BASE}/students`, {
         method: "POST",
         body: submitData,
       });
@@ -161,6 +161,7 @@ export default function StudentsPage() {
         return;
       }
 
+      // reset form
       setFormData({
         name: "",
         father_name: "",
@@ -186,29 +187,27 @@ export default function StudentsPage() {
     }
   };
 
+  // ✅ DELETE
   const handleDelete = async (studentId) => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/students/${studentId}`, {
-        method: "DELETE",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.message || "Delete failed");
-        return;
-      }
-
+      await apiRequest(`/students/${studentId}`, "DELETE");
       fetchStudents();
     } catch (err) {
-      alert("Server error while deleting");
+      alert(err.message || "Delete failed");
     }
   };
 
+  // ✅ IMAGE URL
   const getStudentImage = (picture) => {
     if (!picture) return "/student-demo.png";
-    return `http://127.0.0.1:8000/students/${picture}`;
+    return `${API_BASE.replace("/api", "")}/students/${picture}`;
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem("admin");
+    window.location.href = "/admin/login";
+  };
+
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">
