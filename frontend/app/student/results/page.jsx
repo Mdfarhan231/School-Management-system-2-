@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 export default function StudentResultsPage() {
   const router = useRouter();
-  const API = "http://127.0.0.1:8000/api";
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
   const [student, setStudent] = useState(null);
   const [results, setResults] = useState([]);
@@ -25,10 +26,10 @@ export default function StudentResultsPage() {
     fetchResults(parsedStudent.student_id);
   }, [router]);
 
+  // ✅ UPDATED
   const fetchResults = async (studentId) => {
     try {
-      const res = await fetch(`${API}/student-results/${studentId}`);
-      const data = await res.json();
+      const data = await apiRequest(`/student-results/${studentId}`);
       setResults(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch student results:", error);
@@ -53,9 +54,10 @@ export default function StudentResultsPage() {
     router.replace("/student/login");
   };
 
+  // ✅ UPDATED IMAGE URL
   const getStudentImage = (picture) => {
     if (!picture) return "/student-demo.png";
-    return `http://127.0.0.1:8000/students/${picture}`;
+    return `${API_BASE.replace("/api", "")}/students/${picture}`;
   };
 
   if (!student) {

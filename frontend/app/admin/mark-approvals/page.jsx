@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { apiRequest } from "@/lib/api";
+
 export default function MarkApprovalsPage() {
-  const API = "http://127.0.0.1:8000/api";
 
   const [marks, setMarks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,8 +23,7 @@ export default function MarkApprovalsPage() {
   const fetchPendingMarks = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API}/student-marks/pending`);
-      const data = await res.json();
+      const data = await apiRequest("/student-marks/pending");
       setMarks(data);
     } catch (err) {
       console.error("Failed to fetch pending marks:", err);
@@ -37,23 +37,11 @@ export default function MarkApprovalsPage() {
     try {
       setApprovingId(id);
 
-      const res = await fetch(`${API}/student-marks/${id}/approve`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-        },
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.message || "Approval failed");
-        return;
-      }
+      await apiRequest(`/student-marks/${id}/approve`, "POST");
 
       fetchPendingMarks();
     } catch (err) {
-      alert("Server error while approving");
+      alert(err.message || "Approval failed");
     } finally {
       setApprovingId(null);
     }

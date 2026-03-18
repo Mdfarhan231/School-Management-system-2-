@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 export default function StudentLoginPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function StudentLoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // ✅ handle input
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -22,36 +24,25 @@ export default function StudentLoginPage() {
     }));
   };
 
+  // ✅ handle submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/student/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Login failed");
-        return;
-      }
+      const data = await apiRequest("/student/login", "POST", formData);
 
       localStorage.setItem("student", JSON.stringify(data.student));
       router.push("/student/dashboard");
+
     } catch (err) {
-      setError("Server error. Please try again.");
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">

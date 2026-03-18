@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { apiRequest } from "@/lib/api";
 
 export default function ExamRoutinePage() {
-  const API = "http://127.0.0.1:8000/api";
-
   const today = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Dhaka",
     year: "numeric",
@@ -42,8 +41,7 @@ export default function ExamRoutinePage() {
 
   const fetchRoutines = async () => {
     try {
-      const res = await fetch(`${API}/exam-routines`);
-      const data = await res.json();
+      const data = await apiRequest("/exam-routines");
       setRoutines(data);
     } catch (error) {
       console.error("Failed to fetch routines:", error);
@@ -52,8 +50,7 @@ export default function ExamRoutinePage() {
 
   const fetchClasses = async () => {
     try {
-      const res = await fetch(`${API}/classes`);
-      const data = await res.json();
+      const data = await apiRequest("/classes");
       setClasses(data);
     } catch (error) {
       console.error("Failed to fetch classes:", error);
@@ -62,8 +59,7 @@ export default function ExamRoutinePage() {
 
   const fetchSubjects = async () => {
     try {
-      const res = await fetch(`${API}/subjects`);
-      const data = await res.json();
+      const data = await apiRequest("/subjects");
       setSubjects(data);
     } catch (error) {
       console.error("Failed to fetch subjects:", error);
@@ -72,8 +68,7 @@ export default function ExamRoutinePage() {
 
   const fetchExams = async () => {
     try {
-      const res = await fetch(`${API}/exams`);
-      const data = await res.json();
+      const data = await apiRequest("/exams");
       setExams(data);
     } catch (error) {
       console.error("Failed to fetch exams:", error);
@@ -92,22 +87,7 @@ export default function ExamRoutinePage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API}/exam-routines`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.message || "Failed to add routine");
-        setLoading(false);
-        return;
-      }
+      await apiRequest("/exam-routines", "POST", form);
 
       setForm({
         exam_id: "",
@@ -120,7 +100,7 @@ export default function ExamRoutinePage() {
 
       fetchRoutines();
     } catch (error) {
-      alert("Server error. Please try again.");
+      alert(error.message || "Failed to add routine");
     } finally {
       setLoading(false);
     }
@@ -128,20 +108,10 @@ export default function ExamRoutinePage() {
 
   const deleteRoutine = async (id) => {
     try {
-      const res = await fetch(`${API}/exam-routines/${id}`, {
-        method: "DELETE",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.message || "Delete failed");
-        return;
-      }
-
+      await apiRequest(`/exam-routines/${id}`, "DELETE");
       fetchRoutines();
     } catch (error) {
-      alert("Server error while deleting.");
+      alert(error.message || "Delete failed");
     }
   };
 

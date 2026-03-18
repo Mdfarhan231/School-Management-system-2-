@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 export default function TeacherAttendancePage() {
   const router = useRouter();
-  const API = "http://127.0.0.1:8000/api";
   const ATTENDANCE_LIMIT_SECONDS = 60;
 
   const [teacher, setTeacher] = useState(null);
@@ -71,8 +71,7 @@ export default function TeacherAttendancePage() {
 
   const fetchClasses = async () => {
     try {
-      const res = await fetch(`${API}/classes`);
-      const data = await res.json();
+      const data = await apiRequest("/classes");
       setClasses(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch classes:", error);
@@ -90,19 +89,10 @@ export default function TeacherAttendancePage() {
       setLoadingStudents(true);
       setMessage({ text: "Loading students...", ok: true });
 
-      const res = await fetch(`${API}/attendance/students`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          class_id: Number(selectedClassId),
-          shift: selectedShift,
-        }),
+      const data = await apiRequest("/attendance/students", "POST", {
+        class_id: Number(selectedClassId),
+        shift: selectedShift,
       });
-
-      const data = await res.json();
 
       if (!Array.isArray(data) || data.length === 0) {
         setStudents([]);
@@ -168,33 +158,19 @@ export default function TeacherAttendancePage() {
     try {
       setSaving(true);
 
-      const res = await fetch(`${API}/attendance/store`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          teacher_id: teacher.teacher_id,
-          class_id: Number(selectedClassId),
-          shift: selectedShift,
-          attendance_date: attendanceDate,
-          timer_expired: timerExpired,
-          attendance,
-        }),
+      const data = await apiRequest("/attendance/store", "POST", {
+        teacher_id: teacher.teacher_id,
+        class_id: Number(selectedClassId),
+        shift: selectedShift,
+        attendance_date: attendanceDate,
+        timer_expired: timerExpired,
+        attendance,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setMessage({ text: data.message || "Failed to save attendance.", ok: false });
-        return;
-      }
 
       setMessage({ text: data.message || "Attendance saved successfully.", ok: true });
     } catch (error) {
       console.error("Failed to save attendance:", error);
-      setMessage({ text: "Server error while saving attendance.", ok: false });
+      setMessage({ text: error.message || "Server error while saving attendance.", ok: false });
     } finally {
       setSaving(false);
     }
@@ -219,6 +195,7 @@ export default function TeacherAttendancePage() {
       </main>
     );
   }
+
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">

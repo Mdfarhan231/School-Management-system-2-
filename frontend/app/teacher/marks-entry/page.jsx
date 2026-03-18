@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 export default function TeacherMarksEntryPage() {
   const router = useRouter();
-  const API = "http://127.0.0.1:8000/api";
 
   const [teacher, setTeacher] = useState(null);
   const [exams, setExams] = useState([]);
@@ -77,40 +77,39 @@ export default function TeacherMarksEntryPage() {
 
   const fetchExams = async () => {
     try {
-      const res = await fetch(`${API}/exams`);
-      const data = await res.json();
+      const data = await apiRequest("/exams");
       setExams(data);
     } catch (err) {
       console.error("Failed to fetch exams:", err);
+      setExams([]);
     }
   };
 
   const fetchClasses = async () => {
     try {
-      const res = await fetch(`${API}/classes`);
-      const data = await res.json();
+      const data = await apiRequest("/classes");
       setClasses(data);
     } catch (err) {
       console.error("Failed to fetch classes:", err);
+      setClasses([]);
     }
   };
 
   const fetchSubjects = async () => {
     try {
-      const res = await fetch(`${API}/subjects`);
-      const data = await res.json();
+      const data = await apiRequest("/subjects");
       setSubjects(data);
     } catch (err) {
       console.error("Failed to fetch subjects:", err);
+      setSubjects([]);
     }
   };
 
   const fetchStudents = async (classId) => {
     try {
       setTableLoading(true);
-      const res = await fetch(`${API}/students/by-class/${classId}`);
-      const data = await res.json();
-      setStudents(data);
+      const data = await apiRequest(`/students/by-class/${classId}`);
+      setStudents(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch students:", err);
       setStudents([]);
@@ -121,20 +120,11 @@ export default function TeacherMarksEntryPage() {
 
   const fetchSavedMarks = async () => {
     try {
-      const res = await fetch(`${API}/student-marks/filter`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(filter),
-      });
-
-      const data = await res.json();
-      setSavedMarks(data);
+      const data = await apiRequest("/student-marks/filter", "POST", filter);
+      setSavedMarks(Array.isArray(data) ? data : []);
 
       const nextMap = {};
-      data.forEach((item) => {
+      (Array.isArray(data) ? data : []).forEach((item) => {
         nextMap[item.student_id] = {
           written_marks: item.written_marks ?? "",
           mcq_marks: item.mcq_marks ?? "",
@@ -199,26 +189,12 @@ export default function TeacherMarksEntryPage() {
         viva_marks: row.viva_marks || 0,
       };
 
-      const res = await fetch(`${API}/student-marks`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Failed to save marks");
-        return;
-      }
+      await apiRequest("/student-marks", "POST", payload);
 
       fetchSavedMarks();
       alert("Marks saved successfully.");
     } catch (err) {
-      setError("Server error. Please try again.");
+      setError(err.message || "Failed to save marks");
     } finally {
       setLoading(false);
     }
@@ -231,6 +207,7 @@ export default function TeacherMarksEntryPage() {
       </main>
     );
   }
+
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">

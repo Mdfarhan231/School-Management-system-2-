@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const API = process.env.NEXT_PUBLIC_API_URL;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -14,11 +14,6 @@ export default function AdminLoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // ✅ This will show API in browser console
-  useEffect(() => {
-    console.log("API URL:", API);
-  }, [API]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -32,39 +27,21 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError("");
 
-    if (!API) {
-      setError("API URL is missing.");
-      setLoading(false);
-      return;
-    }
-
     try {
-      const res = await fetch(`${API}/admin/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Login failed");
-        return;
-      }
+      const data = await apiRequest("/admin/login", "POST", formData);
 
       localStorage.setItem("admin", JSON.stringify(data.admin));
       router.push("/admin/dashboard");
+
     } catch (err) {
-      setError("Server error. Please try again.");
+      setError(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
+    // UI stays same
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">
       <header className="bg-[#17172f] px-4 py-3 text-white shadow">
         <h1 className="text-[15px] font-medium sm:text-xl">
