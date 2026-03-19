@@ -9,28 +9,26 @@ use Illuminate\Support\Facades\Http;
 
 class TeacherController extends Controller
 {
-    // Get all teachers
     public function index()
     {
         $teachers = DB::table('teachers')->get();
         return response()->json($teachers);
     }
 
-    // Add teacher
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required',
-            'email' => 'required',
-            'phone' => 'required',
-            'subjects' => 'required',
+            'name' => 'required|string',
+            'email' => 'required|string',
+            'phone' => 'required|string',
+            'shift' => 'nullable|string',
+            'subjects' => 'required|string',
+            'picture' => 'nullable|image|max:2048',
         ]);
 
         $pictureUrl = null;
 
-        // ✅ Upload to Supabase Storage
         if ($request->hasFile('picture')) {
-
             $file = $request->file('picture');
 
             $extension = $file->getClientOriginalExtension();
@@ -42,17 +40,17 @@ class TeacherController extends Controller
                 'Content-Type' => $file->getMimeType(),
             ])->put(
                 env('SUPABASE_URL') . '/storage/v1/object/' . env('SUPABASE_BUCKET') . '/' . $filePath,
-                file_get_contents($file)
+                file_get_contents($file->getRealPath())
             );
 
             if ($response->failed()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Image upload failed'
+                    'message' => 'Image upload failed',
+                    'error' => $response->body(),
                 ], 500);
             }
 
-            // ✅ Public URL
             $pictureUrl = env('SUPABASE_URL') . '/storage/v1/object/public/' . env('SUPABASE_BUCKET') . '/' . $filePath;
         }
 
@@ -62,16 +60,15 @@ class TeacherController extends Controller
             'phone' => $request->phone,
             'shift' => $request->shift,
             'subjects' => $request->subjects,
-            'picture' => $pictureUrl // ✅ store full URL
-        ]);
+            'picture' => $pictureUrl,
+        ], 'teacher_id');
 
         return response()->json([
             'success' => true,
-            'teacher_id' => $id
+            'teacher_id' => $id,
         ]);
     }
 
-    // Delete teacher
     public function destroy($id)
     {
         DB::table('teachers')->where('teacher_id', $id)->delete();
