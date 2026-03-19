@@ -12,6 +12,9 @@ use App\Http\Controllers\Api\TeacherAttendanceController;
 //for check the db connection for render to supabase
 use Illuminate\Support\Facades\DB;
 
+//testing supabase bucket connection
+Route::get('/test-supabase-upload', [TeacherController::class, 'testSupabaseUpload']);
+
 // use App\Http\Controllers\Api\MarkSetupController;
 // use App\Http\Controllers\Api\MarkDistributionController;
 
