@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class TeacherController extends Controller
 {
@@ -12,7 +13,6 @@ class TeacherController extends Controller
     public function index()
     {
         $teachers = DB::table('teachers')->get();
-
         return response()->json($teachers);
     }
 
@@ -26,12 +26,32 @@ class TeacherController extends Controller
             'subjects' => 'required',
         ]);
 
-        $pictureName = null;
+        $pictureUrl = null;
 
+        // ✅ Upload to Supabase Storage
         if ($request->hasFile('picture')) {
-            $picture = $request->file('picture');
-            $pictureName = time().'_'.$picture->getClientOriginalName();
-            $picture->move(public_path('teachers'), $pictureName);
+
+            $file = $request->file('picture');
+
+            $filePath = 'teachers/' . time() . '_' . $file->getClientOriginalName();
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('SUPABASE_KEY'),
+                'Content-Type' => $file->getMimeType(),
+            ])->put(
+                env('SUPABASE_URL') . '/storage/v1/object/' . env('SUPABASE_BUCKET') . '/' . $filePath,
+                file_get_contents($file)
+            );
+
+            if ($response->failed()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Image upload failed'
+                ], 500);
+            }
+
+            // ✅ Public URL
+            $pictureUrl = env('SUPABASE_URL') . '/storage/v1/object/public/' . env('SUPABASE_BUCKET') . '/' . $filePath;
         }
 
         $id = DB::table('teachers')->insertGetId([
@@ -40,7 +60,7 @@ class TeacherController extends Controller
             'phone' => $request->phone,
             'shift' => $request->shift,
             'subjects' => $request->subjects,
-            'picture' => $pictureName
+            'picture' => $pictureUrl // ✅ store full URL
         ]);
 
         return response()->json([
