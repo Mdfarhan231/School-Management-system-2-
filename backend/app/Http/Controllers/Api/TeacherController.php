@@ -77,4 +77,31 @@ class TeacherController extends Controller
             'success' => true
         ]);
     }
+    public function testSupabaseUpload()
+{
+    try {
+        $content = 'hello from render';
+        $fileName = 'teachers/test_' . time() . '.txt';
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . env('SUPABASE_KEY'),
+            'Content-Type' => 'text/plain',
+        ])->put(
+            env('SUPABASE_URL') . '/storage/v1/object/' . env('SUPABASE_BUCKET') . '/' . $fileName,
+            $content
+        );
+
+        return response()->json([
+            'success' => $response->successful(),
+            'status' => $response->status(),
+            'response_body' => $response->body(),
+            'public_url' => env('SUPABASE_URL') . '/storage/v1/object/public/' . env('SUPABASE_BUCKET') . '/' . $fileName,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+}
 }
