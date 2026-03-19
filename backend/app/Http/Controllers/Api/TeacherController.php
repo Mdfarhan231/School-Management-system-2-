@@ -33,7 +33,9 @@ class TeacherController extends Controller
 
             $file = $request->file('picture');
 
-            $filePath = 'teachers/' . time() . '_' . $file->getClientOriginalName();
+            $extension = $file->getClientOriginalExtension();
+            $fileName = time() . '_' . uniqid() . '.' . $extension;
+            $filePath = 'teachers/' . $fileName;
 
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . env('SUPABASE_KEY'),
