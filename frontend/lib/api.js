@@ -14,8 +14,15 @@ export async function apiRequest(
     Accept: "application/json",
   };
 
-  if (body) {
+  let requestBody = undefined;
+
+  // ✅ Handle FormData (file upload)
+  if (body instanceof FormData) {
+    requestBody = body;
+    // ❌ DO NOT set Content-Type (browser handles it)
+  } else if (body) {
     headers["Content-Type"] = "application/json";
+    requestBody = JSON.stringify(body);
   }
 
   if (token) {
@@ -25,7 +32,7 @@ export async function apiRequest(
   const response = await fetch(`${API_BASE}${endpoint}`, {
     method,
     headers,
-    body: body ? JSON.stringify(body) : undefined,
+    body: requestBody,
   });
 
   const data = await response.json().catch(() => ({}));

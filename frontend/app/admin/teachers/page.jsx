@@ -26,14 +26,14 @@ export default function TeachersPage() {
     fetchTeachers();
   }, []);
 
-  // ✅ FETCH TEACHERS
   const fetchTeachers = async () => {
     try {
       setTableLoading(true);
       const data = await apiRequest("/teachers");
-      setTeachers(data);
+      setTeachers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch teachers:", err);
+      setTeachers([]);
     } finally {
       setTableLoading(false);
     }
@@ -44,14 +44,13 @@ export default function TeachersPage() {
     window.location.href = "/admin/login";
   };
 
-  // ✅ HANDLE INPUT
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (name === "picture") {
       setFormData((prev) => ({
         ...prev,
-        picture: files[0] || null,
+        picture: files?.[0] || null,
       }));
       return;
     }
@@ -82,7 +81,6 @@ export default function TeachersPage() {
     });
   };
 
-  // ⚠️ SUBMIT (FormData → keep fetch)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -100,19 +98,8 @@ export default function TeachersPage() {
         submitData.append("picture", formData.picture);
       }
 
-      const res = await fetch(`${API_BASE}/teachers`, {
-        method: "POST",
-        body: submitData,
-      });
+      await apiRequest("/teachers", "POST", submitData);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || "Failed to add teacher");
-        return;
-      }
-
-      // reset form
       setFormData({
         name: "",
         email: "",
@@ -127,13 +114,12 @@ export default function TeachersPage() {
 
       fetchTeachers();
     } catch (err) {
-      setError("Server error. Please try again.");
+      setError(err.message || "Failed to add teacher");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ DELETE
   const handleDelete = async (id) => {
     try {
       await apiRequest(`/teachers/${id}`, "DELETE");
@@ -143,12 +129,10 @@ export default function TeachersPage() {
     }
   };
 
-  // ✅ IMAGE URL
-const getTeacherImage = (picture) => {
-  if (!picture) return "/teacher-demo.png";
-  return picture;
-};
-
+  const getTeacherImage = (picture) => {
+    if (!picture) return "/teacher-demo.png";
+    return picture;
+  };
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">
@@ -223,7 +207,7 @@ const getTeacherImage = (picture) => {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="e.g. 01XXXXXXXXX"
-                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-black outline-none placeholder:text-gray-500 focus:border-blue-500"
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-black outline-none placeholder:text-gray-500 focus:border-blue-500"
                 />
               </div>
             </div>
