@@ -14,25 +14,24 @@ export async function apiRequest(
     Accept: "application/json",
   };
 
-  let requestBody = undefined;
-
-  // ✅ Handle FormData (file upload)
-  if (body instanceof FormData) {
-    requestBody = body;
-    // ❌ DO NOT set Content-Type (browser handles it)
-  } else if (body) {
-    headers["Content-Type"] = "application/json";
-    requestBody = JSON.stringify(body);
-  }
-
   if (token) {
     headers.Authorization = `Bearer ${token}`;
+  }
+
+  const isFormData = body instanceof FormData;
+
+  if (body && !isFormData) {
+    headers["Content-Type"] = "application/json";
   }
 
   const response = await fetch(`${API_BASE}${endpoint}`, {
     method,
     headers,
-    body: requestBody,
+    body: body
+      ? isFormData
+        ? body
+        : JSON.stringify(body)
+      : undefined,
   });
 
   const data = await response.json().catch(() => ({}));
