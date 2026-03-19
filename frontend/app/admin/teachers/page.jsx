@@ -5,8 +5,6 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/api";
 
 export default function TeachersPage() {
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -146,10 +144,10 @@ export default function TeachersPage() {
   };
 
   // ✅ IMAGE URL
-  const getTeacherImage = (picture) => {
-    if (!picture) return "/teacher-demo.png";
-    return `${API_BASE.replace("/api", "")}/teachers/${picture}`;
-  };
+const getTeacherImage = (picture) => {
+  if (!picture) return "/teacher-demo.png";
+  return picture;
+};
 
 
   return (
