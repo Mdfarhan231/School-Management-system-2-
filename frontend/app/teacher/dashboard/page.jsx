@@ -26,7 +26,7 @@ export default function TeacherDashboardPage() {
 
   const getTeacherImage = (picture) => {
     if (!picture) return "/teacher-demo.png";
-    return `http://127.0.0.1:8000/teachers/${picture}`;
+    return picture;
   };
 
   if (!teacher) {
@@ -97,19 +97,19 @@ export default function TeacherDashboardPage() {
               Exam Routine
             </Link>
 
-           <Link
-            href="/teacher/attendance"
-            className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
+            <Link
+              href="/teacher/attendance"
+              className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
             >
-           Take Attendance
-          </Link>
+              Take Attendance
+            </Link>
 
-           <Link
-          href="/teacher/attendance-history"
-           className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
-           >
-           Attendance History
-          </Link>
+            <Link
+              href="/teacher/attendance-history"
+              className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
+            >
+              Attendance History
+            </Link>
 
             <Link
               href="/teacher/results"
@@ -126,10 +126,10 @@ export default function TeacherDashboardPage() {
             </Link>
 
             <Link
-             href="/teacher/marks-entry"
-             className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
+              href="/teacher/marks-entry"
+              className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
             >
-             Marks Entry
+              Marks Entry
             </Link>
           </div>
 
