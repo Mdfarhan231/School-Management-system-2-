@@ -16,7 +16,12 @@ export default function StudentDashboardPage() {
       return;
     }
 
-    setStudent(JSON.parse(savedStudent));
+    try {
+      setStudent(JSON.parse(savedStudent));
+    } catch (error) {
+      localStorage.removeItem("student");
+      router.replace("/student/login");
+    }
   }, [router]);
 
   const handleLogout = () => {
@@ -26,7 +31,7 @@ export default function StudentDashboardPage() {
 
   const getStudentImage = (picture) => {
     if (!picture) return "/student-demo.png";
-    return `http://127.0.0.1:8000/students/${picture}`;
+    return picture;
   };
 
   if (!student) {
@@ -38,9 +43,9 @@ export default function StudentDashboardPage() {
   }
 
   return (
-    <main className="flex min-h-screen  flex-col bg-[#e5e7eb]">
+    <main className="flex min-h-screen flex-col bg-[#e5e7eb]">
       <header className="bg-[#17172f] px-4 py-3 text-white shadow">
-        <h1 className="text-[15px] font-medium sm:text-xl flex items-center justify-center">
+        <h1 className="flex items-center justify-center text-[15px] font-medium sm:text-xl">
           School Management System
         </h1>
       </header>
@@ -55,7 +60,7 @@ export default function StudentDashboardPage() {
             <div className="shrink-0">
               <img
                 src={getStudentImage(student.picture)}
-                alt={student.name}
+                alt={student.name || "Student"}
                 className="h-24 w-24 rounded-full object-cover shadow-md"
               />
             </div>
@@ -69,11 +74,15 @@ export default function StudentDashboardPage() {
                 Student ID:{" "}
                 <span className="font-normal">{student.student_id || "-"}</span>
               </p>
+
               <p className="text-[16px] font-semibold text-[#374151]">
-                Father's Name: <span className="font-normal">{student.father_name || "-"}</span>
+                Father's Name:{" "}
+                <span className="font-normal">{student.father_name || "-"}</span>
               </p>
+
               <p className="text-[16px] font-semibold text-[#374151]">
-                Mother's Name: <span className="font-normal">{student.mother_name || "-"}</span>
+                Mother's Name:{" "}
+                <span className="font-normal">{student.mother_name || "-"}</span>
               </p>
 
               <p className="text-[16px] font-semibold text-[#374151]">
@@ -116,10 +125,10 @@ export default function StudentDashboardPage() {
             </Link>
 
             <Link
-            href="/student/attendance"
+              href="/student/attendance"
               className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
-              >
-            Attendance
+            >
+              Attendance
             </Link>
 
             <Link
@@ -135,13 +144,6 @@ export default function StudentDashboardPage() {
             >
               Notice Board
             </Link>
-
-           <Link
-           href="/student/results"
-          className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
-            >
-            Results
-          </Link>
           </div>
 
           <div className="mt-5 text-center">
