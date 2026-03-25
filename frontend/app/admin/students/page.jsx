@@ -49,7 +49,6 @@ export default function StudentsPage() {
     return "B";
   }, [formData.roll]);
 
-  // ✅ FETCH CLASSES
   const fetchClasses = async () => {
     try {
       const data = await apiRequest("/classes");
@@ -59,7 +58,6 @@ export default function StudentsPage() {
     }
   };
 
-  // ✅ FETCH SUBJECTS
   const fetchSubjects = async (classId) => {
     try {
       const data = await apiRequest(`/classes/${classId}/subjects`);
@@ -70,7 +68,6 @@ export default function StudentsPage() {
     }
   };
 
-  // ✅ FETCH STUDENTS
   const fetchStudents = async () => {
     try {
       setTableLoading(true);
@@ -83,7 +80,6 @@ export default function StudentsPage() {
     }
   };
 
-  // ✅ HANDLE INPUT CHANGE
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
@@ -115,7 +111,6 @@ export default function StudentsPage() {
     }));
   };
 
-  // ✅ SUBMIT (FormData → keep fetch)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -157,11 +152,10 @@ export default function StudentsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Failed to add student");
+        setError(data.message || data.error || "Failed to add student");
         return;
       }
 
-      // reset form
       setFormData({
         name: "",
         father_name: "",
@@ -181,13 +175,13 @@ export default function StudentsPage() {
 
       fetchStudents();
     } catch (err) {
-      setError("Server error. Please try again.");
+      console.error("Student add failed:", err);
+      setError(err.message || "Server error. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ DELETE
   const handleDelete = async (studentId) => {
     try {
       await apiRequest(`/students/${studentId}`, "DELETE");
@@ -197,17 +191,15 @@ export default function StudentsPage() {
     }
   };
 
-  // ✅ IMAGE URL
   const getStudentImage = (picture) => {
     if (!picture) return "/student-demo.png";
-    return `${API_BASE.replace("/api", "")}/students/${picture}`;
+    return picture;
   };
 
   const handleLogout = () => {
     localStorage.removeItem("admin");
     window.location.href = "/admin/login";
   };
-
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">
