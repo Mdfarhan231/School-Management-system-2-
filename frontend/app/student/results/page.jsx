@@ -7,7 +7,6 @@ import { apiRequest } from "@/lib/api";
 
 export default function StudentResultsPage() {
   const router = useRouter();
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
   const [student, setStudent] = useState(null);
   const [results, setResults] = useState([]);
@@ -21,14 +20,25 @@ export default function StudentResultsPage() {
       return;
     }
 
-    const parsedStudent = JSON.parse(savedStudent);
-    setStudent(parsedStudent);
-    fetchResults(parsedStudent.student_id);
+    try {
+      const parsedStudent = JSON.parse(savedStudent);
+      setStudent(parsedStudent);
+
+      if (parsedStudent?.student_id) {
+        fetchResults(parsedStudent.student_id);
+      } else {
+        setResults([]);
+        setLoading(false);
+      }
+    } catch (error) {
+      localStorage.removeItem("student");
+      router.replace("/student/login");
+    }
   }, [router]);
 
-  // ✅ UPDATED
   const fetchResults = async (studentId) => {
     try {
+      setLoading(true);
       const data = await apiRequest(`/student-results/${studentId}`);
       setResults(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -41,11 +51,13 @@ export default function StudentResultsPage() {
 
   const groupedResults = useMemo(() => {
     const groups = {};
+
     results.forEach((item) => {
       const examName = item.exam_name || "Unknown Exam";
       if (!groups[examName]) groups[examName] = [];
       groups[examName].push(item);
     });
+
     return groups;
   }, [results]);
 
@@ -54,10 +66,27 @@ export default function StudentResultsPage() {
     router.replace("/student/login");
   };
 
-  // ✅ UPDATED IMAGE URL
   const getStudentImage = (picture) => {
     if (!picture) return "/student-demo.png";
-    return `${API_BASE.replace("/api", "")}/students/${picture}`;
+    return picture;
+  };
+
+  const getStatusStyle = (status) => {
+    if (!status) {
+      return "bg-gray-100 text-gray-700";
+    }
+
+    const normalized = String(status).toLowerCase();
+
+    if (normalized === "pass") {
+      return "bg-emerald-100 text-emerald-700";
+    }
+
+    if (normalized === "fail") {
+      return "bg-red-100 text-red-700";
+    }
+
+    return "bg-blue-100 text-blue-700";
   };
 
   if (!student) {
@@ -107,7 +136,7 @@ export default function StudentResultsPage() {
               <div className="shrink-0">
                 <img
                   src={getStudentImage(student.picture)}
-                  alt={student.name}
+                  alt={student.name || "Student"}
                   className="h-24 w-24 rounded-full object-cover shadow-md"
                 />
               </div>
@@ -175,24 +204,28 @@ export default function StudentResultsPage() {
                       </thead>
 
                       <tbody>
-                        {examRows.map((row) => (
+                        {examRows.map((row, index) => (
                           <tr
-                            key={row.id}
+                            key={row.id ?? `${examName}-${row.subject_name}-${index}`}
                             className="border-b border-gray-200 bg-white text-sm text-black"
                           >
-                            <td className="px-5 py-4">{row.subject_name}</td>
-                            <td className="px-5 py-4">{row.written_marks}</td>
-                            <td className="px-5 py-4">{row.mcq_marks}</td>
-                            <td className="px-5 py-4">{row.practical_marks}</td>
-                            <td className="px-5 py-4">{row.viva_marks}</td>
-                            <td className="px-5 py-4">{row.assignment_marks}</td>
-                            <td className="px-5 py-4">{row.class_test_marks}</td>
-                            <td className="px-5 py-4 font-semibold">{row.total_marks}</td>
-                            <td className="px-5 py-4 font-semibold">{row.grade}</td>
-                            <td className="px-5 py-4 font-semibold">{row.gpa}</td>
+                            <td className="px-5 py-4">{row.subject_name || "-"}</td>
+                            <td className="px-5 py-4">{row.written_marks ?? "-"}</td>
+                            <td className="px-5 py-4">{row.mcq_marks ?? "-"}</td>
+                            <td className="px-5 py-4">{row.practical_marks ?? "-"}</td>
+                            <td className="px-5 py-4">{row.viva_marks ?? "-"}</td>
+                            <td className="px-5 py-4">{row.assignment_marks ?? "-"}</td>
+                            <td className="px-5 py-4">{row.class_test_marks ?? "-"}</td>
+                            <td className="px-5 py-4 font-semibold">{row.total_marks ?? "-"}</td>
+                            <td className="px-5 py-4 font-semibold">{row.grade ?? "-"}</td>
+                            <td className="px-5 py-4 font-semibold">{row.gpa ?? "-"}</td>
                             <td className="px-5 py-4">
-                              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                                {row.status}
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(
+                                  row.status
+                                )}`}
+                              >
+                                {row.status || "-"}
                               </span>
                             </td>
                           </tr>
