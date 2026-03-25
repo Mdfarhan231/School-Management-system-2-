@@ -1,11 +1,6 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
-export async function apiRequest(
-  endpoint,
-  method = "GET",
-  body = null,
-  token = null
-) {
+export async function apiRequest(endpoint, method = "GET", body = null, token = null) {
   if (!API_BASE) {
     throw new Error("API base URL is not defined");
   }
@@ -27,11 +22,7 @@ export async function apiRequest(
   const response = await fetch(`${API_BASE}${endpoint}`, {
     method,
     headers,
-    body: body
-      ? isFormData
-        ? body
-        : JSON.stringify(body)
-      : undefined,
+    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
   });
 
   const data = await response.json().catch(() => ({}));
