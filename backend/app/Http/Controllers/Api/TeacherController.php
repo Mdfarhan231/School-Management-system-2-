@@ -55,6 +55,7 @@ class TeacherController extends Controller
                     'Authorization' => 'Bearer ' . env('SUPABASE_KEY'),
                     'Content-Type' => $file->getMimeType(),
                 ])->withBody($fileContent, $file->getMimeType())->put(
+                    
                     env('SUPABASE_URL') . '/storage/v1/object/' . env('SUPABASE_BUCKET') . '/' . $filePath
                 );
 
