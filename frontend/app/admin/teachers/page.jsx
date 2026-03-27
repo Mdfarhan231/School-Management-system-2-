@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function TeachersPage() {
   const [formData, setFormData] = useState({
@@ -13,11 +14,12 @@ export default function TeachersPage() {
     subjects: [],
     picture: null,
   });
-
+ const router = useRouter();
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [tableLoading, setTableLoading] = useState(true);
   const [error, setError] = useState("");
+  const [admin, setAdmin] = useState(null);
 
   const shifts = ["Morning", "Day"];
   const subjectOptions = ["Bangla", "English", "Math", "Science", "Drawing"];
@@ -38,10 +40,26 @@ export default function TeachersPage() {
       setTableLoading(false);
     }
   };
+     useEffect(() => {
+    const savedAdmin = localStorage.getItem("admin");
+
+    if (!savedAdmin) {
+      router.replace("/admin/login");
+      return;
+    }
+
+    try {
+      setAdmin(JSON.parse(savedAdmin));
+    } catch (error) {
+      localStorage.removeItem("admin");
+      router.replace("/admin/login");
+    }
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("admin");
-    window.location.href = "/admin/login";
+    router.replace("/admin/login");
+    router.refresh();
   };
 
   const handleChange = (e) => {

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function ExamRoutinePage() {
   const today = new Intl.DateTimeFormat("en-CA", {
@@ -12,11 +13,13 @@ export default function ExamRoutinePage() {
     day: "2-digit",
   }).format(new Date());
 
+  const router = useRouter();
   const [routines, setRoutines] = useState([]);
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [admin, setAdmin] = useState(null);
 
   const [form, setForm] = useState({
     exam_id: "",
@@ -27,9 +30,26 @@ export default function ExamRoutinePage() {
     end_time: "",
   });
 
+     useEffect(() => {
+    const savedAdmin = localStorage.getItem("admin");
+
+    if (!savedAdmin) {
+      router.replace("/admin/login");
+      return;
+    }
+
+    try {
+      setAdmin(JSON.parse(savedAdmin));
+    } catch (error) {
+      localStorage.removeItem("admin");
+      router.replace("/admin/login");
+    }
+  }, [router]);
+
   const handleLogout = () => {
     localStorage.removeItem("admin");
-    window.location.href = "/admin/login";
+    router.replace("/admin/login");
+    router.refresh();
   };
 
   useEffect(() => {
