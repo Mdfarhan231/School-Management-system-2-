@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AdminDashboardPage() {
   // const handleLogout = () => {
@@ -29,7 +32,7 @@ export default function AdminDashboardPage() {
     localStorage.removeItem("admin");
     router.replace("/admin/login");
   };
-  
+
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">
       {/* Top header */}
