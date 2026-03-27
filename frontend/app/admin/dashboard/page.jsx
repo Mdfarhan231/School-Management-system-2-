@@ -3,11 +3,33 @@
 import Link from "next/link";
 
 export default function AdminDashboardPage() {
+  // const handleLogout = () => {
+  //   localStorage.removeItem("admin");
+  //   window.location.href = "/admin/login";
+  // };
+  const router = useRouter();
+  const [admin, setAdmin] = useState(null);
+   useEffect(() => {
+    const savedAdmin = localStorage.getItem("admin");
+
+    if (!savedAdmin) {
+      router.replace("/admin/login");
+      return;
+    }
+
+    try {
+      setAdmin(JSON.parse(savedAdmin));
+    } catch (error) {
+      localStorage.removeItem("admin");
+      router.replace("/admin/login");
+    }
+  }, [router]);
+
   const handleLogout = () => {
     localStorage.removeItem("admin");
-    window.location.href = "/admin/login";
+    router.replace("/admin/login");
   };
-
+  
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">
       {/* Top header */}
