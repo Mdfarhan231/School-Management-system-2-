@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
 import { apiRequest } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 export default function StudentsPage() {
   const API_BASE = process.env.NEXT_PUBLIC_API_URL;
@@ -19,12 +20,14 @@ export default function StudentsPage() {
     picture: null,
   });
 
+  const router = useRouter();
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [tableLoading, setTableLoading] = useState(true);
   const [error, setError] = useState("");
+  const [admin, setAdmin] = useState(null);
 
   const shiftOptions = ["Morning", "Day"];
 
@@ -196,9 +199,26 @@ export default function StudentsPage() {
     return picture;
   };
 
+     useEffect(() => {
+    const savedAdmin = localStorage.getItem("admin");
+
+    if (!savedAdmin) {
+      router.replace("/admin/login");
+      return;
+    }
+
+    try {
+      setAdmin(JSON.parse(savedAdmin));
+    } catch (error) {
+      localStorage.removeItem("admin");
+      router.replace("/admin/login");
+    }
+  }, [router]);
+
   const handleLogout = () => {
-    localStorage.removeItem("admin");
-    window.location.href = "/admin/login";
+   localStorage.removeItem("admin");
+    router.replace("/admin/login");
+    router.refresh();
   };
 
   return (

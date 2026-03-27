@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
+import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 
 export default function MarkApprovalsPage() {
@@ -10,10 +10,29 @@ export default function MarkApprovalsPage() {
   const [marks, setMarks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [approvingId, setApprovingId] = useState(null);
+  const router = useRouter();
+  const [admin, setAdmin] = useState(null);
+
+     useEffect(() => {
+    const savedAdmin = localStorage.getItem("admin");
+
+    if (!savedAdmin) {
+      router.replace("/admin/login");
+      return;
+    }
+
+    try {
+      setAdmin(JSON.parse(savedAdmin));
+    } catch (error) {
+      localStorage.removeItem("admin");
+      router.replace("/admin/login");
+    }
+  }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("admin");
-    window.location.href = "/admin/login";
+   localStorage.removeItem("admin");
+    router.replace("/admin/login");
+    router.refresh();
   };
 
   useEffect(() => {

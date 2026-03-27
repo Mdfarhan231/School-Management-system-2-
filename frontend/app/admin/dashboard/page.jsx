@@ -31,6 +31,7 @@ export default function AdminDashboardPage() {
   const handleLogout = () => {
     localStorage.removeItem("admin");
     router.replace("/admin/login");
+    router.refresh();
   };
 
   return (
