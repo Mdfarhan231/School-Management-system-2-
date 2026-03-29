@@ -176,7 +176,7 @@ function HeaderAndNavbar() {
           {/* Right: small buttons */}
           <div className="flex items-center gap-2">
             <Link
-              href="/members"
+              href=""
               className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-blue-700 shadow-sm hover:bg-slate-50"
             >
               👥 সদস্যগণ
@@ -204,19 +204,19 @@ function HeaderAndNavbar() {
       {/* Navbar (blue strip) */}
       <nav className="bg-[#4f73a8]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-6 px-4 py-3 text-white">
-          <NavItem href="/" icon="🏠" label="হোম" />
-          <NavItem href="/about" icon="ℹ️" label="আমাদের সম্পর্কে" />
-          <NavItem href="/academic" icon="📚" label="একাডেমিক" />
-          <NavItem href="/notice" icon="📌" label="নোটিশ বোর্ড" />
-          <NavItem href="/gallery" icon="🖼️" label="গ্যালারি" />
-          <NavItem href="/contact" icon="☎️" label="যোগাযোগ" />
+          <NavItem href="" icon="🏠" label="হোম" />
+          <NavItem href="" icon="ℹ️" label="আমাদের সম্পর্কে" />
+          <NavItem href="" icon="📚" label="একাডেমিক" />
+          <NavItem href="" icon="📌" label="নোটিশ বোর্ড" />
+          <NavItem href="" icon="🖼️" label="গ্যালারি" />
+          <NavItem href="" icon="☎️" label="যোগাযোগ" />
         </div>
       </nav>
 
       {/* Portal buttons */}
       <div className="bg-slate-100">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-3 px-4 py-4">
-          <PillButton href="/notice" label="Latest Notices" color="bg-slate-800" />
+          <PillButton href="" label="Latest Notices" color="bg-slate-800" />
           <PillButton href="/teacher/login" label="Teacher Portal" color="bg-emerald-500" />
           <PillButton href="/admin/login" label="Admin login" color="bg-orange-400" />
           <PillButton href="/student/login" label="Student Portal" color="bg-rose-500" />
