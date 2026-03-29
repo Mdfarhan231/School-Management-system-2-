@@ -139,7 +139,7 @@ export default function StudentDashboardPage() {
             </Link>
 
             <Link
-              href="/student/notices"
+              href=""
               className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
             >
               Notice Board

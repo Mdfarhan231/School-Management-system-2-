@@ -110,27 +110,33 @@ export default function TeacherDashboardPage() {
             >
               Attendance History
             </Link>
-
-            <Link
-              href="/teacher/results"
-              className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
-            >
-              Student Results
-            </Link>
-
-            <Link
-              href="/teacher/notices"
-              className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
-            >
-              Notice Board
-            </Link>
-
-            <Link
+              <Link
               href="/teacher/marks-entry"
               className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
             >
               Marks Entry
             </Link>
+
+            {/* <Link
+              href=""
+              className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
+            >
+              Student Results
+            </Link> */}
+
+            {/* <Link
+              href=""
+              className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
+            >
+              Notice Board
+            </Link> */}
+{/* 
+            <Link
+              href="/teacher/marks-entry"
+              className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
+            >
+              Marks Entry
+            </Link> */}
           </div>
 
           <div className="mt-5 text-center">
