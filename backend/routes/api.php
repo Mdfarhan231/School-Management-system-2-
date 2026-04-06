@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
+
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\StudentController;
@@ -9,21 +11,9 @@ use App\Http\Controllers\Api\StudentAuthController;
 use App\Http\Controllers\Api\ExamRoutineController;
 use App\Http\Controllers\Api\StudentMarkController;
 use App\Http\Controllers\Api\TeacherAttendanceController;
-//for check the db connection for render to supabase
-use Illuminate\Support\Facades\DB;
 
-//testing supabase bucket connection
+// testing supabase bucket connection
 Route::get('/test-supabase-upload', [TeacherController::class, 'testSupabaseUpload']);
-
-// use App\Http\Controllers\Api\MarkSetupController;
-// use App\Http\Controllers\Api\MarkDistributionController;
-
-
-// use App\Http\Controllers\Api\Admin\AdminMarkApprovalController;
-// use App\Http\Controllers\Api\Admin\SubjectMarkConfigController;
-// use App\Http\Controllers\Api\Common\ExamTypeController;
-// use App\Http\Controllers\Api\Student\StudentResultController;
-// use App\Http\Controllers\Api\Teacher\TeacherMarkController;
 
 Route::post('/admin/login', [AdminAuthController::class, 'login']);
 
@@ -56,38 +46,24 @@ Route::get('/subjects', function () {
 });
 
 Route::get('/teacher/exam-routines/{teacherId}', [ExamRoutineController::class, 'teacherRoutine']);
-
 Route::get('/student/exam-routines/{studentId}', [ExamRoutineController::class, 'studentRoutine']);
 
-// Route::get('/mark-setups', [MarkSetupController::class, 'index']);
-// Route::post('/mark-setups', [MarkSetupController::class, 'store']);
-// Route::delete('/mark-setups/{id}', [MarkSetupController::class, 'destroy']);
-
-// Route::get('/mark-distributions', [MarkDistributionController::class, 'index']);
-// Route::post('/mark-distributions', [MarkDistributionController::class, 'store']);
-// Route::delete('/mark-distributions/{id}', [MarkDistributionController::class, 'destroy']);
-
-// Route::get('/students/by-class/{classId}', [StudentMarkController::class, 'studentsByClass']);
-// Route::post('/student-marks/filter', [StudentMarkController::class, 'marksByFilter']);
-// Route::post('/student-marks', [StudentMarkController::class, 'store']);
-
+// Student marks
 Route::get('/students/by-class/{classId}', [StudentMarkController::class, 'studentsByClass']);
 Route::post('/student-marks/filter', [StudentMarkController::class, 'marksByFilter']);
 Route::post('/student-marks', [StudentMarkController::class, 'store']);
-
 Route::get('/student-marks/pending', [StudentMarkController::class, 'pendingMarks']);
+Route::get('/student-marks/pending-summary', [StudentMarkController::class, 'pendingSummary']);
 Route::post('/student-marks/{id}/approve', [StudentMarkController::class, 'approve']);
-
 Route::get('/student-results/{studentId}', [StudentMarkController::class, 'approvedResultsByStudent']);
 
-
+// Attendance
 Route::post('/attendance/students', [TeacherAttendanceController::class, 'studentsByClassShift']);
 Route::post('/attendance/store', [TeacherAttendanceController::class, 'store']);
 Route::post('/attendance/history', [TeacherAttendanceController::class, 'history']);
 Route::get('/student/attendance/{studentId}', [TeacherAttendanceController::class, 'studentHistory']);
 
-
-//for check the db connection for render to supabase
+// DB connection test
 Route::get('/db-test', function () {
     try {
         return response()->json([
@@ -102,4 +78,3 @@ Route::get('/db-test', function () {
         ], 500);
     }
 });
-

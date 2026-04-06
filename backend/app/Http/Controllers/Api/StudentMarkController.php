@@ -39,18 +39,21 @@ class StudentMarkController extends Controller
 
     public function store(Request $request)
     {
-       $request->validate([
-    'exam_id' => 'required|integer|exists:exams,exam_id',
-    'class_id' => 'required|integer|exists:classes,class_id',
-    'subject_id' => 'required|integer|exists:subjects,subject_id',
-    'student_id' => 'required|integer|exists:students,student_id',
+        $request->validate([
+            'exam_id' => 'required|integer|exists:exams,exam_id',
+            'class_id' => 'required|integer|exists:classes,class_id',
+            'subject_id' => 'required|integer|exists:subjects,subject_id',
+            'student_id' => 'required|integer|exists:students,student_id',
+            'teacher_id' => 'required|integer|exists:teachers,teacher_id',
 
-    'written_marks' => 'nullable|numeric|min:0|max:70',
-    'mcq_marks' => 'nullable|numeric|min:0|max:10',
-    'practical_marks' => 'nullable|numeric|min:0|max:10',
-    'viva_marks' => 'nullable|numeric|min:0|max:5',
-    'assignment_marks' => 'nullable|numeric|min:0|max:5',
-]);
+            'written_marks' => 'nullable|numeric|min:0|max:70',
+            'mcq_marks' => 'nullable|numeric|min:0|max:10',
+            'practical_marks' => 'nullable|numeric|min:0|max:10',
+            'viva_marks' => 'nullable|numeric|min:0|max:5',
+            'assignment_marks' => 'nullable|numeric|min:0|max:5',
+            'class_test_marks' => 'nullable|numeric|min:0|max:5',
+        ]);
+
         $written = (int) ($request->written_marks ?? 0);
         $mcq = (int) ($request->mcq_marks ?? 0);
         $practical = (int) ($request->practical_marks ?? 0);
@@ -93,6 +96,7 @@ class StudentMarkController extends Controller
             DB::table('student_marks')
                 ->where('id', $exists->id)
                 ->update([
+                    'teacher_id' => $request->teacher_id,
                     'class_id' => $request->class_id,
                     'written_marks' => $written,
                     'mcq_marks' => $mcq,
@@ -112,6 +116,7 @@ class StudentMarkController extends Controller
                 'student_id' => $request->student_id,
                 'class_id' => $request->class_id,
                 'subject_id' => $request->subject_id,
+                'teacher_id' => $request->teacher_id,
                 'written_marks' => $written,
                 'mcq_marks' => $mcq,
                 'practical_marks' => $practical,
@@ -140,6 +145,7 @@ class StudentMarkController extends Controller
             ->join('classes', 'student_marks.class_id', '=', 'classes.class_id')
             ->join('subjects', 'student_marks.subject_id', '=', 'subjects.subject_id')
             ->join('exams', 'student_marks.exam_id', '=', 'exams.exam_id')
+            ->leftJoin('teachers', 'student_marks.teacher_id', '=', 'teachers.teacher_id')
             ->where('student_marks.status', 'pending')
             ->select(
                 'student_marks.id',
@@ -147,6 +153,7 @@ class StudentMarkController extends Controller
                 'student_marks.class_id',
                 'student_marks.subject_id',
                 'student_marks.student_id',
+                'student_marks.teacher_id',
                 'student_marks.written_marks',
                 'student_marks.mcq_marks',
                 'student_marks.practical_marks',
@@ -157,17 +164,49 @@ class StudentMarkController extends Controller
                 'student_marks.grade',
                 'student_marks.gpa',
                 'student_marks.status',
+                'student_marks.updated_at',
                 'students.name as student_name',
                 'students.roll',
                 'students.section',
                 'classes.class_name',
                 'subjects.subject_name',
-                'exams.exam_name'
+                'exams.exam_name',
+                'teachers.name as teacher_name'
             )
-            ->orderBy('student_marks.id', 'desc')
+            ->orderBy('student_marks.updated_at', 'desc')
             ->get();
 
         return response()->json($marks);
+    }
+
+    public function pendingSummary()
+    {
+        $baseQuery = DB::table('student_marks')
+            ->join('classes', 'student_marks.class_id', '=', 'classes.class_id')
+            ->join('subjects', 'student_marks.subject_id', '=', 'subjects.subject_id')
+            ->leftJoin('teachers', 'student_marks.teacher_id', '=', 'teachers.teacher_id')
+            ->where('student_marks.status', 'pending');
+
+        $totalPending = (clone $baseQuery)->count();
+
+        $recentPending = (clone $baseQuery)
+            ->select(
+                'student_marks.id',
+                'student_marks.status',
+                'student_marks.updated_at',
+                'classes.class_name',
+                'subjects.subject_name',
+                'teachers.name as teacher_name'
+            )
+            ->orderBy('student_marks.updated_at', 'desc')
+            ->limit(2)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'total_pending' => $totalPending,
+            'recent_pending' => $recentPending,
+        ]);
     }
 
     public function approve($id)
