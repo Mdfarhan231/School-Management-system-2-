@@ -6,14 +6,14 @@ import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 
 export default function MarkApprovalsPage() {
+  const router = useRouter();
 
   const [marks, setMarks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [approvingId, setApprovingId] = useState(null);
-  const router = useRouter();
   const [admin, setAdmin] = useState(null);
 
-     useEffect(() => {
+  useEffect(() => {
     const savedAdmin = localStorage.getItem("admin");
 
     if (!savedAdmin) {
@@ -22,28 +22,26 @@ export default function MarkApprovalsPage() {
     }
 
     try {
-      setAdmin(JSON.parse(savedAdmin));
-    } catch (error) {
+      const parsedAdmin = JSON.parse(savedAdmin);
+      setAdmin(parsedAdmin);
+      fetchPendingMarks();
+    } catch {
       localStorage.removeItem("admin");
       router.replace("/admin/login");
     }
   }, [router]);
 
   const handleLogout = () => {
-   localStorage.removeItem("admin");
+    localStorage.removeItem("admin");
     router.replace("/admin/login");
     router.refresh();
   };
-
-  useEffect(() => {
-    fetchPendingMarks();
-  }, []);
 
   const fetchPendingMarks = async () => {
     try {
       setLoading(true);
       const data = await apiRequest("/student-marks/pending");
-      setMarks(data);
+      setMarks(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch pending marks:", err);
       setMarks([]);
@@ -55,16 +53,22 @@ export default function MarkApprovalsPage() {
   const handleApprove = async (id) => {
     try {
       setApprovingId(id);
-
       await apiRequest(`/student-marks/${id}/approve`, "POST");
-
-      fetchPendingMarks();
+      await fetchPendingMarks();
     } catch (err) {
       alert(err.message || "Approval failed");
     } finally {
       setApprovingId(null);
     }
   };
+
+  if (!admin) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#e5e7eb]">
+        <p className="text-black">Loading...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">
@@ -116,12 +120,13 @@ export default function MarkApprovalsPage() {
             </h3>
 
             <div className="overflow-x-auto rounded-xl">
-              <table className="w-full min-w-[1500px] border-collapse overflow-hidden rounded-xl">
+              <table className="w-full min-w-[1650px] border-collapse overflow-hidden rounded-xl">
                 <thead>
                   <tr className="bg-blue-700 text-left text-sm font-bold text-white">
                     <th className="px-5 py-3">Exam</th>
                     <th className="px-5 py-3">Class</th>
                     <th className="px-5 py-3">Subject</th>
+                    <th className="px-5 py-3">Teacher</th>
                     <th className="px-5 py-3">Student</th>
                     <th className="px-5 py-3">Roll</th>
                     <th className="px-5 py-3">Section</th>
@@ -143,7 +148,7 @@ export default function MarkApprovalsPage() {
                   {loading ? (
                     <tr className="bg-white">
                       <td
-                        colSpan="17"
+                        colSpan="18"
                         className="px-5 py-6 text-center text-sm text-gray-500"
                       >
                         Loading pending marks...
@@ -158,6 +163,7 @@ export default function MarkApprovalsPage() {
                         <td className="px-5 py-4">{mark.exam_name}</td>
                         <td className="px-5 py-4">{mark.class_name}</td>
                         <td className="px-5 py-4">{mark.subject_name}</td>
+                        <td className="px-5 py-4">{mark.teacher_name || "-"}</td>
                         <td className="px-5 py-4">{mark.student_name}</td>
                         <td className="px-5 py-4">{mark.roll}</td>
                         <td className="px-5 py-4">{mark.section}</td>
@@ -173,7 +179,7 @@ export default function MarkApprovalsPage() {
                         <td className="px-5 py-4 font-semibold">{mark.grade}</td>
                         <td className="px-5 py-4 font-semibold">{mark.gpa}</td>
                         <td className="px-5 py-4">
-                          <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">
+                          <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold capitalize text-yellow-700">
                             {mark.status}
                           </span>
                         </td>
@@ -192,7 +198,7 @@ export default function MarkApprovalsPage() {
                   ) : (
                     <tr className="bg-white">
                       <td
-                        colSpan="17"
+                        colSpan="18"
                         className="px-5 py-6 text-center text-sm text-gray-500"
                       >
                         No pending marks found.
