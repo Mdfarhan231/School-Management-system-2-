@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { apiRequest } from "@/lib/api";
 import {
   LayoutDashboard,
   Users,
@@ -59,11 +60,6 @@ const upcomingExams = [
   { id: 3, subject: "English Literature", class: "Grade 9", date: "Oct 18, 2026", time: "01:00 PM" },
 ];
 
-const pendingApprovals = [
-  { id: 1, teacher: "Dr. Sarah Smith", subject: "Biology", class: "Grade 11", status: "Pending" },
-  { id: 2, teacher: "Mr. James Wilson", subject: "History", class: "Grade 8", status: "Pending" },
-];
-
 function StatCard({ title, value, subtext, icon: Icon, colorClass }) {
   return (
     <motion.div
@@ -91,6 +87,12 @@ export default function AdminDashboardPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [admin, setAdmin] = useState(null);
 
+  const [approvalSummary, setApprovalSummary] = useState({
+    total_pending: 0,
+    recent_pending: [],
+  });
+  const [approvalLoading, setApprovalLoading] = useState(true);
+
   useEffect(() => {
     const savedAdmin = localStorage.getItem("admin");
 
@@ -100,12 +102,34 @@ export default function AdminDashboardPage() {
     }
 
     try {
-      setAdmin(JSON.parse(savedAdmin));
+      const parsedAdmin = JSON.parse(savedAdmin);
+      setAdmin(parsedAdmin);
+      fetchPendingSummary();
     } catch {
       localStorage.removeItem("admin");
       router.replace("/admin/login");
     }
   }, [router]);
+
+  const fetchPendingSummary = async () => {
+    try {
+      setApprovalLoading(true);
+      const data = await apiRequest("/student-marks/pending-summary");
+
+      setApprovalSummary({
+        total_pending: data?.total_pending || 0,
+        recent_pending: Array.isArray(data?.recent_pending) ? data.recent_pending : [],
+      });
+    } catch (error) {
+      console.error("Failed to load pending summary:", error.message);
+      setApprovalSummary({
+        total_pending: 0,
+        recent_pending: [],
+      });
+    } finally {
+      setApprovalLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("admin");
@@ -342,7 +366,7 @@ export default function AdminDashboardPage() {
             />
             <StatCard
               title="Pending Approvals"
-              value="12"
+              value={approvalSummary.total_pending}
               subtext="Requires your attention"
               icon={CheckSquare}
               colorClass="bg-rose-50 text-rose-600 group-hover:bg-rose-600 group-hover:text-white"
@@ -537,7 +561,7 @@ export default function AdminDashboardPage() {
                 <div>
                   <h3 className="text-lg font-bold text-slate-900">Mark Approvals</h3>
                   <p className="text-xs font-medium text-slate-400">
-                    Results waiting for verification
+                    Total pending marks: {approvalSummary.total_pending}
                   </p>
                 </div>
                 <button className="rounded-xl p-2 transition-colors hover:bg-slate-50">
@@ -546,41 +570,57 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="space-y-3 p-4">
-                {pendingApprovals.map((approval) => (
-                  <div
-                    key={approval.id}
-                    className="flex items-center justify-between rounded-2xl border border-slate-100 p-5 transition-all hover:shadow-md"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-400">
-                        {approval.teacher.split(" ").pop()?.[0]}
-                      </div>
-
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900">
-                          {approval.subject} - {approval.class}
-                        </h4>
-                        <p className="text-xs font-medium text-slate-500">
-                          Submitted by {approval.teacher}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <span className="rounded-full bg-amber-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-600">
-                        {approval.status}
-                      </span>
-                      <button className="rounded-lg bg-indigo-50 p-2 text-indigo-600 transition-all hover:bg-indigo-600 hover:text-white">
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                    </div>
+                {approvalLoading ? (
+                  <div className="p-6 text-sm text-slate-400">
+                    Loading pending approvals...
                   </div>
-                ))}
+                ) : approvalSummary.recent_pending.length === 0 ? (
+                  <div className="p-6 text-sm text-slate-400">
+                    No pending approvals found.
+                  </div>
+                ) : (
+                  approvalSummary.recent_pending.map((approval) => (
+                    <div
+                      key={approval.id}
+                      className="flex items-center justify-between rounded-2xl border border-slate-100 p-5 transition-all hover:shadow-md"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-400">
+                          {approval.subject_name?.charAt(0)}
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900">
+                            {approval.subject_name} - {approval.class_name}
+                          </h4>
+                          <p className="text-xs font-medium text-slate-500">
+                            Submitted by {approval.teacher_name || "Unknown Teacher"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="rounded-full bg-amber-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-600">
+                          {approval.status}
+                        </span>
+                        <Link
+                          href="/admin/mark-approvals"
+                          className="rounded-lg bg-indigo-50 p-2 text-indigo-600 transition-all hover:bg-indigo-600 hover:text-white"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </div>
+                    </div>
+                  ))
+                )}
 
                 <div className="px-4 pt-4">
-                  <button className="w-full rounded-2xl border-2 border-dashed border-slate-200 py-3 text-xs font-bold text-slate-400 transition-all hover:border-indigo-300 hover:text-indigo-500">
+                  <Link
+                    href="/admin/mark-approvals"
+                    className="block w-full rounded-2xl border-2 border-dashed border-slate-200 py-3 text-center text-xs font-bold text-slate-400 transition-all hover:border-indigo-300 hover:text-indigo-500"
+                  >
                     View All Pending Requests
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

@@ -15,7 +15,7 @@ export default function TeacherMarksEntryPage() {
   const [students, setStudents] = useState([]);
   const [savedMarks, setSavedMarks] = useState([]);
   const [marksMap, setMarksMap] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loadingStudentId, setLoadingStudentId] = useState(null);
   const [tableLoading, setTableLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,12 +33,17 @@ export default function TeacherMarksEntryPage() {
       return;
     }
 
-    const parsedTeacher = JSON.parse(savedTeacher);
-    setTeacher(parsedTeacher);
+    try {
+      const parsedTeacher = JSON.parse(savedTeacher);
+      setTeacher(parsedTeacher);
 
-    fetchExams();
-    fetchClasses();
-    fetchSubjects(parsedTeacher.subjects || "");
+      fetchExams();
+      fetchClasses();
+      fetchSubjects();
+    } catch {
+      localStorage.removeItem("teacher");
+      router.replace("/teacher/login");
+    }
   }, [router]);
 
   useEffect(() => {
@@ -61,7 +66,10 @@ export default function TeacherMarksEntryPage() {
 
   const teacherSubjectList = useMemo(() => {
     if (!teacher?.subjects) return [];
-    return teacher.subjects.split(",").map((item) => item.trim().toLowerCase());
+    return teacher.subjects
+      .split(",")
+      .map((item) => item.trim().toLowerCase())
+      .filter(Boolean);
   }, [teacher]);
 
   const filteredSubjects = useMemo(() => {
@@ -78,7 +86,7 @@ export default function TeacherMarksEntryPage() {
   const fetchExams = async () => {
     try {
       const data = await apiRequest("/exams");
-      setExams(data);
+      setExams(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch exams:", err);
       setExams([]);
@@ -88,7 +96,7 @@ export default function TeacherMarksEntryPage() {
   const fetchClasses = async () => {
     try {
       const data = await apiRequest("/classes");
-      setClasses(data);
+      setClasses(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch classes:", err);
       setClasses([]);
@@ -98,7 +106,7 @@ export default function TeacherMarksEntryPage() {
   const fetchSubjects = async () => {
     try {
       const data = await apiRequest("/subjects");
-      setSubjects(data);
+      setSubjects(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch subjects:", err);
       setSubjects([]);
@@ -121,16 +129,18 @@ export default function TeacherMarksEntryPage() {
   const fetchSavedMarks = async () => {
     try {
       const data = await apiRequest("/student-marks/filter", "POST", filter);
-      setSavedMarks(Array.isArray(data) ? data : []);
+      const markRows = Array.isArray(data) ? data : [];
+      setSavedMarks(markRows);
 
       const nextMap = {};
-      (Array.isArray(data) ? data : []).forEach((item) => {
+      markRows.forEach((item) => {
         nextMap[item.student_id] = {
           written_marks: item.written_marks ?? "",
           mcq_marks: item.mcq_marks ?? "",
           practical_marks: item.practical_marks ?? "",
           assignment_marks: item.assignment_marks ?? "",
           viva_marks: item.viva_marks ?? "",
+          class_test_marks: item.class_test_marks ?? "",
         };
       });
       setMarksMap(nextMap);
@@ -159,6 +169,7 @@ export default function TeacherMarksEntryPage() {
           practical_marks: "",
           assignment_marks: "",
           viva_marks: "",
+          class_test_marks: "",
         }),
         [field]: value,
       },
@@ -171,32 +182,39 @@ export default function TeacherMarksEntryPage() {
       return;
     }
 
+    if (!teacher?.teacher_id) {
+      setError("Teacher ID not found. Please login again.");
+      return;
+    }
+
     const row = marksMap[studentId] || {};
 
     try {
-      setLoading(true);
+      setLoadingStudentId(studentId);
       setError("");
 
       const payload = {
-        exam_id: filter.exam_id,
-        class_id: filter.class_id,
-        subject_id: filter.subject_id,
-        student_id: studentId,
-        written_marks: row.written_marks || 0,
-        mcq_marks: row.mcq_marks || 0,
-        practical_marks: row.practical_marks || 0,
-        assignment_marks: row.assignment_marks || 0,
-        viva_marks: row.viva_marks || 0,
+        exam_id: Number(filter.exam_id),
+        class_id: Number(filter.class_id),
+        subject_id: Number(filter.subject_id),
+        student_id: Number(studentId),
+        teacher_id: Number(teacher.teacher_id),
+        written_marks: Number(row.written_marks || 0),
+        mcq_marks: Number(row.mcq_marks || 0),
+        practical_marks: Number(row.practical_marks || 0),
+        assignment_marks: Number(row.assignment_marks || 0),
+        viva_marks: Number(row.viva_marks || 0),
+        class_test_marks: Number(row.class_test_marks || 0),
       };
 
       await apiRequest("/student-marks", "POST", payload);
 
-      fetchSavedMarks();
+      await fetchSavedMarks();
       alert("Marks saved successfully.");
     } catch (err) {
       setError(err.message || "Failed to save marks");
     } finally {
-      setLoading(false);
+      setLoadingStudentId(null);
     }
   };
 
@@ -207,7 +225,6 @@ export default function TeacherMarksEntryPage() {
       </main>
     );
   }
-
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">
@@ -308,7 +325,7 @@ export default function TeacherMarksEntryPage() {
             </h3>
 
             <div className="overflow-x-auto rounded-xl">
-              <table className="w-full min-w-[1400px] border-collapse overflow-hidden rounded-xl">
+              <table className="w-full min-w-[1500px] border-collapse overflow-hidden rounded-xl">
                 <thead>
                   <tr className="bg-blue-700 text-left text-sm font-bold text-white">
                     <th className="px-5 py-3">Student ID</th>
@@ -321,6 +338,7 @@ export default function TeacherMarksEntryPage() {
                     <th className="px-5 py-3">Practical</th>
                     <th className="px-5 py-3">Assignment</th>
                     <th className="px-5 py-3">Viva</th>
+                    <th className="px-5 py-3">Class Test</th>
                     <th className="px-5 py-3">Action</th>
                   </tr>
                 </thead>
@@ -329,7 +347,7 @@ export default function TeacherMarksEntryPage() {
                   {tableLoading ? (
                     <tr className="bg-white">
                       <td
-                        colSpan="11"
+                        colSpan="12"
                         className="px-5 py-6 text-center text-sm text-gray-500"
                       >
                         Loading students...
@@ -343,6 +361,7 @@ export default function TeacherMarksEntryPage() {
                         practical_marks: "",
                         assignment_marks: "",
                         viva_marks: "",
+                        class_test_marks: "",
                       };
 
                       return (
@@ -357,11 +376,11 @@ export default function TeacherMarksEntryPage() {
                           <td className="px-5 py-4">{student.shift}</td>
 
                           <td className="px-3 py-4">
-                            <input placeholder="Max 70"
+                            <input
+                              placeholder="Max 70"
                               type="number"
                               min="0"
                               max="70"
-
                               value={row.written_marks}
                               onChange={(e) =>
                                 handleMarkChange(
@@ -370,12 +389,13 @@ export default function TeacherMarksEntryPage() {
                                   e.target.value
                                 )
                               }
-                              className=" w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none focus:border-blue-500"
+                              className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none focus:border-blue-500"
                             />
                           </td>
 
                           <td className="px-3 py-4">
-                            <input placeholder="Max 10"
+                            <input
+                              placeholder="Max 10"
                               type="number"
                               min="0"
                               max="10"
@@ -392,7 +412,8 @@ export default function TeacherMarksEntryPage() {
                           </td>
 
                           <td className="px-3 py-4">
-                            <input placeholder="Max 10"
+                            <input
+                              placeholder="Max 10"
                               type="number"
                               min="0"
                               max="10"
@@ -409,7 +430,8 @@ export default function TeacherMarksEntryPage() {
                           </td>
 
                           <td className="px-3 py-4">
-                            <input placeholder="Max 5"
+                            <input
+                              placeholder="Max 5"
                               type="number"
                               min="0"
                               max="5"
@@ -426,7 +448,8 @@ export default function TeacherMarksEntryPage() {
                           </td>
 
                           <td className="px-3 py-4">
-                            <input placeholder="Max 5"
+                            <input
+                              placeholder="Max 5"
                               type="number"
                               min="0"
                               max="5"
@@ -442,14 +465,32 @@ export default function TeacherMarksEntryPage() {
                             />
                           </td>
 
+                          <td className="px-3 py-4">
+                            <input
+                              placeholder="Max 5"
+                              type="number"
+                              min="0"
+                              max="5"
+                              value={row.class_test_marks}
+                              onChange={(e) =>
+                                handleMarkChange(
+                                  student.student_id,
+                                  "class_test_marks",
+                                  e.target.value
+                                )
+                              }
+                              className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none focus:border-blue-500"
+                            />
+                          </td>
+
                           <td className="px-5 py-4">
                             <button
                               type="button"
                               onClick={() => handleSaveOne(student.student_id)}
-                              disabled={loading}
+                              disabled={loadingStudentId === student.student_id}
                               className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-70"
                             >
-                              Save
+                              {loadingStudentId === student.student_id ? "Saving..." : "Save"}
                             </button>
                           </td>
                         </tr>
@@ -458,7 +499,7 @@ export default function TeacherMarksEntryPage() {
                   ) : (
                     <tr className="bg-white">
                       <td
-                        colSpan="11"
+                        colSpan="12"
                         className="px-5 py-6 text-center text-sm text-gray-500"
                       >
                         Select class to load students.
