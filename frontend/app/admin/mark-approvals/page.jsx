@@ -1,3 +1,4 @@
+//when admin first enters in the mark-approval page. the first fetchPendingMarks(); function call . so user can see the pending marks.
 "use client";
 
 import Link from "next/link";

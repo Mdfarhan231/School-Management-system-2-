@@ -266,7 +266,7 @@ export default function AdminDashboardPage() {
               />
             </div>
           </div>
-
+               {/* Admin Profile Picture */}
           <div className="flex items-center gap-5">
             <button className="relative rounded-xl p-2.5 text-slate-500 transition-colors hover:bg-slate-50">
               <Bell className="h-5 w-5" />
@@ -275,13 +275,13 @@ export default function AdminDashboardPage() {
 
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-indigo-100 bg-indigo-50 shadow-sm">
               <img
-                src="https://picsum.photos/seed/school-admin/100/100"
+                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
                 alt="Admin"
                 className="h-full w-full object-cover"
                 referrerPolicy="no-referrer"
               />
             </div>
-
+               {/* Admin Text Info */}
             <div className="hidden sm:block">
               <p className="leading-none text-sm font-bold text-slate-900">
                 Welcome, {admin?.name || "admin"}
