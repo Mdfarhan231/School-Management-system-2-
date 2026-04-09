@@ -16,6 +16,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
+    //setFormData is async function
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
