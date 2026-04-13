@@ -160,7 +160,7 @@ function HeaderAndNavbar() {
           <div className="flex items-center gap-3">
             <div className="relative h-14 w-14 overflow-hidden rounded bg-white shadow">
               {/* logo : frontend/public/logo.png */}
-              <Image src="/logo-2.png" alt="School Logo" fill className="object-contain" />
+              <Image src="/logo.png" alt="School Logo" fill className="object-contain" />
             </div>
 
             <div>
