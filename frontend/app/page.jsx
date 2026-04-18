@@ -38,7 +38,7 @@ export default function HomePage() {
   const goNext = () => setActiveIndex((prev) => (prev + 1) % slides.length);
 
   return (
-    <main className="min-h-screen bg-slate-100">
+    <main className="min-h-screen bg-[#F8F8F8]">
       {/* 
            TOP INFO BAR
           - Shows phone + email (top dark strip)
@@ -154,7 +154,7 @@ function HeaderAndNavbar() {
   return (
     <header>
       {/* Header (logo + title + right buttons) */}
-      <div className="bg-slate-100">
+      <div className="bg-[#F8F8F8]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           {/* Left: logo + title */}
           <div className="flex items-center gap-3">
@@ -214,7 +214,7 @@ function HeaderAndNavbar() {
       </nav>
 
       {/* Portal buttons */}
-      <div className="bg-slate-100">
+      <div className="bg-[#F8F8F8]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-3 px-4 py-4">
           <PillButton href="" label="Latest Notices" color="bg-slate-800" />
           <PillButton href="/teacher/login" label="Teacher Portal" color="bg-emerald-500" />
