@@ -1,0 +1,88 @@
+# ============================================
+# ROOT PROJECT GITIGNORE
+# School Management System (Laravel + Next.js)
+# ============================================
+
+# ============================================
+# DEPENDENCIES
+# ============================================
+/vendor/
+/node_modules/
+*.lock
+yarn.lock
+package-lock.json
+composer.lock
+
+# ============================================
+# ENVIRONMENT VARIABLES (NEVER COMMIT SECRETS!)
+# ============================================
+.env
+.env.local
+.env.*.local
+.env.backup
+.env.production
+.env.*.php
+supabase_settings.txt
+
+# ============================================
+# BUILD & CACHE (Generated files)
+# ============================================
+# Frontend build
+/frontend/.next/
+/frontend/dist/
+/frontend/out/
+/frontend/.turbo/
+
+# Backend cache
+/backend/bootstrap/cache/
+/backend/storage/cache/
+/backend/storage/framework/
+/backend/public/build/
+/backend/public/hot/
+
+# ============================================
+# LOGS & TEMPORARY FILES
+# ============================================
+*.log
+/storage/logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ============================================
+# IDE & EDITOR SETTINGS (Optional - personal preference)
+# ============================================
+.idea/
+.vscode/
+.nova/
+.fleet/
+.zed/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Testing & Coverage
+# ============================================
+/coverage/
+.phpunit.result.cache
+.phpunit.cache/
+
+# ============================================
+# Project-specific
+# ============================================
+/auth.json
+Homestead.json
+Homestead.yaml
+/public/storage/
+.phpactor.json
+.pem
+
+# ============================================
+# Query/temporary files
+# ============================================
+query.txt
+prompt.txt
