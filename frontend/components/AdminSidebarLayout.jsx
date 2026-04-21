@@ -74,15 +74,15 @@ export default function AdminSidebarLayout({ children }) {
             initial={{ x: -280 }}
             animate={{ x: 0 }}
             exit={{ x: -280 }}
-            className="fixed inset-y-0 left-0 z-50 w-72 bg-[#1a1c2e] text-slate-300 shadow-2xl lg:relative"
+            className="fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-200 bg-white text-slate-600 shadow-sm lg:relative"
           >
             <div className="flex items-center justify-between p-8">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500 shadow-lg shadow-indigo-500/20">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900">
                   <BookOpen className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold leading-tight text-white">
+                  <h2 className="text-lg font-bold leading-tight text-slate-900">
                     Global Knowledge
                   </h2>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
@@ -93,9 +93,9 @@ export default function AdminSidebarLayout({ children }) {
 
               <button
                 onClick={() => setIsSidebarOpen(false)}
-                className="rounded-lg p-2 transition-colors hover:bg-white/10"
+                className="rounded-lg p-2 transition-colors hover:bg-slate-100"
               >
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5 text-slate-500" />
               </button>
             </div>
 
@@ -111,8 +111,8 @@ export default function AdminSidebarLayout({ children }) {
                     className={cn(
                       "group flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition-all",
                       isActive
-                        ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20"
-                        : "text-slate-300 hover:bg-white/5 hover:text-white"
+                        ? "bg-slate-900 text-white shadow-md"
+                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                     )}
                   >
                     <Icon
@@ -120,7 +120,7 @@ export default function AdminSidebarLayout({ children }) {
                         "h-5 w-5 transition-colors",
                         isActive
                           ? "text-white"
-                          : "text-slate-500 group-hover:text-slate-300"
+                          : "text-slate-400 group-hover:text-slate-900"
                       )}
                     />
                     {item.label}
@@ -130,20 +130,20 @@ export default function AdminSidebarLayout({ children }) {
             </nav>
 
             <div className="absolute bottom-0 left-0 right-0 p-6">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-500/20">
-                    <UserCheck className="h-5 w-5 text-indigo-400" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200">
+                    <UserCheck className="h-5 w-5 text-slate-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-white">Admin Portal</p>
-                    <p className="text-xs text-slate-500">Super Admin Access</p>
+                    <p className="text-sm font-bold text-slate-900">Admin Portal</p>
+                    <p className="text-xs text-slate-400">Super Admin Access</p>
                   </div>
                 </div>
 
                 <button
                   onClick={handleLogout}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-500/10 py-3 text-xs font-bold text-rose-400 transition-all hover:bg-rose-500 hover:text-white"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-50 py-3 text-xs font-bold text-rose-500 transition-all hover:bg-rose-500 hover:text-white"
                 >
                   <LogOut className="h-4 w-4" />
                   Logout System
