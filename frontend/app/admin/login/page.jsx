@@ -87,6 +87,12 @@ export default function AdminLoginPage() {
               {loading ? "Logging in..." : "Login"}
             </button>
           </form>
+
+          <p className="mt-6 text-center text-sm text-gray-600">
+            <a href="/" className="font-semibold text-[#1f2937] underline hover:text-blue-600">
+              Back to Home
+            </a>
+          </p>
         </div>
       </section>
 
