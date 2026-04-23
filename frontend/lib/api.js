@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '');
 
 export async function apiRequest(endpoint, method = "GET", body = null, token = null) {
   if (!API_BASE) {
