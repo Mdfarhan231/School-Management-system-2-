@@ -63,6 +63,14 @@ Route::post('/attendance/store', [TeacherAttendanceController::class, 'store']);
 Route::post('/attendance/history', [TeacherAttendanceController::class, 'history']);
 Route::get('/student/attendance/{studentId}', [TeacherAttendanceController::class, 'studentHistory']);
 
+// Dashboard stats
+Route::get('/dashboard/stats', function () {
+    return response()->json([
+        'student_count' => DB::table('students')->count(),
+        'teacher_count' => DB::table('teachers')->count(),
+    ]);
+});
+
 // DB connection test
 Route::get('/db-test', function () {
     try {

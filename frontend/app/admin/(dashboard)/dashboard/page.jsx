@@ -75,6 +75,8 @@ export default function AdminDashboardPage() {
   const [upcomingExams, setUpcomingExams] = useState([]);
   const [examsLoading, setExamsLoading] = useState(true);
 
+  const [dashboardStats, setDashboardStats] = useState({ student_count: null, teacher_count: null });
+
   const [approvalSummary, setApprovalSummary] = useState({
     total_pending: 0,
     recent_pending: [],
@@ -88,6 +90,7 @@ export default function AdminDashboardPage() {
         setAdmin(JSON.parse(savedAdmin));
         fetchPendingSummary();
         fetchUpcomingExams();
+        fetchDashboardStats();
       } catch {
         // Layout handles auth redirect
       }
@@ -124,6 +127,18 @@ export default function AdminDashboardPage() {
       setUpcomingExams([]);
     } finally {
       setExamsLoading(false);
+    }
+  };
+
+  const fetchDashboardStats = async () => {
+    try {
+      const data = await apiRequest("/dashboard/stats");
+      setDashboardStats({
+        student_count: data?.student_count ?? null,
+        teacher_count: data?.teacher_count ?? null,
+      });
+    } catch (error) {
+      console.error("Failed to fetch dashboard stats:", error.message);
     }
   };
 
@@ -180,15 +195,15 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Students"
-          value="1,284"
-          subtext="+42 new this month"
+          value={dashboardStats.student_count !== null ? dashboardStats.student_count.toLocaleString() : "..."}
+          subtext="Registered in the system"
           icon={GraduationCap}
           colorClass="bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white"
         />
         <StatCard
           title="Total Teachers"
-          value="86"
-          subtext="4 on leave today"
+          value={dashboardStats.teacher_count !== null ? dashboardStats.teacher_count.toLocaleString() : "..."}
+          subtext="Registered in the system"
           icon={Users}
           colorClass="bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white"
         />
