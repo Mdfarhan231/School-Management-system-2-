@@ -372,7 +372,8 @@ export default function AdminDashboardPage() {
 
                 const formatTime = (timeStr) => {
                   if (!timeStr) return "";
-                  const [h, m] = timeStr.split(":");
+                  const [timePart] = timeStr.split(" ");
+                  const [h, m] = timePart.split(":");
                   const hour = parseInt(h, 10);
                   const suffix = hour >= 12 ? "PM" : "AM";
                   const displayHour = hour % 12 || 12;
