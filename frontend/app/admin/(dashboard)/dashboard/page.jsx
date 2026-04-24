@@ -46,11 +46,7 @@ const studentDistribution = [
   { name: "Higher Secondary", value: 200, color: "#f59e0b" },
 ];
 
-const upcomingExams = [
-  { id: 1, subject: "Mathematics", class: "Grade 10", date: "Oct 15, 2026", time: "09:00 AM" },
-  { id: 2, subject: "Physics", class: "Grade 12", date: "Oct 16, 2026", time: "10:30 AM" },
-  { id: 3, subject: "English Literature", class: "Grade 9", date: "Oct 18, 2026", time: "01:00 PM" },
-];
+
 
 function StatCard({ title, value, subtext, icon: Icon, colorClass }) {
   return (
@@ -76,6 +72,8 @@ function StatCard({ title, value, subtext, icon: Icon, colorClass }) {
 
 export default function AdminDashboardPage() {
   const [admin, setAdmin] = useState(null);
+  const [upcomingExams, setUpcomingExams] = useState([]);
+  const [examsLoading, setExamsLoading] = useState(true);
 
   const [approvalSummary, setApprovalSummary] = useState({
     total_pending: 0,
@@ -89,6 +87,7 @@ export default function AdminDashboardPage() {
       try {
         setAdmin(JSON.parse(savedAdmin));
         fetchPendingSummary();
+        fetchUpcomingExams();
       } catch {
         // Layout handles auth redirect
       }
@@ -112,6 +111,19 @@ export default function AdminDashboardPage() {
       });
     } finally {
       setApprovalLoading(false);
+    }
+  };
+
+  const fetchUpcomingExams = async () => {
+    try {
+      setExamsLoading(true);
+      const data = await apiRequest("/exam-routines");
+      setUpcomingExams(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Failed to fetch exam routines:", error.message);
+      setUpcomingExams([]);
+    } finally {
+      setExamsLoading(false);
     }
   };
 
@@ -343,39 +355,67 @@ export default function AdminDashboardPage() {
             </button>
           </div>
 
-          <div className="space-y-3 p-4">
-            {upcomingExams.map((exam) => (
-              <div
-                key={exam.id}
-                className="group flex items-center justify-between rounded-2xl border border-transparent bg-slate-50 p-4 transition-all hover:border-indigo-100 hover:bg-white"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl border border-slate-100 bg-white shadow-sm">
-                    <span className="text-[10px] font-bold uppercase text-indigo-500">
-                      {exam.date.split(" ")[0]}
-                    </span>
-                    <span className="text-sm font-black text-slate-900">
-                      {exam.date.split(" ")[1].replace(",", "")}
-                    </span>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900">{exam.subject}</h4>
-                    <p className="text-xs font-medium text-slate-500">{exam.class}</p>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
-                    <Clock className="h-3.5 w-3.5" />
-                    {exam.time}
-                  </div>
-                  <button className="mt-1 text-[10px] font-black uppercase tracking-widest text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100">
-                    Details
-                  </button>
-                </div>
+          <div className={`space-y-3 p-4 ${upcomingExams.length > 2 ? "max-h-[280px] overflow-y-auto" : ""}`} style={upcomingExams.length > 2 ? { scrollbarWidth: "thin", scrollbarColor: "#c7d2fe transparent" } : {}}>
+            {examsLoading ? (
+              <div className="p-6 text-sm text-slate-400">
+                Loading exam routines...
               </div>
-            ))}
+            ) : upcomingExams.length === 0 ? (
+              <div className="p-6 text-sm text-slate-400">
+                No upcoming exams found.
+              </div>
+            ) : (
+              upcomingExams.map((exam) => {
+                const dateObj = new Date(exam.exam_date);
+                const monthStr = dateObj.toLocaleString("en-US", { month: "short" }).toUpperCase();
+                const dayStr = dateObj.getDate();
+
+                const formatTime = (timeStr) => {
+                  if (!timeStr) return "";
+                  const [h, m] = timeStr.split(":");
+                  const hour = parseInt(h, 10);
+                  const suffix = hour >= 12 ? "PM" : "AM";
+                  const displayHour = hour % 12 || 12;
+                  return `${String(displayHour).padStart(2, "0")}:${m} ${suffix}`;
+                };
+
+                return (
+                  <div
+                    key={exam.id}
+                    className="group flex items-center justify-between rounded-2xl border border-transparent bg-slate-50 p-4 transition-all hover:border-indigo-100 hover:bg-white"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-12 w-12 flex-col items-center justify-center rounded-xl border border-slate-100 bg-white shadow-sm">
+                        <span className="text-[10px] font-bold uppercase text-indigo-500">
+                          {monthStr}
+                        </span>
+                        <span className="text-sm font-black text-slate-900">
+                          {dayStr}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900">{exam.subject_name}</h4>
+                        <p className="text-xs font-medium text-slate-500">{exam.class_name}</p>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
+                        <Clock className="h-3.5 w-3.5" />
+                        {formatTime(exam.start_time)}
+                      </div>
+                      <Link
+                        href="/admin/exam-routines"
+                        className="mt-1 inline-block text-[10px] font-black uppercase tracking-widest text-indigo-600 opacity-0 transition-opacity group-hover:opacity-100"
+                      >
+                        Details
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
