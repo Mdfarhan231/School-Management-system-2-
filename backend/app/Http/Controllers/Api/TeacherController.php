@@ -37,6 +37,8 @@ class TeacherController extends Controller
                 'phone' => 'required|string',
                 'shift' => 'nullable|string',
                 'subjects' => 'required|string',
+                'designation' => 'nullable|string',
+                'joiningDate' => 'nullable|date',
                 'picture' => 'nullable|image|max:2048',
             ]);
 
@@ -81,6 +83,8 @@ class TeacherController extends Controller
                 'phone' => mb_convert_encoding(trim((string) $request->phone), 'UTF-8', 'UTF-8'),
                 'shift' => $request->shift ? mb_convert_encoding(trim((string) $request->shift), 'UTF-8', 'UTF-8') : null,
                 'subjects' => mb_convert_encoding(trim((string) $request->subjects), 'UTF-8', 'UTF-8'),
+                'designation' => $request->designation ? mb_convert_encoding(trim((string) $request->designation), 'UTF-8', 'UTF-8') : null,
+                'joining_date' => $request->joiningDate ?: null,
                 'picture' => $pictureUrl,
             ], 'teacher_id');
 
