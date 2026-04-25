@@ -19,9 +19,7 @@ export default function TeachersPage() {
 
   const [activeDropdown, setActiveDropdown] = useState(null);
 
-  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [tableLoading, setTableLoading] = useState(true);
   const [error, setError] = useState("");
 
   const shifts = ["Morning", "Day"];
@@ -29,22 +27,7 @@ export default function TeachersPage() {
   const subjectOptions = ["Bangla", "English", "Math", "Science", "Drawing", "Physics", "Chemistry", "Biology"];
   const designations = ["Senior Teacher", "Junior Teacher", "Lecturer", "Senior Lecturer", "Professor", "Trainee", "Head of Dept"];
 
-  useEffect(() => {
-    fetchTeachers();
-  }, []);
 
-  const fetchTeachers = async () => {
-    try {
-      setTableLoading(true);
-      const data = await apiRequest("/teachers");
-      setTeachers(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Failed to fetch teachers:", err);
-      setTeachers([]);
-    } finally {
-      setTableLoading(false);
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -118,26 +101,11 @@ export default function TeachersPage() {
       const fileInput = document.getElementById("teacherPicture");
       if (fileInput) fileInput.value = "";
 
-      fetchTeachers();
     } catch (err) {
       setError(err.message || "Failed to add teacher");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await apiRequest(`/teachers/${id}`, "DELETE");
-      fetchTeachers();
-    } catch (err) {
-      alert(err.message || "Delete failed");
-    }
-  };
-
-  const getTeacherImage = (picture) => {
-    if (!picture) return "/teacher-demo.png";
-    return picture;
   };
 
   return (
@@ -367,77 +335,6 @@ export default function TeachersPage() {
             {loading ? 'Adding...' : 'Add Teacher'}
           </button>
         </form>
-      </div>
-
-      <div className="mx-auto mt-6 w-full max-w-5xl rounded-2xl bg-[#f3f4f6] p-4 shadow">
-        <h3 className="mb-4 text-[18px] font-bold text-black">All Teachers</h3>
-
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1000px] border-collapse">
-            <thead>
-              <tr className="bg-blue-700 text-left text-sm font-bold text-white">
-                <th className="px-5 py-3">Teacher ID</th>
-                <th className="px-5 py-3">Name</th>
-                <th className="px-5 py-3">Email</th>
-                <th className="px-5 py-3">Phone</th>
-                <th className="px-5 py-3">Shift</th>
-                <th className="px-5 py-3">Subject</th>
-                <th className="px-5 py-3">Designation</th>
-                <th className="px-5 py-3">Joining Date</th>
-                <th className="px-5 py-3">Pic</th>
-                <th className="px-5 py-3">Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {tableLoading ? (
-                <tr>
-                  <td colSpan="10" className="px-5 py-6 text-center text-sm text-gray-500">
-                    Loading teachers...
-                  </td>
-                </tr>
-              ) : teachers.length > 0 ? (
-                teachers.map((teacher) => (
-                  <tr
-                    key={teacher.teacher_id}
-                    className="border-b border-gray-200 text-sm text-black"
-                  >
-                    <td className="px-5 py-4">{teacher.teacher_id}</td>
-                    <td className="px-5 py-4">{teacher.name}</td>
-                    <td className="px-5 py-4">{teacher.email}</td>
-                    <td className="px-5 py-4">{teacher.phone}</td>
-                    <td className="px-5 py-4">{teacher.shift || "-"}</td>
-                    <td className="px-5 py-4">{teacher.subjects || "-"}</td>
-                    <td className="px-5 py-4">{teacher.designation || "-"}</td>
-                    <td className="px-5 py-4">{teacher.joining_date ? new Date(teacher.joining_date).toLocaleDateString() : "-"}</td>
-                    <td className="px-5 py-4">
-                      <img
-                        src={getTeacherImage(teacher.picture)}
-                        alt={teacher.name}
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                    </td>
-                    <td className="px-5 py-4">
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(teacher.teacher_id)}
-                        className="font-semibold text-red-600 hover:text-red-700"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="10" className="px-5 py-6 text-center text-sm text-gray-500">
-                    No teachers found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
       </div>
     </section>
   );
