@@ -24,7 +24,8 @@ export default function TeachersPage() {
   const [tableLoading, setTableLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const shifts = ["Morning", "Day", "Evening"];
+  const shifts = ["Morning", "Day"];
+  const today = new Date().toISOString().split("T")[0];
   const subjectOptions = ["Bangla", "English", "Math", "Science", "Drawing", "Physics", "Chemistry", "Biology"];
   const designations = ["Senior Teacher", "Junior Teacher", "Lecturer", "Senior Lecturer", "Professor", "Trainee", "Head of Dept"];
 
@@ -327,6 +328,7 @@ export default function TeachersPage() {
                 value={formData.joiningDate}
                 onChange={handleChange}
                 required
+                min={today}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all font-medium"
               />
               <Calendar size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -380,6 +382,8 @@ export default function TeachersPage() {
                 <th className="px-5 py-3">Phone</th>
                 <th className="px-5 py-3">Shift</th>
                 <th className="px-5 py-3">Subject</th>
+                <th className="px-5 py-3">Designation</th>
+                <th className="px-5 py-3">Joining Date</th>
                 <th className="px-5 py-3">Pic</th>
                 <th className="px-5 py-3">Action</th>
               </tr>
@@ -388,7 +392,7 @@ export default function TeachersPage() {
             <tbody>
               {tableLoading ? (
                 <tr>
-                  <td colSpan="8" className="px-5 py-6 text-center text-sm text-gray-500">
+                  <td colSpan="10" className="px-5 py-6 text-center text-sm text-gray-500">
                     Loading teachers...
                   </td>
                 </tr>
@@ -404,6 +408,8 @@ export default function TeachersPage() {
                     <td className="px-5 py-4">{teacher.phone}</td>
                     <td className="px-5 py-4">{teacher.shift || "-"}</td>
                     <td className="px-5 py-4">{teacher.subjects || "-"}</td>
+                    <td className="px-5 py-4">{teacher.designation || "-"}</td>
+                    <td className="px-5 py-4">{teacher.joining_date ? new Date(teacher.joining_date).toLocaleDateString() : "-"}</td>
                     <td className="px-5 py-4">
                       <img
                         src={getTeacherImage(teacher.picture)}
@@ -424,7 +430,7 @@ export default function TeachersPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="px-5 py-6 text-center text-sm text-gray-500">
+                  <td colSpan="10" className="px-5 py-6 text-center text-sm text-gray-500">
                     No teachers found.
                   </td>
                 </tr>
