@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, Upload, Calendar } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 
 export default function TeachersPage() {
@@ -10,16 +12,21 @@ export default function TeachersPage() {
     phone: "",
     shift: "",
     subjects: [],
+    designation: "",
+    joiningDate: "",
     picture: null,
   });
+
+  const [activeDropdown, setActiveDropdown] = useState(null);
 
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [tableLoading, setTableLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const shifts = ["Morning", "Day"];
-  const subjectOptions = ["Bangla", "English", "Math", "Science", "Drawing"];
+  const shifts = ["Morning", "Day", "Evening"];
+  const subjectOptions = ["Bangla", "English", "Math", "Science", "Drawing", "Physics", "Chemistry", "Biology"];
+  const designations = ["Senior Teacher", "Junior Teacher", "Lecturer", "Senior Lecturer", "Professor", "Trainee", "Head of Dept"];
 
   useEffect(() => {
     fetchTeachers();
@@ -87,6 +94,8 @@ export default function TeachersPage() {
       submitData.append("phone", formData.phone);
       submitData.append("shift", formData.shift);
       submitData.append("subjects", formData.subjects.join(","));
+      submitData.append("designation", formData.designation);
+      submitData.append("joiningDate", formData.joiningDate);
 
       if (formData.picture) {
         submitData.append("picture", formData.picture);
@@ -100,6 +109,8 @@ export default function TeachersPage() {
         phone: "",
         shift: "",
         subjects: [],
+        designation: "",
+        joiningDate: "",
         picture: null,
       });
 
@@ -130,120 +141,218 @@ export default function TeachersPage() {
 
   return (
     <section className="flex-1 bg-[#e5e7eb] px-4 py-8">
-      <div className="mx-auto w-full max-w-[455px] rounded-2xl bg-[#f3f4f6] px-5 py-5 shadow">
-        <h2 className="mb-4 text-center text-[20px] font-bold text-black">
-          Add Teacher
-        </h2>
+      <div className="mx-auto w-full max-w-2xl rounded-2xl bg-white shadow-xl overflow-hidden border border-gray-100">
+        <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-center bg-white">
+          <h2 className="text-2xl font-bold text-gray-900">Add Teacher</h2>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="mb-2 block text-[14px] font-semibold text-black">
-              Full Name
-            </label>
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          {/* Full Name */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-900">Full Name</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="e.g. MD.Shoisob Jahan Shaikat"
-              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-black outline-none placeholder:text-gray-500 focus:border-blue-500"
+              placeholder="e.g. MD. Shoisob Jahan Shaikat"
+              required
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-[14px] font-semibold text-black">
-                Email
-              </label>
+          {/* Email & Phone */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-900">Email</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="e.g. teacher@gmail.com"
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-black outline-none placeholder:text-gray-500 focus:border-blue-500"
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
               />
             </div>
-
-            <div>
-              <label className="mb-2 block text-[14px] font-semibold text-black">
-                Phone
-              </label>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-900">Phone</label>
               <input
-                type="text"
+                type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="e.g. 01XXXXXXXXX"
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-black outline-none placeholder:text-gray-500 focus:border-blue-500"
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all placeholder:text-gray-300"
               />
             </div>
           </div>
 
-          <div>
-            <label className="mb-2 block text-[14px] font-semibold text-black">
-              Shift
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {shifts.map((shift) => {
-                const active = formData.shift === shift;
+          {/* Designation Dropdown */}
+          <div className="space-y-2 relative">
+            <label className="text-sm font-bold text-gray-900">Designation</label>
+            <button
+              type="button"
+              onClick={() => setActiveDropdown(activeDropdown === 'designation' ? null : 'designation')}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 flex items-center justify-between bg-white hover:border-gray-300 transition-colors"
+            >
+              <span className={formData.designation ? 'text-gray-900 font-medium' : 'text-gray-300'}>
+                {formData.designation || 'Select designation'}
+              </span>
+              <ChevronDown size={18} className={`text-gray-400 transition-transform ${activeDropdown === 'designation' ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+              {activeDropdown === 'designation' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute z-20 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden py-2"
+                >
+                  {designations.map(d => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, designation: d });
+                        setActiveDropdown(null);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm font-medium text-gray-600 hover:bg-green-50 hover:text-green-600 transition-colors"
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
-                return (
-                  <button
-                    key={shift}
-                    type="button"
-                    onClick={() => handleShiftSelect(shift)}
-                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                      active
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    {shift}
-                  </button>
-                );
-              })}
+          {/* Shift Dropdown */}
+          <div className="space-y-2 relative">
+            <label className="text-sm font-bold text-gray-900">Shift</label>
+            <button
+              type="button"
+              onClick={() => setActiveDropdown(activeDropdown === 'shift' ? null : 'shift')}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 flex items-center justify-between bg-white hover:border-gray-300 transition-colors"
+            >
+              <span className={formData.shift ? 'text-gray-900 font-medium' : 'text-gray-300'}>
+                {formData.shift || 'Select shift'}
+              </span>
+              <ChevronDown size={18} className={`text-gray-400 transition-transform ${activeDropdown === 'shift' ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+              {activeDropdown === 'shift' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute z-20 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden py-2"
+                >
+                  {shifts.map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => {
+                        handleShiftSelect(s);
+                        setActiveDropdown(null);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm font-medium text-gray-600 hover:bg-green-50 hover:text-green-600 transition-colors"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Subject Dropdown (multi-select) */}
+          <div className="space-y-2 relative">
+            <label className="text-sm font-bold text-gray-900">Subject</label>
+            <button
+              type="button"
+              onClick={() => setActiveDropdown(activeDropdown === 'subjects' ? null : 'subjects')}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 flex items-center justify-between bg-white hover:border-gray-300 transition-colors text-left"
+            >
+              <div className="flex flex-wrap gap-2 overflow-hidden">
+                {formData.subjects.length > 0 ? (
+                  formData.subjects.map(s => (
+                    <span key={s} className="px-2 py-0.5 bg-green-50 text-green-600 text-[11px] font-bold rounded-md uppercase tracking-wider">
+                      {s}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-gray-300">Select subjects</span>
+                )}
+              </div>
+              <ChevronDown size={18} className={`text-gray-400 transition-transform flex-shrink-0 ${activeDropdown === 'subjects' ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+              {activeDropdown === 'subjects' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute z-20 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden p-3"
+                >
+                  <div className="grid grid-cols-2 gap-2">
+                    {subjectOptions.map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => handleSubjectToggle(s)}
+                        className={`px-4 py-2 text-left text-sm font-medium rounded-lg transition-colors ${
+                          formData.subjects.includes(s)
+                            ? 'bg-green-600 text-white'
+                            : 'text-gray-600 hover:bg-green-50'
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Joining Date */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-900">Joining Date</label>
+            <div className="relative">
+              <input
+                type="date"
+                name="joiningDate"
+                value={formData.joiningDate}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all font-medium"
+              />
+              <Calendar size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
           </div>
 
-          <div>
-            <label className="mb-2 block text-[14px] font-semibold text-black">
-              Subject
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {subjectOptions.map((subject) => {
-                const active = formData.subjects.includes(subject);
-
-                return (
-                  <button
-                    key={subject}
-                    type="button"
-                    onClick={() => handleSubjectToggle(subject)}
-                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                      active
-                        ? "border-emerald-600 bg-emerald-600 text-white"
-                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    {subject}
-                  </button>
-                );
-              })}
+          {/* Teacher Photo */}
+          <div className="space-y-4">
+            <label className="text-sm font-bold text-gray-900">Teacher Photo</label>
+            <div className="flex items-center justify-between p-2 border border-gray-200 rounded-2xl bg-white group hover:border-green-500/50 transition-colors">
+              <label className="flex items-center gap-2 px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl cursor-pointer transition-all active:scale-95">
+                <Upload size={18} />
+                Choose File
+                <input
+                  id="teacherPicture"
+                  type="file"
+                  name="picture"
+                  accept="image/*"
+                  onChange={handleChange}
+                  className="hidden"
+                />
+              </label>
+              <span className="text-xs font-bold text-gray-400 px-4 truncate max-w-[200px]">
+                {formData.picture ? formData.picture.name : 'No file chosen'}
+              </span>
             </div>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-[14px] font-semibold text-black">
-              Teacher Photo
-            </label>
-            <input
-              id="teacherPicture"
-              type="file"
-              name="picture"
-              accept="image/*"
-              onChange={handleChange}
-              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm text-gray-700 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:font-semibold file:text-black hover:file:bg-gray-300"
-            />
           </div>
 
           {error && <p className="text-sm font-medium text-red-600">{error}</p>}
@@ -251,9 +360,9 @@ export default function TeachersPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-70"
+            className="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-600/20 transition-all active:scale-[0.98] mt-4 disabled:opacity-70"
           >
-            {loading ? "Adding..." : "Add Teacher"}
+            {loading ? 'Adding...' : 'Add Teacher'}
           </button>
         </form>
       </div>
