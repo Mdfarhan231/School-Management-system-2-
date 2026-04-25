@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Mail, Phone, Trash2, Download } from "lucide-react";
+import Link from "next/link";
+import { Search, Mail, Phone, Trash2, Plus } from "lucide-react";
 import { apiRequest } from "@/lib/api";
 
 export default function AllTeachersPage() {
@@ -52,27 +53,6 @@ export default function AllTeachersPage() {
       t.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const exportCSV = () => {
-    const headers = ["ID", "Name", "Email", "Phone", "Shift", "Subjects", "Designation", "Joining Date"];
-    const rows = teachers.map((t) => [
-      t.teacher_id,
-      t.name,
-      t.email,
-      t.phone,
-      t.shift || "",
-      t.subjects || "",
-      t.designation || "",
-      t.joining_date || "",
-    ]);
-    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "teachers.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <section className="flex flex-1 overflow-hidden bg-[#f1f5f9]">
@@ -80,13 +60,13 @@ export default function AllTeachersPage() {
       <div className="flex w-full flex-col overflow-hidden lg:w-[58%] xl:w-[62%]">
         {/* Toolbar */}
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-6 py-4">
-          <button
-            onClick={exportCSV}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+          <Link
+            href="/admin/teachers"
+            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 active:scale-95"
           >
-            <Download size={15} />
-            Export CSV
-          </button>
+            <Plus size={15} />
+            Add Teacher
+          </Link>
 
           {/* Search */}
           <div className="relative flex-1 max-w-xs">
