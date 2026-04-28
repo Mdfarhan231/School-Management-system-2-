@@ -8,41 +8,7 @@ import { Plus } from 'lucide-react';
 import { Notice } from '@/types';
 import { cn } from '@/lib/utils';
 
-const INITIAL_NOTICES: Notice[] = [
-  {
-    id: '1',
-    title: 'Annual Sports Meet 2024',
-    content: 'The annual sports meet for the academic year 2024 will be held on May 15th. All students must participate in at least one event.',
-    category: 'event',
-    priority: 'high',
-    status: 'published',
-    date: new Date().toISOString(),
-    author: 'Principal',
-    targetAudience: ['Students', 'Teachers'],
-  },
-  {
-    id: '2',
-    title: 'Mid-term Results Declaration',
-    content: 'The mid-term results for grades 8-12 will be published on the portal next Monday. Parents are requested to check and sign the digital report.',
-    category: 'academic',
-    priority: 'urgent',
-    status: 'published',
-    date: new Date(Date.now() - 86400000).toISOString(),
-    author: 'Examination Cell',
-    targetAudience: ['Students', 'Parents'],
-  },
-  {
-    id: '3',
-    title: 'Summer Vacation Schedule',
-    content: 'Summer holidays will commence from June 1st to July 15th. The school will reopen on July 16th with a revised timetable.',
-    category: 'holiday',
-    priority: 'medium',
-    status: 'draft',
-    date: new Date(Date.now() - 172800000).toISOString(),
-    author: 'Management',
-    targetAudience: ['Students', 'Staff'],
-  }
-];
+const INITIAL_NOTICES: Notice[] = [];
 
 export default function NoticesPage() {
   const [notices, setNotices] = useState<Notice[]>(INITIAL_NOTICES);

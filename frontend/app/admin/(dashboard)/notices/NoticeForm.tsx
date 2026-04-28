@@ -16,7 +16,7 @@ interface NoticeFormProps {
 export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initialData }) => {
   const [title, setTitle] = useState(initialData?.title || '');
   const [content, setContent] = useState(initialData?.content || '');
-  const [category, setCategory] = useState<NoticeCategory>((initialData?.category as NoticeCategory) || 'general');
+  const [category, setCategory] = useState<NoticeCategory>((initialData?.category as NoticeCategory) || 'ALL');
   const [priority, setPriority] = useState<NoticePriority>((initialData?.priority as NoticePriority) || 'medium');
   const [date, setDate] = useState<Date>(initialData?.date ? new Date(initialData.date) : new Date());
   const [targetAudience, setTargetAudience] = useState<string[]>(initialData?.targetAudience || []);
@@ -42,7 +42,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initia
     );
   };
 
-  const audiences = ['Students', 'Teachers', 'Parents', 'Staff'];
+  const audiences = ['Students', 'Teachers', 'Homepage'];
 
   const priorityColors: Record<NoticePriority, string> = {
     low: 'bg-blue-100 text-blue-700',
@@ -87,11 +87,10 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initia
                     <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="academic">Academic</SelectItem>
-                    <SelectItem value="exam">Exam</SelectItem>
-                    <SelectItem value="event">Event</SelectItem>
-                    <SelectItem value="holiday">Holiday</SelectItem>
+                    <SelectItem value="ALL">ALL</SelectItem>
+                    <SelectItem value="Student">Student</SelectItem>
+                    <SelectItem value="Teacher">Teacher</SelectItem>
+                    <SelectItem value="Homepage">Homepage</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

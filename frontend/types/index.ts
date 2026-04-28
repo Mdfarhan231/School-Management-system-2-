@@ -1,4 +1,4 @@
-export type NoticeCategory = 'general' | 'academic' | 'exam' | 'event' | 'holiday';
+export type NoticeCategory = 'ALL' | 'Student' | 'Teacher' | 'Homepage';
 export type NoticePriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export interface Notice {
