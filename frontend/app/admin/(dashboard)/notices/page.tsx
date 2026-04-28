@@ -36,7 +36,7 @@ export default function NoticesPage() {
 
   const handleSaveNotice = async (newNotice: Partial<Notice>) => {
     try {
-      const response = await apiRequest('/notices', 'POST', newNotice);
+      const response = await apiRequest('/notices', 'POST', newNotice as any);
       if (response.id) {
         fetchNotices();
         setActiveTab('list');
