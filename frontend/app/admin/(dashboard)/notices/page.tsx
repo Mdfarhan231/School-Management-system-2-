@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { NoticeForm } from './NoticeForm';
 import { NoticeList } from './NoticeList';
@@ -7,24 +7,54 @@ import { Tabs } from './ui';
 import { Plus } from 'lucide-react';
 import { Notice } from '@/types';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/api';
 
 const INITIAL_NOTICES: Notice[] = [];
 
 export default function NoticesPage() {
   const [notices, setNotices] = useState<Notice[]>(INITIAL_NOTICES);
   const [activeTab, setActiveTab] = useState('list');
+  const [loading, setLoading] = useState(true);
 
-  const handleSaveNotice = (newNotice: Partial<Notice>) => {
-    const notice: Notice = {
-      ...newNotice as Notice,
-      id: Math.random().toString(36).substr(2, 9),
-    };
-    setNotices([notice, ...notices]);
-    setActiveTab('list');
+  useEffect(() => {
+    fetchNotices();
+  }, []);
+
+  const fetchNotices = async () => {
+    try {
+      setLoading(true);
+      const data = await apiRequest('/notices');
+      if (Array.isArray(data)) {
+        setNotices(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notices:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteNotice = (id: string) => {
-    setNotices(notices.filter(n => n.id !== id));
+  const handleSaveNotice = async (newNotice: Partial<Notice>) => {
+    try {
+      const response = await apiRequest('/notices', 'POST', newNotice);
+      if (response.id) {
+        fetchNotices();
+        setActiveTab('list');
+      }
+    } catch (error) {
+      console.error('Failed to save notice:', error);
+      alert('Failed to save notice. Please try again.');
+    }
+  };
+
+  const handleDeleteNotice = async (id: string) => {
+    try {
+      await apiRequest(`/notices/${id}`, 'DELETE');
+      setNotices(notices.filter(n => n.id !== id));
+    } catch (error) {
+      console.error('Failed to delete notice:', error);
+      alert('Failed to delete notice. Please try again.');
+    }
   };
 
   return (

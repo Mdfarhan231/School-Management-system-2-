@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\StudentAuthController;
 use App\Http\Controllers\Api\ExamRoutineController;
 use App\Http\Controllers\Api\StudentMarkController;
 use App\Http\Controllers\Api\TeacherAttendanceController;
+use App\Http\Controllers\Api\NoticeController;
 
 // testing supabase bucket connection
 Route::get('/test-supabase-upload', [TeacherController::class, 'testSupabaseUpload']);
@@ -62,6 +63,11 @@ Route::post('/attendance/students', [TeacherAttendanceController::class, 'studen
 Route::post('/attendance/store', [TeacherAttendanceController::class, 'store']);
 Route::post('/attendance/history', [TeacherAttendanceController::class, 'history']);
 Route::get('/student/attendance/{studentId}', [TeacherAttendanceController::class, 'studentHistory']);
+
+// Notices
+Route::get('/notices', [NoticeController::class, 'index']);
+Route::post('/notices', [NoticeController::class, 'store']);
+Route::delete('/notices/{id}', [NoticeController::class, 'destroy']);
 
 // Dashboard stats
 Route::get('/dashboard/stats', function () {
