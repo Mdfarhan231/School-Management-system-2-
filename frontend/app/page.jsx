@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { apiRequest } from "@/lib/api";
 
 
 export default function HomePage() {
@@ -151,6 +152,29 @@ function TopInfoBar() {
      4) Portal buttons row
    */
 function HeaderAndNavbar() {
+  const [notices, setNotices] = useState([]);
+
+  useEffect(() => {
+    const fetchNotices = async () => {
+      try {
+        const data = await apiRequest("/notices");
+        if (Array.isArray(data)) {
+          // Filter notices meant for Homepage
+          const homepageNotices = data.filter(notice => 
+            notice.category === "Homepage" || 
+            notice.category === "ALL" || 
+            (notice.target_audience && notice.target_audience.includes("Homepage")) ||
+            (notice.targetAudience && notice.targetAudience.includes("Homepage"))
+          );
+          setNotices(homepageNotices);
+        }
+      } catch (error) {
+        console.error("Failed to fetch notices:", error);
+      }
+    };
+    fetchNotices();
+  }, []);
+
   return (
     <header>
       {/* Header (logo + title + right buttons) */}
@@ -194,10 +218,26 @@ function HeaderAndNavbar() {
 
       {/* NOTICE Bar (maroon strip) */}
       <div className="bg-[#6b4b55]">
-        <div className="mx-auto max-w-6xl px-4 py-2">
-          <span className="inline-block rounded-sm bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600 shadow-sm">
+        <div className="mx-auto max-w-6xl px-4 py-2 flex items-center">
+          <span className="inline-block rounded-sm bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600 shadow-sm z-10 relative whitespace-nowrap">
             NOTICE
           </span>
+          <div className="flex-1 overflow-hidden ml-4">
+            {notices.length > 0 ? (
+              <marquee className="text-white text-sm font-medium tracking-wide flex items-center" behavior="scroll" direction="left" scrollamount="5">
+                {notices.map((notice, index) => (
+                  <span key={notice.id || index} className="mx-8 inline-block">
+                    <span className="text-amber-300 font-bold mr-2">✦</span>
+                    {notice.title}{notice.content ? ` - ${notice.content}` : ''}
+                  </span>
+                ))}
+              </marquee>
+            ) : (
+              <marquee className="text-white/70 text-sm font-medium tracking-wide" behavior="scroll" direction="left" scrollamount="5">
+                No new notices at the moment.
+              </marquee>
+            )}
+          </div>
         </div>
       </div>
 
