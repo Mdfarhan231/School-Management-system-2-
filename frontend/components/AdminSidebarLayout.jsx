@@ -17,6 +17,7 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  Megaphone,
 } from "lucide-react";
 
 function cn(...classes) {
@@ -30,6 +31,7 @@ const navItems = [
   { label: "All Teachers", icon: UserCheck, href: "/admin/all-teachers" },
   { label: "Exam Routine", icon: Calendar, href: "/admin/exam-routines" },
   { label: "Mark Approvals", icon: CheckSquare, href: "/admin/mark-approvals" },
+  { label: "Notices", icon: Megaphone, href: "/admin/notices" },
 ];
 
 export default function AdminSidebarLayout({ children }) {
