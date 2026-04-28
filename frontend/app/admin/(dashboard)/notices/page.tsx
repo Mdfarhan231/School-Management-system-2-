@@ -15,6 +15,7 @@ export default function NoticesPage() {
   const [notices, setNotices] = useState<Notice[]>(INITIAL_NOTICES);
   const [activeTab, setActiveTab] = useState('list');
   const [loading, setLoading] = useState(true);
+  const [editingNotice, setEditingNotice] = useState<Notice | null>(null);
 
   useEffect(() => {
     fetchNotices();
@@ -36,15 +37,31 @@ export default function NoticesPage() {
 
   const handleSaveNotice = async (newNotice: Partial<Notice>) => {
     try {
-      const response = await apiRequest('/notices', 'POST', newNotice as any);
-      if (response.id) {
-        fetchNotices();
-        setActiveTab('list');
+      if (newNotice.id) {
+        // Update existing notice
+        const response = await apiRequest(`/notices/${newNotice.id}`, 'PUT', newNotice as any);
+        if (response.id || response.message) {
+          fetchNotices();
+          setEditingNotice(null);
+          setActiveTab('list');
+        }
+      } else {
+        // Create new notice
+        const response = await apiRequest('/notices', 'POST', newNotice as any);
+        if (response.id) {
+          fetchNotices();
+          setActiveTab('list');
+        }
       }
     } catch (error) {
       console.error('Failed to save notice:', error);
       alert('Failed to save notice. Please try again.');
     }
+  };
+
+  const handleEditNotice = (notice: Notice) => {
+    setEditingNotice(notice);
+    setActiveTab('add');
   };
 
   const handleDeleteNotice = async (id: string) => {
@@ -73,8 +90,11 @@ export default function NoticesPage() {
           </div>
 
           <div className="flex bg-white/50 p-1 rounded-2xl border border-slate-200 shadow-sm backdrop-blur-sm">
-             <button
-                onClick={() => setActiveTab('list')}
+              <button
+                onClick={() => {
+                    setEditingNotice(null);
+                    setActiveTab('list');
+                }}
                 className={cn(
                     "px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300",
                     activeTab === 'list' ? "bg-white text-indigo-600 shadow-md transform scale-[1.02]" : "text-slate-400 hover:text-slate-600"
@@ -82,8 +102,11 @@ export default function NoticesPage() {
              >
                 View History
              </button>
-             <button
-                onClick={() => setActiveTab('add')}
+              <button
+                onClick={() => {
+                    setEditingNotice(null);
+                    setActiveTab('add');
+                }}
                 className={cn(
                     "px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2",
                     activeTab === 'add' ? "bg-white text-indigo-600 shadow-md transform scale-[1.02]" : "text-slate-400 hover:text-slate-600"
@@ -106,8 +129,7 @@ export default function NoticesPage() {
               <NoticeList 
                 notices={notices} 
                 onDelete={handleDeleteNotice}
-                onEdit={(n) => { console.log('Edit', n); setActiveTab('add'); }} 
-                onView={(n) => console.log('View', n)}
+                onEdit={handleEditNotice} 
               />
             </motion.div>
           ) : (
@@ -120,7 +142,11 @@ export default function NoticesPage() {
             >
               <NoticeForm 
                 onSave={handleSaveNotice}
-                onCancel={() => setActiveTab('list')}
+                onCancel={() => {
+                  setEditingNotice(null);
+                  setActiveTab('list');
+                }}
+                initialData={editingNotice || undefined}
               />
             </motion.div>
           )}

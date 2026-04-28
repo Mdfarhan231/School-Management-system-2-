@@ -67,6 +67,7 @@ Route::get('/student/attendance/{studentId}', [TeacherAttendanceController::clas
 // Notices
 Route::get('/notices', [NoticeController::class, 'index']);
 Route::post('/notices', [NoticeController::class, 'store']);
+Route::put('/notices/{id}', [NoticeController::class, 'update']);
 Route::delete('/notices/{id}', [NoticeController::class, 'destroy']);
 
 // Dashboard stats

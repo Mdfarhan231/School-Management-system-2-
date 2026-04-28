@@ -20,19 +20,19 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initia
   const [priority, setPriority] = useState<NoticePriority>((initialData?.priority as NoticePriority) || 'medium');
   const [date, setDate] = useState<Date>(initialData?.date ? new Date(initialData.date) : new Date());
   const [targetAudience, setTargetAudience] = useState<string[]>(initialData?.targetAudience || []);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-  const handleSubmit = (status: 'draft' | 'published') => {
+  const handleSubmit = () => {
     if (!title || !content) return;
     onSave({
+      id: initialData?.id,
       title,
       content,
       category,
       priority,
-      status,
+      status: 'published',
       date: date.toISOString(),
       targetAudience,
-      author: 'Admin User', // Hardcoded for now
+      author: 'Admin User',
     });
   };
 
@@ -170,14 +170,8 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initia
               </Button>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setIsPreviewOpen(!isPreviewOpen)} className="gap-2">
-                <Eye className="w-4 h-4" /> Preview
-              </Button>
-              <Button variant="secondary" onClick={() => handleSubmit('draft')} className="gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-none">
-                <Save className="w-4 h-4" /> Save Draft
-              </Button>
-              <Button onClick={() => handleSubmit('published')} className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">
-                <Send className="w-4 h-4" /> Publish Notice
+              <Button onClick={() => handleSubmit()} className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">
+                <Send className="w-4 h-4" /> {initialData?.id ? 'Update Notice' : 'Publish Notice'}
               </Button>
             </div>
           </CardFooter>

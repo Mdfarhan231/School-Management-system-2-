@@ -75,6 +75,42 @@ class NoticeController extends Controller
         }
     }
 
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string',
+            'content' => 'required|string',
+            'category' => 'required|string',
+            'priority' => 'required|string',
+            'status' => 'required|string',
+            'targetAudience' => 'nullable|array',
+        ]);
+
+        try {
+            $audienceArray = $request->input('targetAudience', []);
+            $pgArray = '{' . implode(',', $audienceArray) . '}';
+
+            DB::table('notices')->where('id', $id)->update([
+                'title' => $request->title,
+                'content' => $request->content,
+                'category' => $request->category,
+                'priority' => $request->priority,
+                'status' => $request->status,
+                'date' => $request->date ?? now(),
+                'author' => $request->author ?? 'Admin',
+                'target_audience' => $pgArray,
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'message' => 'Notice updated successfully',
+                'id' => $id
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function destroy($id)
     {
         try {

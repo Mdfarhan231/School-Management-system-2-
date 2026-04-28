@@ -11,10 +11,9 @@ interface NoticeListProps {
   notices: Notice[];
   onDelete: (id: string) => void;
   onEdit: (notice: Notice) => void;
-  onView: (notice: Notice) => void;
 }
 
-export const NoticeList: React.FC<NoticeListProps> = ({ notices, onDelete, onEdit, onView }) => {
+export const NoticeList: React.FC<NoticeListProps> = ({ notices, onDelete, onEdit }) => {
   const priorityColors: Record<string, string> = {
     low: 'bg-blue-100 text-blue-700',
     medium: 'bg-yellow-100 text-yellow-700',
@@ -83,14 +82,7 @@ export const NoticeList: React.FC<NoticeListProps> = ({ notices, onDelete, onEdi
                 </div>
 
                 <div className="flex md:flex-col gap-2 w-full md:w-auto mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100 md:pl-6 justify-end">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="flex-1 md:flex-none justify-start text-slate-500 hover:text-indigo-600 hover:bg-indigo-50"
-                    onClick={() => onView(notice)}
-                  >
-                    <Eye className="w-4 h-4 mr-2" /> View
-                  </Button>
+
                   <Button 
                     variant="ghost" 
                     size="sm" 
