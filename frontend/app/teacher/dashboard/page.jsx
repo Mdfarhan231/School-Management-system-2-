@@ -235,17 +235,7 @@ const TeacherDashboardPage = () => {
              </div>
           </div>
         </div>
-        
-        {/* Navigation Quick Links */}
-        <div className="pt-4 border-t border-slate-200">
-           <h4 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Quick Actions</h4>
-           <div className="flex flex-wrap gap-3">
-              <Link href="/teacher/exam-routine" className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 transition">Exam Routine</Link>
-              <Link href="/teacher/attendance" className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 transition">Take Attendance</Link>
-              <Link href="/teacher/attendance-history" className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 transition">Attendance History</Link>
-              <Link href="/teacher/marks-entry" className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 transition">Marks Entry</Link>
-           </div>
-        </div>
+
 
       </div>
     </div>
