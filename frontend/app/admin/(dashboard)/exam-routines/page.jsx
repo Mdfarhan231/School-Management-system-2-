@@ -48,7 +48,7 @@ function formatDate(d) {
 }
 
 // ─── Custom Select ───────────────────────────────────────────────────────────
-function SelectField({ label, name, value, onChange, options, placeholder }) {
+function SelectField({ label, name, value, onChange, options, placeholder, disabled }) {
   const [open, setOpen] = useState(false);
   const selected = options.find((o) => String(o.value) === String(value));
 
@@ -57,42 +57,52 @@ function SelectField({ label, name, value, onChange, options, placeholder }) {
       <label className="text-sm font-bold text-gray-900">{label}</label>
       <button
         type="button"
-        onClick={() => setOpen((p) => !p)}
-        className="w-full px-4 py-3 rounded-xl border border-gray-200 flex items-center justify-between bg-white hover:border-gray-300 transition-colors"
+        onClick={() => !disabled && setOpen((p) => !p)}
+        className={`w-full px-4 py-3 rounded-xl border flex items-center justify-between transition-colors ${
+          disabled
+            ? "border-gray-100 bg-slate-50 cursor-not-allowed"
+            : "border-gray-200 bg-white hover:border-gray-300"
+        }`}
       >
         <span className={selected ? "text-gray-900 font-medium" : "text-gray-300"}>
           {selected ? selected.label : placeholder}
         </span>
         <ChevronDown
           size={16}
-          className={`text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`transition-transform ${open ? "rotate-180" : ""} ${
+            disabled ? "text-gray-200" : "text-gray-400"
+          }`}
         />
       </button>
       <AnimatePresence>
-        {open && (
+        {open && !disabled && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             className="absolute z-30 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden py-1"
           >
-            {options.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => {
-                  onChange(name, opt.value);
-                  setOpen(false);
-                }}
-                className={`w-full px-4 py-2.5 text-left text-sm font-medium transition-colors ${
-                  String(value) === String(opt.value)
-                    ? "bg-indigo-600 text-white"
-                    : "text-gray-600 hover:bg-indigo-50 hover:text-indigo-600"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
+            {options.length === 0 ? (
+              <p className="px-4 py-3 text-sm text-slate-400 text-center">No subjects found</p>
+            ) : (
+              options.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(name, opt.value);
+                    setOpen(false);
+                  }}
+                  className={`w-full px-4 py-2.5 text-left text-sm font-medium transition-colors ${
+                    String(value) === String(opt.value)
+                      ? "bg-indigo-600 text-white"
+                      : "text-gray-600 hover:bg-indigo-50 hover:text-indigo-600"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -129,7 +139,6 @@ export default function ExamRoutinePage() {
   useEffect(() => {
     fetchRoutines();
     fetchClasses();
-    fetchSubjects();
     fetchExams();
   }, []);
 
@@ -149,11 +158,13 @@ export default function ExamRoutinePage() {
     } catch {}
   };
 
-  const fetchSubjects = async () => {
+  const fetchSubjectsByClass = async (classId) => {
     try {
-      const data = await apiRequest("/subjects");
-      setSubjects(data);
-    } catch {}
+      const data = await apiRequest(`/classes/${classId}/subjects`);
+      setSubjects(Array.isArray(data) ? data : []);
+    } catch {
+      setSubjects([]);
+    }
   };
 
   const fetchExams = async () => {
@@ -164,7 +175,14 @@ export default function ExamRoutinePage() {
   };
 
   const handleSelect = (name, value) => {
-    setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === "class_id") {
+      // Reset subject and load subjects for chosen class
+      setSubjects([]);
+      setForm((prev) => ({ ...prev, class_id: value, subject_id: "" }));
+      fetchSubjectsByClass(value);
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleChange = (e) => {
@@ -306,7 +324,8 @@ export default function ExamRoutinePage() {
                   value={form.subject_id}
                   onChange={handleSelect}
                   options={subjectOptions}
-                  placeholder="Select subject"
+                  placeholder={form.class_id ? "Select subject" : "Select class first"}
+                  disabled={!form.class_id}
                 />
               </div>
 
