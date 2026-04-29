@@ -67,12 +67,12 @@ export default function StudentDashboardPage() {
 
   if (loading || !student) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
+      <div className="flex items-center justify-center h-full">
         <div className="animate-pulse flex flex-col items-center">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-slate-600 font-medium">Loading Dashboard...</p>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -82,8 +82,7 @@ export default function StudentDashboardPage() {
     : Array.isArray(student.subjects) ? student.subjects : ['Unassigned'];
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f8fafc] p-4 md:p-8">
-      <div className="max-w-6xl mx-auto w-full space-y-8 animate-in fade-in duration-500">
+    <div className="max-w-6xl mx-auto w-full space-y-8 animate-in fade-in duration-500">
         <header className="flex flex-col sm:flex-row justify-between sm:items-end pb-4 border-b border-slate-200 gap-4">
           <div>
             <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Student Dashboard</h2>
@@ -284,6 +283,5 @@ export default function StudentDashboardPage() {
         </div>
 
       </div>
-    </main>
   );
 }
