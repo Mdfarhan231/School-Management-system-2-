@@ -75,7 +75,8 @@ class TeacherAuthController extends Controller
                 'teachers.phone',
                 'teachers.shift',
                 'teachers.subjects',
-                'teachers.picture'
+                'teachers.picture',
+                'teachers.designation'
             )
             ->first();
 
