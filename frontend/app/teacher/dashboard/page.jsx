@@ -113,7 +113,7 @@ const TeacherDashboardPage = () => {
               </div>
               <h3 className="text-xl font-bold text-white mt-4">{teacher.name}</h3>
               <span className="px-3 py-1 bg-indigo-500/10 text-indigo-400 rounded-full text-xs font-bold mt-2 uppercase tracking-wide border border-indigo-500/20">
-                Teacher
+                {teacher.designation || 'Teacher'}
               </span>
             </div>
 
