@@ -110,7 +110,7 @@ export default function TeacherDashboardPage() {
             >
               Attendance History
             </Link>
-              <Link
+            <Link
               href="/teacher/marks-entry"
               className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
             >
@@ -130,7 +130,7 @@ export default function TeacherDashboardPage() {
             >
               Notice Board
             </Link> */}
-{/* 
+            {/* 
             <Link
               href="/teacher/marks-entry"
               className="rounded-lg bg-[#5b5b5b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b4b4b]"
