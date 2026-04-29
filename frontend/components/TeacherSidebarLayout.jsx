@@ -222,14 +222,7 @@ export default function TeacherSidebarLayout({ children }) {
                 </button>
               </div>
             )}
-            <div className="relative hidden md:block">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search students, classes..."
-                className="w-80 rounded-xl border-none bg-slate-50 py-2.5 pl-12 pr-6 text-sm transition-all focus:ring-2 focus:ring-indigo-500 outline-none"
-              />
-            </div>
+
           </div>
                {/* Teacher Profile Info */}
           <div className="flex items-center gap-5">

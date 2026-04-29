@@ -199,43 +199,7 @@ export default function TeacherAttendancePage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">
-      <header className="bg-[#17172f] px-4 py-3 text-white shadow">
-        <h1 className="text-[15px] font-medium sm:text-xl">
-          School Management System
-        </h1>
-      </header>
 
-      <nav className="border-b border-gray-300 bg-white">
-        <div className="flex items-center justify-end gap-6 px-6 py-3 text-[14px] font-semibold text-[#17172f]">
-          <Link href="/teacher/dashboard" className="hover:text-blue-600">
-            🏠 Dashboard
-          </Link>
-
-          <Link href="/teacher/attendance" className="hover:text-blue-600">
-            🕒 Take Attendance
-          </Link>
-
-          <Link href="/teacher/attendance-history" className="hover:text-blue-600">
-            📋 Attendance History
-          </Link>
-
-          <Link href="/teacher/exam-routine" className="hover:text-blue-600">
-            📝 Exam Routine
-          </Link>
-
-          <Link href="/teacher/marks-entry" className="hover:text-blue-600">
-            📊 Marks Entry
-          </Link>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="hover:text-red-600"
-          >
-            ↪ Logout
-          </button>
-        </div>
-      </nav>
 
       <section className="flex-1 px-4 py-8">
         <div className="mx-auto max-w-5xl rounded-[28px] bg-[#e5e7eb] p-6 shadow-[-10px_-10px_20px_rgba(255,255,255,0.85),10px_10px_22px_rgba(163,177,198,0.5)]">
@@ -373,9 +337,7 @@ export default function TeacherAttendancePage() {
         </div>
       </section>
 
-      <footer className="bg-[#17172f] px-4 py-6 text-center text-xs font-semibold text-white">
-        © 2026 Global Knowledge School
-      </footer>
+
     </main>
   );
 }
