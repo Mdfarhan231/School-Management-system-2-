@@ -55,7 +55,7 @@ class NoticeController extends Controller
             DB::table('notices')->insert([
                 'id' => $id,
                 'title' => $request->title,
-                'content' => $request->content,
+                'content' => $request->input('content'),
                 'category' => $request->category,
                 'priority' => $request->priority,
                 'status' => $request->status,
@@ -92,7 +92,7 @@ class NoticeController extends Controller
 
             DB::table('notices')->where('id', $id)->update([
                 'title' => $request->title,
-                'content' => $request->content,
+                'content' => $request->input('content'),
                 'category' => $request->category,
                 'priority' => $request->priority,
                 'status' => $request->status,
