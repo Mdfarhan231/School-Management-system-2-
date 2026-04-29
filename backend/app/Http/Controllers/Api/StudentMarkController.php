@@ -233,6 +233,49 @@ class StudentMarkController extends Controller
         ]);
     }
 
+    public function reject($id)
+    {
+        $mark = DB::table('student_marks')->where('id', $id)->first();
+
+        if (!$mark) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Mark record not found.'
+            ], 404);
+        }
+
+        DB::table('student_marks')
+            ->where('id', $id)
+            ->update([
+                'status' => 'rejected',
+                'updated_at' => now(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Marks rejected.'
+        ]);
+    }
+
+    public function approveAll()
+    {
+        $count = DB::table('student_marks')
+            ->where('status', 'pending')
+            ->count();
+
+        DB::table('student_marks')
+            ->where('status', 'pending')
+            ->update([
+                'status' => 'approved',
+                'updated_at' => now(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "All {$count} pending marks approved."
+        ]);
+    }
+
     public function approvedResultsByStudent($studentId)
     {
         $results = DB::table('student_marks')

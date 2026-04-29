@@ -56,6 +56,8 @@ Route::post('/student-marks', [StudentMarkController::class, 'store']);
 Route::get('/student-marks/pending', [StudentMarkController::class, 'pendingMarks']);
 Route::get('/student-marks/pending-summary', [StudentMarkController::class, 'pendingSummary']);
 Route::post('/student-marks/{id}/approve', [StudentMarkController::class, 'approve']);
+Route::post('/student-marks/{id}/reject', [StudentMarkController::class, 'reject']);
+Route::post('/student-marks/approve-all', [StudentMarkController::class, 'approveAll']);
 Route::get('/student-results/{studentId}', [StudentMarkController::class, 'approvedResultsByStudent']);
 
 // Attendance
