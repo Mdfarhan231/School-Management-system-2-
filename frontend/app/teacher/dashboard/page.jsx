@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
-import { Mail, Phone, Clock, Book, User, ArrowRight, CalendarCheck, LogOut } from 'lucide-react';
+import { Mail, Phone, Clock, Book, User, ArrowRight, CalendarCheck } from 'lucide-react';
 import Link from 'next/link';
 import { apiRequest } from '@/lib/api';
 
@@ -61,11 +61,6 @@ const TeacherDashboardPage = () => {
     fetchDashboardData();
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("teacher");
-    router.replace("/teacher/login");
-  };
-
   const getTeacherImage = (picture) => {
     if (!picture) return "/teacher-demo.png";
     return picture;
@@ -88,7 +83,7 @@ const TeacherDashboardPage = () => {
     : Array.isArray(teacher.subjects) ? teacher.subjects : ['Unassigned'];
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f8fafc] p-4 md:p-8">
+    <div className="flex flex-col bg-transparent p-4 md:p-8">
       <div className="max-w-6xl mx-auto w-full space-y-8 animate-in fade-in duration-500">
         
         <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end pb-4 border-b border-slate-200 gap-4">
@@ -100,12 +95,6 @@ const TeacherDashboardPage = () => {
             <div className="text-xs font-mono text-slate-400 uppercase tracking-widest">
               Academic Year 2026-27
             </div>
-            <button 
-              onClick={handleLogout}
-              className="text-xs flex items-center gap-1 text-red-500 hover:text-red-600 font-semibold transition-colors"
-            >
-              <LogOut size={14} /> Logout
-            </button>
           </div>
         </header>
 
@@ -259,7 +248,7 @@ const TeacherDashboardPage = () => {
         </div>
 
       </div>
-    </main>
+    </div>
   );
 };
 
