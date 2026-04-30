@@ -24,7 +24,7 @@ export default function TeachersPage() {
 
   const shifts = ["Morning", "Day"];
   const today = new Date().toISOString().split("T")[0];
-  const subjectOptions = ["Bangla", "English", "Math", "Science", "Drawing", "Physics", "Chemistry", "Biology"];
+  const subjectOptions = ["Bangla", "English", "Math", "Science", "Drawing"];
   const designations = ["Senior Teacher", "Junior Teacher", "Lecturer", "Senior Lecturer", "Professor", "Trainee", "Head of Dept"];
 
 
