@@ -133,7 +133,7 @@ export default function StudentsPage() {
   );
 
   return (
-    <section className="flex-1 bg-[#e5e7eb] px-4 py-8 overflow-y-auto">
+    <section className="flex-1 bg-[#f1f5f9] px-4 py-8 overflow-y-auto">
       <div className="mx-auto w-full max-w-2xl rounded-2xl bg-white shadow-xl overflow-hidden border border-gray-100">
         <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-center bg-white">
           <h2 className="text-2xl font-bold text-gray-900">Add Student</h2>
