@@ -78,6 +78,7 @@ export default function AdminSidebarLayout({ children }) {
           "relative z-50 flex flex-col border-r border-slate-200 bg-white text-slate-600 shadow-sm transition-all duration-300 ease-in-out shrink-0",
           isSidebarOpen ? "w-72" : "w-20"
         )}
+        style={{ overflow: "visible" }}
       >
         <div className={cn("flex items-center p-6 h-20 shrink-0", isSidebarOpen ? "justify-between" : "justify-center px-0")}>
           <div className="flex items-center gap-3 overflow-hidden">
@@ -198,7 +199,7 @@ export default function AdminSidebarLayout({ children }) {
       {/* ── Main Content Area ── */}
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-slate-50">
         {/* Header */}
-        <header className="flex h-20 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 lg:px-10">
+        <header className="flex h-20 shrink-0 items-center justify-between border-b border-[#1a3a6b] bg-[#1e3a5f] px-6 lg:px-10">
           <div className="flex items-center gap-6">
             {!isSidebarOpen && (
               <div className="md:hidden">
@@ -211,22 +212,22 @@ export default function AdminSidebarLayout({ children }) {
               </div>
             )}
             <div className="relative hidden md:block">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
               <input
                 type="text"
                 placeholder="Search students, teachers, records..."
-                className="w-80 rounded-xl border-none bg-slate-50 py-2.5 pl-12 pr-6 text-sm transition-all focus:ring-2 focus:ring-indigo-500"
+                className="w-80 rounded-xl border-none bg-white/10 py-2.5 pl-12 pr-6 text-sm text-white placeholder-white/50 transition-all focus:ring-2 focus:ring-white/30"
               />
             </div>
           </div>
                {/* Admin Profile Picture */}
           <div className="flex items-center gap-5">
-            <button className="relative rounded-xl p-2.5 text-slate-500 transition-colors hover:bg-slate-50">
+            <button className="relative rounded-xl p-2.5 text-white/70 transition-colors hover:bg-white/10">
               <Bell className="h-5 w-5" />
-              <span className="absolute right-3 top-3 h-2 w-2 rounded-full border-2 border-white bg-rose-500" />
+              <span className="absolute right-3 top-3 h-2 w-2 rounded-full border-2 border-[#1e3a5f] bg-rose-400" />
             </button>
 
-            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-indigo-100 bg-indigo-50 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-white/20 bg-white/10 shadow-sm">
               <img
                 src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
                 alt="Admin"
@@ -236,10 +237,10 @@ export default function AdminSidebarLayout({ children }) {
             </div>
                {/* Admin Text Info */}
             <div className="hidden sm:block">
-              <p className="leading-none text-sm font-bold text-slate-900">
+              <p className="leading-none text-sm font-bold text-white">
                 Welcome, {admin?.name || "admin"}
               </p>
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-blue-200">
                 System Controller
               </p>
             </div>

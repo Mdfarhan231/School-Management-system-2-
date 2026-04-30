@@ -87,7 +87,7 @@ export default function StudentSidebarLayout({ children }) {
           "relative z-50 flex flex-col text-slate-300 shadow-xl transition-all duration-300 ease-in-out shrink-0",
           isSidebarOpen ? "w-72" : "w-20"
         )}
-        style={{ backgroundColor: "#0F172B" }}
+        style={{ backgroundColor: "#0F172B", overflow: "visible" }}
       >
         <div className={cn("flex items-center p-6 h-20 shrink-0", isSidebarOpen ? "justify-between" : "justify-center px-0")}>
           <div className="flex items-center gap-3 overflow-hidden">
@@ -208,7 +208,7 @@ export default function StudentSidebarLayout({ children }) {
       {/* ── Main Content Area ── */}
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#f8fafc]">
         {/* Header */}
-        <header className="flex h-20 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 lg:px-10 shadow-sm hidden md:flex">
+        <header className="flex h-20 shrink-0 items-center justify-between border-b border-[#1a3a6b] bg-[#1e3a5f] px-6 lg:px-10 shadow-sm hidden md:flex">
           <div className="flex items-center gap-6">
             {!isSidebarOpen && (
               <div className="md:hidden">
@@ -223,12 +223,12 @@ export default function StudentSidebarLayout({ children }) {
           </div>
                {/* Student Profile Info */}
           <div className="flex items-center gap-5">
-            <button className="relative rounded-xl p-2.5 text-slate-500 transition-colors hover:bg-slate-50">
+            <button className="relative rounded-xl p-2.5 text-white/70 transition-colors hover:bg-white/10">
               <Bell className="h-5 w-5" />
-              <span className="absolute right-3 top-3 h-2 w-2 rounded-full border-2 border-white bg-rose-500" />
+              <span className="absolute right-3 top-3 h-2 w-2 rounded-full border-2 border-[#1e3a5f] bg-rose-400" />
             </button>
 
-            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-blue-100 bg-blue-50 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-white/20 bg-white/10 shadow-sm">
               <img
                 src={getStudentImage(student?.picture)}
                 alt={student?.name}
@@ -238,10 +238,10 @@ export default function StudentSidebarLayout({ children }) {
             </div>
                {/* Student Text Info */}
             <div className="hidden sm:block">
-              <p className="leading-none text-sm font-bold text-slate-900">
+              <p className="leading-none text-sm font-bold text-white">
                 {student?.name?.split(' ')[0] || "Student"}
               </p>
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-blue-200">
                 Class {student?.class_name || ""}
               </p>
             </div>

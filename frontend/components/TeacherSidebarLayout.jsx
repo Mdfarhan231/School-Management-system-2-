@@ -91,12 +91,11 @@ export default function TeacherSidebarLayout({ children }) {
             : "8px 0 32px rgba(0,0,0,0.22)",
         }}
         transition={{ type: "spring", stiffness: 320, damping: 34 }}
-        className="fixed left-0 top-0 z-50 h-screen flex flex-col overflow-hidden"
+        className="fixed left-0 top-0 z-50 h-screen flex flex-col"
         style={{
-          backgroundColor: isCollapsed ? "#0F172B" : "rgba(255,255,255,0.92)",
-          backdropFilter:  isCollapsed ? "none"    : "blur(20px)",
-          WebkitBackdropFilter: isCollapsed ? "none" : "blur(20px)",
-          borderRight: isCollapsed ? "none" : "1px solid rgba(148,163,184,0.2)",
+          overflow: "visible",
+          backgroundColor: "#0F172B",
+          borderRight: "1px solid rgba(15,23,43,0.8)",
         }}
       >
         {/* ── Brand / Logo Row ── */}
@@ -126,7 +125,7 @@ export default function TeacherSidebarLayout({ children }) {
                   transition={{ duration: 0.18 }}
                   className="whitespace-nowrap overflow-hidden"
                 >
-                  <p className="text-sm font-bold leading-tight text-slate-800">
+                  <p className="text-sm font-bold leading-tight text-white">
                     GKS Admin
                   </p>
                   <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
@@ -141,12 +140,7 @@ export default function TeacherSidebarLayout({ children }) {
         {/* ── Toggle Button ── */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className={cn(
-            "absolute -right-3 top-[52px] z-50 flex h-6 w-6 items-center justify-center rounded-full shadow-md border transition-colors",
-            isCollapsed
-              ? "border-slate-700 bg-[#0F172B] text-slate-400 hover:bg-slate-800"
-              : "border-slate-200 bg-white text-slate-500 hover:bg-slate-100"
-          )}
+          className="absolute -right-3 top-[52px] z-50 flex h-6 w-6 items-center justify-center rounded-full shadow-md border border-slate-600 bg-[#0F172B] text-slate-300 hover:bg-slate-700 transition-colors"
         >
           {isCollapsed
             ? <ChevronRight className="h-3.5 w-3.5" />
@@ -168,12 +162,10 @@ export default function TeacherSidebarLayout({ children }) {
                   "group flex items-center rounded-xl py-3 transition-all duration-200 overflow-hidden",
                   isCollapsed ? "justify-center px-0 w-12 mx-auto" : "px-4 gap-3 w-full",
                   isActive
-                    ? isCollapsed
-                      ? "bg-indigo-600 text-white shadow-md"
-                      : "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
                     : isCollapsed
                       ? "text-slate-400 hover:bg-white/5 hover:text-white"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      : "text-slate-300 hover:bg-white/10 hover:text-white"
                 )}
               >
                 <Icon
@@ -209,7 +201,7 @@ export default function TeacherSidebarLayout({ children }) {
               "rounded-2xl border transition-all duration-300",
               isCollapsed
                 ? "border-white/10 bg-white/5 p-2 flex justify-center"
-                : "border-slate-200 bg-slate-50 p-4"
+                : "border-white/10 bg-white/5 p-4"
             )}
           >
             <AnimatePresence initial={false}>
@@ -222,11 +214,11 @@ export default function TeacherSidebarLayout({ children }) {
                   transition={{ duration: 0.18 }}
                   className="flex items-center gap-3 mb-3"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100">
-                    <User className="h-4 w-4 text-indigo-600" />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10">
+                    <User className="h-4 w-4 text-slate-300" />
                   </div>
                   <div className="whitespace-nowrap">
-                    <p className="text-sm font-bold text-slate-800">Teacher Portal</p>
+                    <p className="text-sm font-bold text-white">Teacher Portal</p>
                     <p className="text-[10px] text-slate-400">Faculty Access</p>
                   </div>
                 </motion.div>
@@ -240,7 +232,7 @@ export default function TeacherSidebarLayout({ children }) {
                 "flex items-center justify-center gap-2 rounded-xl transition-all",
                 isCollapsed
                   ? "h-10 w-10 bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white"
-                  : "w-full py-2.5 text-xs font-bold bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white"
+                  : "w-full py-2.5 text-xs font-bold bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white"
               )}
             >
               <LogOut className="h-4 w-4 shrink-0" />
@@ -291,23 +283,23 @@ export default function TeacherSidebarLayout({ children }) {
         style={{ paddingLeft: SIDEBAR_COLLAPSED_W }}
       >
         {/* ── Compact Top Navbar ── */}
-        <header className="flex h-12 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5 shadow-sm">
+        <header className="flex h-12 shrink-0 items-center justify-between border-b border-[#1a3a6b] bg-[#1e3a5f] px-5 shadow-sm">
           {/* Left: role badge */}
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-0.5 text-[11px] font-semibold text-indigo-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-0.5 text-[11px] font-semibold text-white">
+              <span className="h-1.5 w-1.5 rounded-full bg-white/70 animate-pulse" />
               Teacher Portal
             </span>
           </div>
 
           {/* Right: bell + avatar + name */}
           <div className="flex items-center gap-3">
-            <button className="relative rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-700">
+            <button className="relative rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white">
               <Bell className="h-4 w-4" />
-              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-white bg-rose-500" />
+              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-[#1e3a5f] bg-rose-400" />
             </button>
 
-            <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg border border-indigo-100 bg-indigo-50 shadow-sm">
+            <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-white/10 shadow-sm">
               <img
                 src={getTeacherImage(teacher?.picture)}
                 alt={teacher?.name}
@@ -317,10 +309,10 @@ export default function TeacherSidebarLayout({ children }) {
             </div>
 
             <div className="hidden sm:block leading-none">
-              <p className="text-xs font-bold text-slate-800">
+              <p className="text-xs font-bold text-white">
                 {teacher?.name?.split(" ")[0] || "Teacher"}
               </p>
-              <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-blue-200">
                 Faculty Member
               </p>
             </div>
