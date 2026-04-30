@@ -387,8 +387,13 @@ export default function AdminDashboardPage() {
 
                 const formatTime = (timeStr) => {
                   if (!timeStr) return "";
-                  const [timePart] = timeStr.split(" ");
-                  const [h, m] = timePart.split(":");
+                  const upper = timeStr.toString().toUpperCase();
+                  // Already has AM/PM — clean up spacing and return
+                  if (upper.includes("AM") || upper.includes("PM")) {
+                    return timeStr.toString().replace(/\s*(AM|PM)\s*/i, (_, p) => ` ${p.toUpperCase()}`).trim();
+                  }
+                  // Raw 24-hour: "HH:MM" or "HH:MM:SS"
+                  const [h, m] = timeStr.split(":");
                   const hour = parseInt(h, 10);
                   const suffix = hour >= 12 ? "PM" : "AM";
                   const displayHour = hour % 12 || 12;

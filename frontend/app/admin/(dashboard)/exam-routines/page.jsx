@@ -32,6 +32,13 @@ function colorFor(idx) {
 
 function formatTime(t) {
   if (!t) return "—";
+  // If the value already contains AM or PM, return it cleaned up
+  const upper = t.toString().toUpperCase();
+  if (upper.includes("AM") || upper.includes("PM")) {
+    // Normalise spacing: "10:00AM" → "10:00 AM", already "10:00 AM" stays
+    return t.toString().replace(/\s*(AM|PM)\s*/i, (_, p) => ` ${p.toUpperCase()}`).trim();
+  }
+  // Raw 24-hour time string: "HH:MM" or "HH:MM:SS"
   const [h, m] = t.split(":");
   const hr = parseInt(h, 10);
   const ampm = hr >= 12 ? "PM" : "AM";

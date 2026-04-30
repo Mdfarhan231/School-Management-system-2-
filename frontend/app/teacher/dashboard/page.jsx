@@ -219,7 +219,7 @@ const TeacherDashboardPage = () => {
                       </div>
                       <div className="flex-1">
                         <h5 className="font-bold text-slate-800">{exam.subject_name || exam.subject || 'Unknown Subject'}</h5>
-                        <p className="text-xs text-slate-500 font-medium">Class: {exam.class_name || exam.class || 'N/A'} | {exam.start_time || 'N/A'}</p>
+                        <p className="text-xs text-slate-500 font-medium">Class: {exam.class_name || exam.class || 'N/A'} | {(() => { const t = exam.start_time; if (!t) return 'N/A'; const u = t.toUpperCase(); if (u.includes('AM') || u.includes('PM')) return t.replace(/\s*(AM|PM)\s*/i, (_, p) => ` ${p.toUpperCase()}`).trim(); const [h, m] = t.split(':'); const hr = parseInt(h, 10); return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`; })()}</p>
                       </div>
                     </div>
                   );

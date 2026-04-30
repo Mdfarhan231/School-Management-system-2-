@@ -5,6 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 
+// Safely format a time string regardless of whether it's already 12h or raw 24h
+function formatTime(t) {
+  if (!t) return "—";
+  const upper = t.toString().toUpperCase();
+  if (upper.includes("AM") || upper.includes("PM")) {
+    return t.toString().replace(/\s*(AM|PM)\s*/i, (_, p) => ` ${p.toUpperCase()}`).trim();
+  }
+  const [h, m] = t.split(":");
+  const hr = parseInt(h, 10);
+  return `${hr % 12 || 12}:${m} ${hr >= 12 ? "PM" : "AM"}`;
+}
+
 export default function TeacherExamRoutinePage() {
   const router = useRouter();
   const [teacher, setTeacher] = useState(null);
@@ -99,7 +111,7 @@ export default function TeacherExamRoutinePage() {
                       <td className="px-5 py-4">{routine.subject_name}</td>
                       <td className="px-5 py-4">{routine.exam_date}</td>
                       <td className="px-5 py-4">
-                        {routine.start_time} - {routine.end_time}
+                        {formatTime(routine.start_time)} – {formatTime(routine.end_time)}
                       </td>
                     </tr>
                   ))
