@@ -249,7 +249,7 @@ export default function StudentSidebarLayout({ children }) {
         </header>
 
         {/* Page Content */}
-        <div className="flex flex-1 flex-col overflow-y-auto relative p-4 md:p-8">
+        <div className="flex flex-1 flex-col overflow-y-auto relative p-6 lg:p-10">
           <div className="md:hidden absolute top-4 left-4 z-10">
              <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}

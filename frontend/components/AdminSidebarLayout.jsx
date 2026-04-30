@@ -332,7 +332,7 @@ export default function AdminSidebarLayout({ children }) {
         </header>
 
         {/* ── Page Content ── */}
-        <div className="flex flex-1 flex-col overflow-y-auto">
+        <div className="flex flex-1 flex-col overflow-y-auto p-6 lg:p-10">
           {children}
         </div>
       </main>
