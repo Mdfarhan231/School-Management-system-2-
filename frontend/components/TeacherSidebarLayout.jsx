@@ -62,12 +62,25 @@ export default function TeacherSidebarLayout({ children }) {
 
   const handleScroll = (e) => {
     const currentScrollY = e.currentTarget.scrollTop;
-    if (currentScrollY > lastScrollY && currentScrollY > 50) {
-      setShowHeader(false);
-    } else if (currentScrollY < lastScrollY) {
+    
+    // Always show at the very top
+    if (currentScrollY <= 50) {
       setShowHeader(true);
+      setLastScrollY(currentScrollY);
+      return;
     }
-    setLastScrollY(currentScrollY);
+
+    const diff = currentScrollY - lastScrollY;
+    
+    if (diff > 10) {
+      // Scrolling down
+      setShowHeader(false);
+      setLastScrollY(currentScrollY);
+    } else if (diff < -10) {
+      // Scrolling up
+      setShowHeader(true);
+      setLastScrollY(currentScrollY);
+    }
   };
 
   const getTeacherImage = (pic) => pic || "/teacher-demo.png";
@@ -135,11 +148,7 @@ export default function TeacherSidebarLayout({ children }) {
         </div>
       </motion.header>
 
-      <motion.div 
-        animate={{ paddingTop: showHeader ? 48 : 0 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="flex flex-1 overflow-hidden"
-      >
+      <div className="flex flex-1 overflow-hidden">
         <motion.aside
           initial={false}
           animate={{
@@ -342,12 +351,16 @@ export default function TeacherSidebarLayout({ children }) {
           {/* ── Page Content ── */}
           <div 
             onScroll={handleScroll}
-            className="flex flex-1 flex-col overflow-y-auto"
+            className="flex flex-1 flex-col overflow-y-auto relative"
           >
-            {children}
+            {/* Spacer to prevent content from hiding under the fixed header when at the top */}
+            <div className="h-12 shrink-0 w-full" />
+            <div className="flex flex-1 flex-col">
+              {children}
+            </div>
           </div>
         </main>
-      </motion.div>
+      </div>
     </div>
   );
 }

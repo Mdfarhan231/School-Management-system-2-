@@ -70,15 +70,25 @@ export default function AdminSidebarLayout({ children }) {
 
   const handleScroll = (e) => {
     const currentScrollY = e.currentTarget.scrollTop;
-    // Hide if scrolling down and moved more than 10px
-    if (currentScrollY > lastScrollY && currentScrollY > 50) {
-      setShowHeader(false);
-    } 
-    // Show if scrolling up
-    else if (currentScrollY < lastScrollY) {
+    
+    // Always show at the very top
+    if (currentScrollY <= 50) {
       setShowHeader(true);
+      setLastScrollY(currentScrollY);
+      return;
     }
-    setLastScrollY(currentScrollY);
+
+    const diff = currentScrollY - lastScrollY;
+    
+    if (diff > 10) {
+      // Scrolling down
+      setShowHeader(false);
+      setLastScrollY(currentScrollY);
+    } else if (diff < -10) {
+      // Scrolling up
+      setShowHeader(true);
+      setLastScrollY(currentScrollY);
+    }
   };
 
   /* ── Early returns ── */
@@ -150,11 +160,7 @@ export default function AdminSidebarLayout({ children }) {
         </div>
       </motion.header>
 
-      <motion.div 
-        animate={{ paddingTop: showHeader ? 48 : 0 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="flex flex-1 overflow-hidden"
-      >
+      <div className="flex flex-1 overflow-hidden">
         {/* ══════════════════════════════════════
             FIXED OVERLAY SIDEBAR (Adjusts on Scroll)
         ══════════════════════════════════════ */}
@@ -360,12 +366,16 @@ export default function AdminSidebarLayout({ children }) {
           {/* ── Page Content ── */}
           <div 
             onScroll={handleScroll}
-            className="flex flex-1 flex-col overflow-y-auto"
+            className="flex flex-1 flex-col overflow-y-auto relative"
           >
-            {children}
+            {/* Spacer to prevent content from hiding under the fixed header when at the top */}
+            <div className="h-12 shrink-0 w-full" />
+            <div className="flex flex-1 flex-col">
+              {children}
+            </div>
           </div>
         </main>
-      </motion.div>
+      </div>
     </div>
   );
 }
