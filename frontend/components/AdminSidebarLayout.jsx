@@ -84,7 +84,7 @@ export default function AdminSidebarLayout({ children }) {
       {/* ══════════════════════════════════════
           TOP NAVBAR (Full Width)
       ══════════════════════════════════════ */}
-      <header className="fixed top-0 left-0 right-0 z-[60] flex h-12 shrink-0 items-center justify-between border-b border-[#1a3a6b] bg-[#1e3a5f] px-5 shadow-sm">
+      <header className="z-[60] flex h-12 shrink-0 items-center justify-between border-b border-[#1a3a6b] bg-[#1e3a5f] px-5 shadow-sm">
         {/* Left: role badge */}
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-0.5 text-[11px] font-semibold text-white">
@@ -129,7 +129,7 @@ export default function AdminSidebarLayout({ children }) {
         </div>
       </header>
 
-      <div className="flex flex-1 pt-12 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
         {/* ══════════════════════════════════════
             FIXED OVERLAY SIDEBAR (Starts Under Navbar)
         ══════════════════════════════════════ */}
