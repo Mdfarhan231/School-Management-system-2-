@@ -65,6 +65,22 @@ export default function AdminSidebarLayout({ children }) {
     router.refresh();
   };
 
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  const handleScroll = (e) => {
+    const currentScrollY = e.currentTarget.scrollTop;
+    // Hide if scrolling down and moved more than 10px
+    if (currentScrollY > lastScrollY && currentScrollY > 50) {
+      setShowHeader(false);
+    } 
+    // Show if scrolling up
+    else if (currentScrollY < lastScrollY) {
+      setShowHeader(true);
+    }
+    setLastScrollY(currentScrollY);
+  };
+
   /* ── Early returns ── */
   if (isAuthPage) return <>{children}</>;
 
@@ -80,11 +96,16 @@ export default function AdminSidebarLayout({ children }) {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-[#f8fafc] font-sans text-slate-900 overflow-hidden">
+    <div className="flex h-screen flex-col bg-[#f8fafc] font-sans text-slate-900 overflow-hidden relative">
       {/* ══════════════════════════════════════
-          TOP NAVBAR (Full Width)
+          ANIMATED TOP NAVBAR (Hide on Scroll)
       ══════════════════════════════════════ */}
-      <header className="z-[60] flex h-12 shrink-0 items-center justify-between border-b border-[#1a3a6b] bg-[#1e3a5f] px-5 shadow-sm">
+      <motion.header
+        initial={false}
+        animate={{ y: showHeader ? 0 : -48 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="fixed top-0 left-0 right-0 z-[60] flex h-12 shrink-0 items-center justify-between border-b border-[#1a3a6b] bg-[#1e3a5f] px-5 shadow-sm"
+      >
         {/* Left: role badge */}
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-0.5 text-[11px] font-semibold text-white">
@@ -127,22 +148,24 @@ export default function AdminSidebarLayout({ children }) {
             </p>
           </div>
         </div>
-      </header>
+      </motion.header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden pt-12">
         {/* ══════════════════════════════════════
-            FIXED OVERLAY SIDEBAR (Starts Under Navbar)
+            FIXED OVERLAY SIDEBAR (Adjusts on Scroll)
         ══════════════════════════════════════ */}
         <motion.aside
           initial={false}
           animate={{
             width: isCollapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W,
+            top: showHeader ? 48 : 0,
+            height: showHeader ? "calc(100vh - 48px)" : "100vh",
             boxShadow: isCollapsed
               ? "0 0 0 0 rgba(0,0,0,0)"
               : "8px 0 32px rgba(0,0,0,0.22)",
           }}
           transition={{ type: "spring", stiffness: 320, damping: 34 }}
-          className="fixed left-0 top-12 z-50 h-[calc(100vh-48px)] flex flex-col"
+          className="fixed left-0 z-50 flex flex-col"
           style={{
             overflow: "visible",
             backgroundColor: "#0F172B",
@@ -330,8 +353,11 @@ export default function AdminSidebarLayout({ children }) {
           )}
           style={{ paddingLeft: SIDEBAR_COLLAPSED_W }}
         >
-          {/* ── Page Content (Removed p-6 lg:p-10 to eliminate white space) ── */}
-          <div className="flex flex-1 flex-col overflow-y-auto">
+          {/* ── Page Content ── */}
+          <div 
+            onScroll={handleScroll}
+            className="flex flex-1 flex-col overflow-y-auto"
+          >
             {children}
           </div>
         </main>
