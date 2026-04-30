@@ -150,7 +150,11 @@ export default function AdminSidebarLayout({ children }) {
         </div>
       </motion.header>
 
-      <div className="flex flex-1 overflow-hidden pt-12">
+      <motion.div 
+        animate={{ paddingTop: showHeader ? 48 : 0 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="flex flex-1 overflow-hidden"
+      >
         {/* ══════════════════════════════════════
             FIXED OVERLAY SIDEBAR (Adjusts on Scroll)
         ══════════════════════════════════════ */}
@@ -361,7 +365,7 @@ export default function AdminSidebarLayout({ children }) {
             {children}
           </div>
         </main>
-      </div>
+      </motion.div>
     </div>
   );
 }

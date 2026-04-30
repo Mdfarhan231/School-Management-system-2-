@@ -135,7 +135,11 @@ export default function TeacherSidebarLayout({ children }) {
         </div>
       </motion.header>
 
-      <div className="flex flex-1 overflow-hidden pt-12">
+      <motion.div 
+        animate={{ paddingTop: showHeader ? 48 : 0 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="flex flex-1 overflow-hidden"
+      >
         <motion.aside
           initial={false}
           animate={{
@@ -343,7 +347,7 @@ export default function TeacherSidebarLayout({ children }) {
             {children}
           </div>
         </main>
-      </div>
+      </motion.div>
     </div>
   );
 }
