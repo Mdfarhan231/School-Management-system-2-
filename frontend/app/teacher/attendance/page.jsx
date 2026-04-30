@@ -188,7 +188,7 @@ export default function TeacherAttendancePage() {
 
   /* ── render ──────────────────────────────────────────────── */
   return (
-    <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in duration-500">
+    <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in duration-500 p-6 lg:p-8">
 
       {/* ── Header ─────────────────────────────────────────── */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
