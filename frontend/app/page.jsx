@@ -160,12 +160,23 @@ function HeaderAndNavbar() {
         const data = await apiRequest("/notices");
         if (Array.isArray(data)) {
           // Filter notices meant for Homepage
-          const homepageNotices = data.filter(notice => 
-            notice.category === "Homepage" || 
-            notice.category === "ALL" || 
-            (notice.target_audience && notice.target_audience.includes("Homepage")) ||
-            (notice.targetAudience && notice.targetAudience.includes("Homepage"))
-          );
+          const homepageNotices = data.filter(notice => {
+            const cat = Array.isArray(notice.category) ? notice.category : [];
+            const audience = Array.isArray(notice.targetAudience)
+              ? notice.targetAudience
+              : notice.target_audience
+              ? notice.target_audience
+              : [];
+            return (
+              cat.includes('ALL') ||
+              cat.includes('Homepage') ||
+              audience.includes('Homepage') ||
+              audience.includes('ALL') ||
+              // Legacy: single-string category field
+              notice.category === 'Homepage' ||
+              notice.category === 'ALL'
+            );
+          });
           setNotices(homepageNotices);
         }
       } catch (error) {

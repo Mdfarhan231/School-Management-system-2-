@@ -41,7 +41,18 @@ export default function StudentDashboardPage() {
         setResults(sortedResults);
 
         const filteredNotices = Array.isArray(noticesData)
-          ? noticesData.filter(n => !n.targetAudience || n.targetAudience.includes('ALL') || n.targetAudience.includes('Students') || n.targetAudience.length === 0)
+          ? noticesData.filter(n => {
+              const cat = Array.isArray(n.category) ? n.category : [];
+              // Also fall back to targetAudience for older notices
+              const audience = Array.isArray(n.targetAudience) ? n.targetAudience : [];
+              return (
+                cat.length === 0 ||
+                cat.includes('ALL') ||
+                cat.includes('Student') ||
+                audience.includes('ALL') ||
+                audience.includes('Students')
+              );
+            })
           : [];
         setNotices(filteredNotices.slice(0, 3));
 

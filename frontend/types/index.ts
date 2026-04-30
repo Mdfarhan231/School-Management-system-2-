@@ -5,7 +5,9 @@ export interface Notice {
   id: string;
   title: string;
   content: string;
-  category: NoticeCategory;
+  // category is now a multi-select array, e.g. ['Student', 'Homepage']
+  // If it contains 'ALL', everyone can see it
+  category: string[];
   priority: NoticePriority;
   status: 'draft' | 'published';
   date: string;

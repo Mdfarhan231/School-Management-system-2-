@@ -52,9 +52,18 @@ export const NoticeList: React.FC<NoticeListProps> = ({ notices, onDelete, onEdi
                     <Badge className={cn("border-none capitalize px-3 py-1", priorityColors[notice.priority])}>
                       {notice.priority} priority
                     </Badge>
-                    <Badge variant="outline" className="capitalize px-3 py-1 bg-white">
-                      {notice.category}
-                    </Badge>
+                    {/* category is an array — render each as a badge */}
+                    {Array.isArray(notice.category)
+                      ? notice.category.map(cat => (
+                          <Badge key={cat} variant="outline" className="capitalize px-3 py-1 bg-white">
+                            {cat}
+                          </Badge>
+                        ))
+                      : notice.category ? (
+                          <Badge variant="outline" className="capitalize px-3 py-1 bg-white">
+                            {notice.category}
+                          </Badge>
+                        ) : null}
                     <Badge className={cn("border-none capitalize px-3 py-1 ml-auto md:ml-0", statusColors[notice.status])}>
                       {notice.status}
                     </Badge>
@@ -75,8 +84,12 @@ export const NoticeList: React.FC<NoticeListProps> = ({ notices, onDelete, onEdi
                       {format(new Date(notice.date), "MMM do, yyyy")}
                     </div>
                     <div className="hidden sm:flex items-center gap-1.5 border-l border-slate-200 pl-4">
-                      <span className="opacity-70">To:</span> 
-                      {notice.targetAudience.length ? notice.targetAudience.join(', ') : 'All'}
+                      <span className="opacity-70">To:</span>
+                      {Array.isArray(notice.category) && notice.category.length
+                        ? notice.category.join(', ')
+                        : Array.isArray(notice.targetAudience) && notice.targetAudience.length
+                        ? notice.targetAudience.join(', ')
+                        : 'All'}
                     </div>
                   </div>
                 </div>

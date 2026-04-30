@@ -20,11 +20,19 @@ class NoticeController extends Controller
                 // Parse PostgreSQL array string like "{Students,Teachers}" into an actual PHP array
                 if (is_string($notice->target_audience)) {
                     $trimmed = trim($notice->target_audience, '{}');
-                    // Ensure quotes are handled if any
                     $trimmed = str_replace('"', '', $trimmed);
                     $notice->targetAudience = $trimmed ? explode(',', $trimmed) : [];
                 } else {
                     $notice->targetAudience = [];
+                }
+
+                // Parse category as array (stored as PostgreSQL text[])
+                if (is_string($notice->category)) {
+                    $cat = trim($notice->category, '{}');
+                    $cat = str_replace('"', '', $cat);
+                    $notice->category = $cat ? explode(',', $cat) : [];
+                } elseif (!is_array($notice->category)) {
+                    $notice->category = [];
                 }
             }
             
@@ -37,38 +45,42 @@ class NoticeController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required|string',
-            'content' => 'required|string',
-            'category' => 'required|string',
-            'priority' => 'required|string',
-            'status' => 'required|string',
+            'title'          => 'required|string',
+            'content'        => 'required|string',
+            'category'       => 'required|array|min:1',
+            'category.*'     => 'string',
+            'priority'       => 'required|string',
+            'status'         => 'required|string',
             'targetAudience' => 'nullable|array',
         ]);
 
         try {
-            $audienceArray = $request->input('targetAudience', []);
-            // Format for Postgres TEXT[]
-            $pgArray = '{' . implode(',', $audienceArray) . '}';
+            // category is now an array — format for PostgreSQL TEXT[]
+            $categoryArray = $request->input('category', []);
+            $pgCategory    = '{' . implode(',', $categoryArray) . '}';
+
+            $audienceArray = $request->input('targetAudience', $categoryArray);
+            $pgArray       = '{' . implode(',', $audienceArray) . '}';
 
             $id = (string) Str::uuid();
 
             DB::table('notices')->insert([
-                'id' => $id,
-                'title' => $request->title,
-                'content' => $request->input('content'),
-                'category' => $request->category,
-                'priority' => $request->priority,
-                'status' => $request->status,
-                'date' => $request->date ?? now(),
-                'author' => $request->author ?? 'Admin',
+                'id'              => $id,
+                'title'           => $request->title,
+                'content'         => $request->input('content'),
+                'category'        => $pgCategory,
+                'priority'        => $request->priority,
+                'status'          => $request->status,
+                'date'            => $request->date ?? now(),
+                'author'          => $request->author ?? 'Admin',
                 'target_audience' => $pgArray,
-                'created_at' => now(),
-                'updated_at' => now()
+                'created_at'      => now(),
+                'updated_at'      => now()
             ]);
 
             return response()->json([
                 'message' => 'Notice created successfully',
-                'id' => $id
+                'id'      => $id
             ], 201);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -78,33 +90,37 @@ class NoticeController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'title' => 'required|string',
-            'content' => 'required|string',
-            'category' => 'required|string',
-            'priority' => 'required|string',
-            'status' => 'required|string',
+            'title'          => 'required|string',
+            'content'        => 'required|string',
+            'category'       => 'required|array|min:1',
+            'category.*'     => 'string',
+            'priority'       => 'required|string',
+            'status'         => 'required|string',
             'targetAudience' => 'nullable|array',
         ]);
 
         try {
-            $audienceArray = $request->input('targetAudience', []);
-            $pgArray = '{' . implode(',', $audienceArray) . '}';
+            $categoryArray = $request->input('category', []);
+            $pgCategory    = '{' . implode(',', $categoryArray) . '}';
+
+            $audienceArray = $request->input('targetAudience', $categoryArray);
+            $pgArray       = '{' . implode(',', $audienceArray) . '}';
 
             DB::table('notices')->where('id', $id)->update([
-                'title' => $request->title,
-                'content' => $request->input('content'),
-                'category' => $request->category,
-                'priority' => $request->priority,
-                'status' => $request->status,
-                'date' => $request->date ?? now(),
-                'author' => $request->author ?? 'Admin',
+                'title'           => $request->title,
+                'content'         => $request->input('content'),
+                'category'        => $pgCategory,
+                'priority'        => $request->priority,
+                'status'          => $request->status,
+                'date'            => $request->date ?? now(),
+                'author'          => $request->author ?? 'Admin',
                 'target_audience' => $pgArray,
-                'updated_at' => now()
+                'updated_at'      => now()
             ]);
 
             return response()->json([
                 'message' => 'Notice updated successfully',
-                'id' => $id
+                'id'      => $id
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

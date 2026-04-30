@@ -1,8 +1,8 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, Button, Input, Textarea, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge, Calendar, Popover, PopoverContent, PopoverTrigger } from './ui';
-import { CalendarIcon, Send, Save, Eye, AlertCircle } from 'lucide-react';
+import { CalendarIcon, Send, AlertCircle, CheckSquare, Square } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Notice, NoticeCategory, NoticePriority } from '@/types';
@@ -13,16 +13,64 @@ interface NoticeFormProps {
   initialData?: Partial<Notice>;
 }
 
+// All available audience / visibility options
+const AUDIENCE_OPTIONS: { value: string; label: string; description: string; color: string }[] = [
+  { value: 'ALL',      label: 'All',      description: 'Everyone (Homepage + Students + Teachers)', color: 'indigo' },
+  { value: 'Homepage', label: 'Homepage', description: 'Show on the public homepage notice bar',   color: 'violet' },
+  { value: 'Student',  label: 'Students', description: 'Visible on the student dashboard',          color: 'blue'   },
+  { value: 'Teacher',  label: 'Teachers', description: 'Visible on the teacher dashboard',          color: 'emerald'},
+];
+
+function normalizeCategory(raw: any): string[] {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string') {
+    // handle PostgreSQL-style "{ALL,Student}" strings
+    const trimmed = raw.trim().replace(/^\{/, '').replace(/\}$/, '');
+    return trimmed ? trimmed.split(',').map(s => s.trim()) : [];
+  }
+  return [];
+}
+
 export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initialData }) => {
-  const [title, setTitle] = useState(initialData?.title || '');
-  const [content, setContent] = useState(initialData?.content || '');
-  const [category, setCategory] = useState<NoticeCategory>((initialData?.category as NoticeCategory) || 'ALL');
+  const [title, setTitle]       = useState(initialData?.title || '');
+  const [content, setContent]   = useState(initialData?.content || '');
+  const [category, setCategory] = useState<string[]>(normalizeCategory(initialData?.category));
   const [priority, setPriority] = useState<NoticePriority>((initialData?.priority as NoticePriority) || 'medium');
-  const [date, setDate] = useState<Date>(initialData?.date ? new Date(initialData.date) : new Date());
-  const [targetAudience, setTargetAudience] = useState<string[]>(initialData?.targetAudience || []);
+  const [date, setDate]         = useState<Date>(initialData?.date ? new Date(initialData.date) : new Date());
+
+  // When ALL is toggled on, select every option. When toggled off, clear all.
+  const toggleOption = (value: string) => {
+    if (value === 'ALL') {
+      // Toggle ALL: if already selected deselect everything; otherwise select all
+      const allSelected = AUDIENCE_OPTIONS.every(o => category.includes(o.value));
+      if (allSelected) {
+        setCategory([]);
+      } else {
+        setCategory(AUDIENCE_OPTIONS.map(o => o.value));
+      }
+      return;
+    }
+
+    setCategory(prev => {
+      let next: string[];
+      if (prev.includes(value)) {
+        next = prev.filter(v => v !== value && v !== 'ALL');
+      } else {
+        next = [...prev.filter(v => v !== 'ALL'), value];
+        // Auto-tick ALL if all three non-ALL options are selected
+        const nonAll = AUDIENCE_OPTIONS.filter(o => o.value !== 'ALL').map(o => o.value);
+        if (nonAll.every(v => next.includes(v))) {
+          next = AUDIENCE_OPTIONS.map(o => o.value);
+        }
+      }
+      return next;
+    });
+  };
+
+  const isAllChecked = AUDIENCE_OPTIONS.every(o => category.includes(o.value));
 
   const handleSubmit = () => {
-    if (!title || !content) return;
+    if (!title || !content || category.length === 0) return;
     onSave({
       id: initialData?.id,
       title,
@@ -31,24 +79,23 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initia
       priority,
       status: 'published',
       date: date.toISOString(),
-      targetAudience,
+      targetAudience: category,   // keep targetAudience in sync for backward-compat
       author: 'Admin User',
     });
   };
 
-  const toggleAudience = (audience: string) => {
-    setTargetAudience((prev) =>
-      prev.includes(audience) ? prev.filter((a) => a !== audience) : [...prev, audience]
-    );
+  const priorityColors: Record<NoticePriority, string> = {
+    low:    'bg-blue-100 text-blue-700',
+    medium: 'bg-yellow-100 text-yellow-700',
+    high:   'bg-orange-100 text-orange-700',
+    urgent: 'bg-red-100 text-red-700',
   };
 
-  const audiences = ['Students', 'Teachers', 'Homepage'];
-
-  const priorityColors: Record<NoticePriority, string> = {
-    low: 'bg-blue-100 text-blue-700',
-    medium: 'bg-yellow-100 text-yellow-700',
-    high: 'bg-orange-100 text-orange-700',
-    urgent: 'bg-red-100 text-red-700',
+  const optionColorMap: Record<string, string> = {
+    indigo: 'border-indigo-200 bg-indigo-50 text-indigo-700',
+    violet: 'border-violet-200 bg-violet-50 text-violet-700',
+    blue:   'border-blue-200 bg-blue-50 text-blue-700',
+    emerald:'border-emerald-200 bg-emerald-50 text-emerald-700',
   };
 
   return (
@@ -68,6 +115,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initia
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title" className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Notice Title</Label>
               <Input
@@ -79,88 +127,96 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initia
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2 relative z-20">
-                <Label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Category</Label>
-                <Select value={category} onValueChange={(v: any) => setCategory(v as NoticeCategory)}>
-                  <SelectTrigger className="bg-slate-50 border-slate-200">
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">ALL</SelectItem>
-                    <SelectItem value="Student">Student</SelectItem>
-                    <SelectItem value="Teacher">Teacher</SelectItem>
-                    <SelectItem value="Homepage">Homepage</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Visibility / Category — multi-select checkboxes */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">
+                Visible To <span className="text-rose-500 ml-0.5">*</span>
+              </Label>
+              <p className="text-xs text-slate-400 -mt-1">Select one or more audiences. Selecting <strong>All</strong> includes Homepage, Students &amp; Teachers.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {AUDIENCE_OPTIONS.map(opt => {
+                  const checked = category.includes(opt.value);
+                  const colorCls = checked ? optionColorMap[opt.color] : 'border-slate-200 bg-white text-slate-600';
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => toggleOption(opt.value)}
+                      className={cn(
+                        'flex items-start gap-3 rounded-xl border-2 px-4 py-3 text-left transition-all duration-200 hover:shadow-sm',
+                        colorCls
+                      )}
+                    >
+                      <span className="mt-0.5 shrink-0">
+                        {checked
+                          ? <CheckSquare className="w-4 h-4" />
+                          : <Square className="w-4 h-4 text-slate-300" />}
+                      </span>
+                      <span>
+                        <span className="block text-sm font-bold leading-tight">{opt.label}</span>
+                        <span className="block text-xs opacity-70 mt-0.5 leading-snug">{opt.description}</span>
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-              <div className="space-y-2 relative z-10">
-                <Label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Priority</Label>
-                <Select value={priority} onValueChange={(v: any) => setPriority(v as NoticePriority)}>
-                  <SelectTrigger className="bg-slate-50 border-slate-200">
-                    <SelectValue placeholder="Select Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {category.length === 0 && (
+                <p className="text-xs text-rose-500 font-medium">Please select at least one audience.</p>
+              )}
             </div>
 
+            {/* Priority */}
+            <div className="space-y-2 relative z-10">
+              <Label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Priority</Label>
+              <Select value={priority} onValueChange={(v: any) => setPriority(v as NoticePriority)}>
+                <SelectTrigger className="bg-slate-50 border-slate-200">
+                  <SelectValue placeholder="Select Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Content */}
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Content</Label>
               <Textarea
                 placeholder="Write the detailed announcement here..."
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="min-h-[200px] bg-slate-50 border-slate-200 focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
+                className="min-h-[160px] bg-slate-50 border-slate-200 focus:ring-2 focus:ring-indigo-500 transition-all duration-200"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 items-end">
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Notice Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full justify-start text-left font-normal bg-slate-50 border-slate-200",
-                        !date && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={(d: any) => d && setDate(d)}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Target Audience</Label>
-                <div className="flex flex-wrap gap-2">
-                  {audiences.map((aud) => (
-                    <Badge
-                      key={aud}
-                      variant={targetAudience.includes(aud) ? "default" : "outline"}
-                      className="cursor-pointer transition-all duration-200 py-1"
-                      onClick={() => toggleAudience(aud)}
-                    >
-                      {aud}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
+            {/* Date */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-slate-700 uppercase tracking-wider">Notice Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal bg-slate-50 border-slate-200",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(d: any) => d && setDate(d)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </CardContent>
           <CardFooter className="flex justify-between border-t border-slate-100 pt-6">
@@ -170,14 +226,18 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initia
               </Button>
             </div>
             <div className="flex gap-2">
-              <Button onClick={() => handleSubmit()} className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200">
+              <Button
+                onClick={() => handleSubmit()}
+                disabled={category.length === 0 || !title || !content}
+                className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Send className="w-4 h-4" /> {initialData?.id ? 'Update Notice' : 'Publish Notice'}
               </Button>
             </div>
           </CardFooter>
         </Card>
 
-        {/* Live Preview Side (Only visible on larger screens) */}
+        {/* Live Preview Side */}
         <div className="hidden lg:block">
           <AnimatePresence>
             <motion.div
@@ -190,11 +250,15 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initia
                   <AlertCircle size={200} />
                 </div>
                 <CardHeader className="relative z-10 flex-shrink-0">
-                  <div className="flex justify-between items-start">
-                    <Badge className="bg-white/20 text-white border-none backdrop-blur-md uppercase tracking-widest text-[10px] px-3 py-1">
-                      {category}
-                    </Badge>
-                    <Badge className={cn("border-none backdrop-blur-md px-3 py-1 uppercase tracking-widest text-[10px] text-white bg-white/20")}>
+                  <div className="flex flex-wrap gap-2 items-start">
+                    {category.length > 0 ? category.map(c => (
+                      <Badge key={c} className="bg-white/20 text-white border-none backdrop-blur-md uppercase tracking-widest text-[10px] px-3 py-1">
+                        {c}
+                      </Badge>
+                    )) : (
+                      <Badge className="bg-white/10 text-white/40 border-none text-[10px] px-3 py-1">No audience selected</Badge>
+                    )}
+                    <Badge className={cn("border-none backdrop-blur-md px-3 py-1 uppercase tracking-widest text-[10px] text-white bg-white/20 ml-auto")}>
                       {priority} priority
                     </Badge>
                   </div>
@@ -210,16 +274,18 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initia
                   <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 flex-grow text-white/90 leading-relaxed whitespace-pre-wrap">
                     {content || 'Enter notice content to see how it will look to the community...'}
                   </div>
-                  <div className="mt-8 flex flex-wrap gap-2 items-center">
-                    <span className="text-xs uppercase tracking-widest text-white/50 font-bold">Audience:</span>
-                    {targetAudience.length === 0 ? (
-                      <span className="text-xs text-white/40 italic">All members</span>
+                  <div className="mt-6 p-4 bg-white/10 rounded-xl">
+                    <p className="text-[10px] uppercase tracking-widest text-white/50 font-bold mb-2">Who can see this notice</p>
+                    {category.length === 0 ? (
+                      <p className="text-xs text-white/40 italic">No audience selected yet</p>
+                    ) : category.includes('ALL') ? (
+                      <p className="text-xs text-white font-semibold">✓ Everyone — Homepage, Students &amp; Teachers</p>
                     ) : (
-                      targetAudience.map(t => (
-                        <Badge key={t} className="bg-white/20 text-white border-none text-[10px] bg-transparent border">
-                          {t}
-                        </Badge>
-                      ))
+                      <ul className="space-y-1">
+                        {category.includes('Homepage') && <li className="text-xs text-white/80">✓ Public Homepage</li>}
+                        {category.includes('Student')  && <li className="text-xs text-white/80">✓ Student Dashboard</li>}
+                        {category.includes('Teacher')  && <li className="text-xs text-white/80">✓ Teacher Dashboard</li>}
+                      </ul>
                     )}
                   </div>
                 </CardContent>

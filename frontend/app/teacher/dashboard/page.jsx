@@ -45,9 +45,20 @@ const TeacherDashboardPage = () => {
         setExams(sortedExams);
 
         // Process notices (get top 2 recent)
-        // Filter notices to 'ALL' or 'Teachers' if target_audience is available
+        // Filter notices visible to Teachers
         const filteredNotices = Array.isArray(noticesData)
-            ? noticesData.filter(n => !n.targetAudience || n.targetAudience.includes('ALL') || n.targetAudience.includes('Teachers') || n.targetAudience.length === 0)
+            ? noticesData.filter(n => {
+                const cat = Array.isArray(n.category) ? n.category : [];
+                // Also fall back to targetAudience for older notices
+                const audience = Array.isArray(n.targetAudience) ? n.targetAudience : [];
+                return (
+                  cat.length === 0 ||
+                  cat.includes('ALL') ||
+                  cat.includes('Teacher') ||
+                  audience.includes('ALL') ||
+                  audience.includes('Teachers')
+                );
+              })
             : [];
         setNotices(filteredNotices.slice(0, 2));
 
