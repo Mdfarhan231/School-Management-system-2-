@@ -11,6 +11,7 @@ const TeacherDashboardPage = () => {
   const [teacher, setTeacher] = useState(null);
   const [stats, setStats] = useState({ studentCount: 0 });
   const [exams, setExams] = useState([]);
+  const [totalExams, setTotalExams] = useState(0);
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,10 +40,9 @@ const TeacherDashboardPage = () => {
         setStats({ studentCount: statsData.student_count || 0 });
         
         // Process exams (get top 3 upcoming)
-        const sortedExams = Array.isArray(examsData) 
-            ? examsData.slice(0, 3) 
-            : [];
-        setExams(sortedExams);
+        const allExams = Array.isArray(examsData) ? examsData : [];
+        setTotalExams(allExams.length);
+        setExams(allExams.slice(0, 3));
 
         // Process notices (get top 2 recent)
         // Filter notices visible to Teachers
@@ -60,7 +60,7 @@ const TeacherDashboardPage = () => {
                 );
               })
             : [];
-        setNotices(filteredNotices.slice(0, 2));
+        setNotices(filteredNotices.slice(0, 5));
 
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -201,7 +201,14 @@ const TeacherDashboardPage = () => {
           {/* Upcoming Exams */}
           <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
              <div className="flex justify-between items-center mb-6">
-                <h4 className="text-lg font-bold text-slate-900">Upcoming Exams</h4>
+                <div className="flex items-center gap-3">
+                  <h4 className="text-lg font-bold text-slate-900">Upcoming Exams</h4>
+                  {totalExams > 0 && (
+                    <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">
+                      {totalExams} total
+                    </span>
+                  )}
+                </div>
                 <Link href="/teacher/exam-routine" className="text-indigo-600 text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all">
                   Full Routine <ArrowRight size={14} />
                 </Link>
@@ -233,6 +240,9 @@ const TeacherDashboardPage = () => {
           <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
              <div className="flex justify-between items-center mb-6">
                 <h4 className="text-lg font-bold text-slate-900">Recent Notices</h4>
+                <Link href="/teacher/notices" className="text-indigo-600 text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all">
+                  All Notices <ArrowRight size={14} />
+                </Link>
              </div>
              <div className="space-y-6">
                 {notices.length > 0 ? notices.map((notice, idx) => (
