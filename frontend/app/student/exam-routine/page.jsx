@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 
@@ -36,10 +35,7 @@ export default function StudentExamRoutinePage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("student");
-    router.replace("/student/login");
-  };
+
 
   if (!student) {
     return (
@@ -51,32 +47,7 @@ export default function StudentExamRoutinePage() {
 
 
   return (
-    <main className="min-h-screen bg-[#e5e7eb]">
-      <header className="bg-[#17172f] px-4 py-3 text-white shadow">
-        <h1 className="text-[15px] font-medium">School Management System</h1>
-      </header>
-
-      <nav className="border-b border-gray-300 bg-white">
-        <div className="flex items-center justify-end gap-6 px-6 py-3 text-[14px] font-semibold text-[#17172f]">
-          <Link href="/student/dashboard" className="hover:text-blue-600">
-            🏠 Dashboard
-          </Link>
-
-          <Link href="/student/exam-routine" className="hover:text-blue-600">
-            📝 Exam Routine
-          </Link>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="hover:text-red-600"
-          >
-            ↪ Logout
-          </button>
-        </div>
-      </nav>
-
-      <section className="px-4 py-8">
+    <section className="px-4 py-8">
         <div className="mx-auto max-w-5xl rounded-[24px] bg-[#e5e7eb] p-5 shadow-[-8px_-8px_16px_rgba(255,255,255,0.85),8px_8px_18px_rgba(163,177,198,0.45)]">
           <h2 className="mb-2 text-[24px] font-bold text-black">
             My Exam Routine
@@ -141,6 +112,5 @@ export default function StudentExamRoutinePage() {
           </div>
         </div>
       </section>
-    </main>
   );
 }

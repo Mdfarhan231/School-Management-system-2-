@@ -258,15 +258,8 @@ export default function StudentDashboardPage() {
              </div>
              <div className="space-y-4">
                 {results.length > 0 ? results.map((res, idx) => {
-                  const totalMarks = (Number(res.written_marks) || 0) + (Number(res.mcq_marks) || 0) + (Number(res.practical_marks) || 0) + (Number(res.assignment_marks) || 0) + (Number(res.viva_marks) || 0) + (Number(res.class_test_marks) || 0);
-                  
-                  let grade = 'F';
-                  if (totalMarks >= 80) grade = 'A+';
-                  else if (totalMarks >= 70) grade = 'A';
-                  else if (totalMarks >= 60) grade = 'A-';
-                  else if (totalMarks >= 50) grade = 'B';
-                  else if (totalMarks >= 40) grade = 'C';
-                  else if (totalMarks >= 33) grade = 'D';
+                  const totalMark = res.total_marks ?? res.total_mark ?? 0;
+                  const grade = res.grade || 'F';
 
                   return (
                     <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50">
@@ -283,7 +276,7 @@ export default function StudentDashboardPage() {
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{res.exam_name || 'Exam'}</p>
                          </div>
                       </div>
-                      <div className="text-sm font-bold text-slate-600">{totalMarks} / 100</div>
+                      <div className="text-sm font-bold text-slate-600">{totalMark} / 100</div>
                     </div>
                   );
                 }) : (

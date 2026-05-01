@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 
@@ -40,10 +39,7 @@ export default function StudentAttendancePage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("student");
-    router.replace("/student/login");
-  };
+
 
   if (!student) {
     return (
@@ -55,42 +51,7 @@ export default function StudentAttendancePage() {
 
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#e5e7eb]">
-      <header className="bg-[#17172f] px-4 py-3 text-white shadow">
-        <h1 className="text-[15px] font-medium sm:text-xl">
-          School Management System
-        </h1>
-      </header>
-
-      <nav className="border-b border-gray-300 bg-white">
-        <div className="flex items-center justify-end gap-6 px-6 py-3 text-[14px] font-semibold text-[#17172f]">
-          <Link href="/student/dashboard" className="hover:text-blue-600">
-            🏠 Dashboard
-          </Link>
-
-          <Link href="/student/attendance" className="hover:text-blue-600">
-            📋 Attendance
-          </Link>
-
-          <Link href="/student/exam-routine" className="hover:text-blue-600">
-            📝 Exam Routine
-          </Link>
-
-          <Link href="/student/results" className="hover:text-blue-600">
-            📊 Results
-          </Link>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="hover:text-red-600"
-          >
-            ↪ Logout
-          </button>
-        </div>
-      </nav>
-
-      <section className="flex-1 px-4 py-8">
+    <section className="flex-1 px-4 py-8">
         <div className="mx-auto max-w-5xl rounded-[28px] bg-[#e5e7eb] p-6 shadow-[-10px_-10px_20px_rgba(255,255,255,0.85),10px_10px_22px_rgba(163,177,198,0.5)]">
           <h2 className="mb-4 text-[22px] font-bold text-black">
             My Attendance History
@@ -157,11 +118,6 @@ export default function StudentAttendancePage() {
             </table>
           </div>
         </div>
-      </section>
-
-      <footer className="bg-[#17172f] px-4 py-6 text-center text-xs font-semibold text-white">
-        © 2026 Global Knowledge School
-      </footer>
-    </main>
+    </section>
   );
 }
