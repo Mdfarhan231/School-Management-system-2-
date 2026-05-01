@@ -24,13 +24,25 @@ function getStatusStyle(status) {
   return "bg-blue-100 text-blue-700";
 }
 
+/* Grade style — covers all official letter grades */
 function getGradeStyle(grade) {
   if (!grade) return "bg-slate-100 text-slate-700";
-  if (grade === "A+") return "bg-emerald-100 text-emerald-700";
-  if (grade.startsWith("A")) return "bg-indigo-100 text-indigo-700";
-  if (grade.startsWith("B")) return "bg-sky-100 text-sky-700";
+  if (grade === "A+")  return "bg-emerald-100 text-emerald-700";
+  if (grade === "A")   return "bg-indigo-100  text-indigo-700";
+  if (grade === "A-")  return "bg-indigo-100  text-indigo-700";
+  if (grade === "B+")  return "bg-sky-100     text-sky-700";
+  if (grade === "B")   return "bg-sky-100     text-sky-700";
+  if (grade === "B-")  return "bg-sky-100     text-sky-700";
+  if (grade === "C+")  return "bg-amber-100   text-amber-700";
+  if (grade === "C")   return "bg-amber-100   text-amber-700";
+  if (grade === "D")   return "bg-orange-100  text-orange-700";
+  if (grade === "F")   return "bg-red-100     text-red-700";
   return "bg-slate-100 text-slate-700";
 }
+
+/* NOTE: Grade & GPA computation lives entirely in
+   backend/app/Services/MarkCalculationService.php.
+   The frontend only renders values returned by the API. */
 
 function getStudentImage(picture) {
   return picture || "/student-demo.png";
@@ -266,22 +278,17 @@ export default function StudentResultsPage() {
       ) : Object.keys(groupedResults).length > 0 ? (
         <div className="space-y-10">
           {Object.entries(groupedResults).map(([examName, examRows], groupIdx) => {
-            /* Calculate group-level GPA & grade */
-            const validGpas = examRows.filter((r) => r.gpa != null).map((r) => Number(r.gpa));
-            const avgGpa = validGpas.length > 0 ? (validGpas.reduce((a, b) => a + b, 0) / validGpas.length) : null;
-
-            let overallGrade = "-";
-            if (avgGpa !== null) {
-              if (avgGpa >= 5.0) overallGrade = "A+";
-              else if (avgGpa >= 4.0) overallGrade = "A";
-              else if (avgGpa >= 3.5) overallGrade = "A-";
-              else if (avgGpa >= 3.0) overallGrade = "B";
-              else if (avgGpa >= 2.0) overallGrade = "C";
-              else overallGrade = "D";
-            }
+            /* Avg GPA badge — simple arithmetic only; all grade values come from
+               the Laravel MarkCalculationService (backend). No grade logic here. */
+            const validGpas = examRows
+              .filter((r) => r.gpa != null)
+              .map((r) => Number(r.gpa));
+            const avgGpa = validGpas.length > 0
+              ? validGpas.reduce((a, b) => a + b, 0) / validGpas.length
+              : null;
 
             const isFirst = groupIdx === 0;
-            const iconBg = isFirst ? "bg-indigo-600" : "bg-emerald-600";
+            const iconBg     = isFirst ? "bg-indigo-600" : "bg-emerald-600";
             const iconShadow = isFirst ? "shadow-indigo-600/20" : "shadow-emerald-600/20";
             const IconComponent = isFirst ? TrendingUp : Award;
 
@@ -302,16 +309,11 @@ export default function StudentResultsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    {avgGpa !== null && (
-                      <div className="px-5 py-2.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
-                        GPA: {avgGpa.toFixed(2)}
-                      </div>
-                    )}
-                    <div className="px-5 py-2.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
-                      Grade: {overallGrade}
+                  {avgGpa !== null && (
+                    <div className="px-5 py-2.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
+                      Avg GPA: {avgGpa.toFixed(2)}
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <ResultsTable results={examRows} />
