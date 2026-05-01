@@ -93,7 +93,7 @@ export default function StudentDashboardPage() {
     : Array.isArray(student.subjects) ? student.subjects : ['Unassigned'];
 
   return (
-    <div className="max-w-6xl mx-auto w-full space-y-8 animate-in fade-in duration-500">
+    <div className="max-w-6xl mx-auto w-full space-y-8 pt-6 pb-12 animate-in fade-in duration-500">
         <header className="flex flex-col sm:flex-row justify-between sm:items-end pb-4 border-b border-slate-200 gap-4">
           <div>
             <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Student Dashboard</h2>
