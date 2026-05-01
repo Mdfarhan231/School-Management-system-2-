@@ -290,7 +290,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ onSave, onCancel, initia
                   </div>
                 </CardContent>
                 <CardFooter className="relative z-10 flex flex-col items-start gap-1 border-t border-white/10 pt-4 mt-auto flex-shrink-0">
-                    <p className="text-[10px] uppercase font-bold tracking-widest text-white/40">Nexus School Management System</p>
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-white/40">GKS School Management System</p>
                     <p className="text-[10px] uppercase font-bold tracking-widest text-white/40">Official Announcement Portal</p>
                 </CardFooter>
               </Card>
