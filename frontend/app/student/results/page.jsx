@@ -16,12 +16,19 @@ import {
 } from "lucide-react";
 
 /* ── helpers ── */
-function getStatusStyle(status) {
-  if (!status) return "bg-gray-100 text-gray-700";
-  const s = String(status).toLowerCase();
-  if (s === "pass") return "bg-emerald-100 text-emerald-700";
-  if (s === "fail") return "bg-red-100 text-red-700";
-  return "bg-blue-100 text-blue-700";
+
+/* Map avg GPA → letter grade (mirrors backend MarkCalculationService scale) */
+function gpaToGrade(gpa) {
+  if (gpa >= 4.00) return "A+";
+  if (gpa >= 3.75) return "A";
+  if (gpa >= 3.50) return "A-";
+  if (gpa >= 3.25) return "B+";
+  if (gpa >= 3.00) return "B";
+  if (gpa >= 2.75) return "B-";
+  if (gpa >= 2.50) return "C+";
+  if (gpa >= 2.25) return "C";
+  if (gpa >= 2.00) return "D";
+  return "F";
 }
 
 /* Grade style — covers all official letter grades */
@@ -72,7 +79,7 @@ function ResultsTable({ results }) {
               <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-center">Total</th>
               <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-center">Grade</th>
               <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-center">GPA</th>
-              <th className="px-5 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-right">Status</th>
+
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -108,11 +115,7 @@ function ResultsTable({ results }) {
                 <td className="px-4 py-4 text-center font-bold text-slate-600">
                   {row.gpa != null ? Number(row.gpa).toFixed(2) : "-"}
                 </td>
-                <td className="px-5 py-4 text-right">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusStyle(row.status)}`}>
-                    {row.status || "-"}
-                  </span>
-                </td>
+
               </motion.tr>
             ))}
           </tbody>
@@ -310,8 +313,13 @@ export default function StudentResultsPage() {
                   </div>
 
                   {avgGpa !== null && (
-                    <div className="px-5 py-2.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
-                      Avg GPA: {avgGpa.toFixed(2)}
+                    <div className="flex items-center gap-3">
+                      <div className="px-5 py-2.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm">
+                        Avg GPA: {avgGpa.toFixed(2)}
+                      </div>
+                      <div className={`px-5 py-2.5 border rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm ${getGradeStyle(gpaToGrade(avgGpa))}`}>
+                        Grade: {gpaToGrade(avgGpa)}
+                      </div>
                     </div>
                   )}
                 </div>
