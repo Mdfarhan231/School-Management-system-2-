@@ -5,9 +5,6 @@ import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 import {
   Calendar,
-  Clock,
-  Download,
-  Share2,
   Search,
   Clock3,
   CalendarDays,
@@ -113,18 +110,7 @@ export default function TeacherExamRoutinePage() {
             </p>
           </div>
 
-          <div className="flex bg-white/5 backdrop-blur-md p-1.5 rounded-2xl border border-white/10">
-            <button className="flex items-center gap-2 px-4 py-2.5 text-white/60 hover:text-white transition-colors duration-200">
-              <Share2 size={18} />
-            </button>
-            <button className="flex items-center gap-3 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 active:scale-95 group">
-              <Download
-                size={16}
-                className="group-hover:-translate-y-0.5 transition-transform"
-              />
-              Download PDF
-            </button>
-          </div>
+
         </div>
       </header>
 

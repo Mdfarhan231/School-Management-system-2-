@@ -28,7 +28,7 @@ const TeacherDashboardPage = () => {
         setTeacher(teacherData);
 
         // Determine teacher ID from localStorage payload
-        const teacherId = teacherData.id || teacherData.teacher_id;
+        const teacherId = teacherData.teacher_id || teacherData.id;
 
         // Fetch stats, exams, and notices concurrently
         const [statsData, examsData, noticesData] = await Promise.all([
