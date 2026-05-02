@@ -15,6 +15,7 @@ import {
   ChevronRight,
   User,
   GraduationCap,
+  Megaphone,
 } from "lucide-react";
 
 function cn(...classes) {
@@ -26,6 +27,7 @@ const navItems = [
   { label: "Exam Routine", icon: Calendar,        href: "/student/exam-routine" },
   { label: "Attendance",   icon: CheckSquare,     href: "/student/attendance" },
   { label: "Results",      icon: BookOpen,        href: "/student/results" },
+  { label: "Notices",      icon: Megaphone,       href: "/student/notices" },
 ];
 
 const SIDEBAR_EXPANDED_W = 272;

@@ -211,9 +211,12 @@ export default function StudentDashboardPage() {
               )}
             </div>
 
-            <button className="mt-4 w-full py-3 text-sm font-bold text-blue-600 hover:bg-blue-50 rounded-xl transition-colors border border-transparent hover:border-blue-100">
-               View All Notices
-            </button>
+            <Link
+              href="/student/notices"
+              className="mt-4 w-full py-3 text-sm font-bold text-blue-600 hover:bg-blue-50 rounded-xl transition-colors border border-transparent hover:border-blue-100 flex items-center justify-center gap-1"
+            >
+              View All Notices <ArrowRight size={14} />
+            </Link>
           </div>
         </div>
 
