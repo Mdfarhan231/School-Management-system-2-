@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
+  Megaphone,
 } from "lucide-react";
 
 function cn(...classes) {
@@ -27,6 +28,7 @@ const navItems = [
   { label: "Attendance History", icon: Clock,           href: "/teacher/attendance-history" },
   { label: "Exam Routine",       icon: Calendar,        href: "/teacher/exam-routine" },
   { label: "Marks Entry",        icon: BookOpen,        href: "/teacher/marks-entry" },
+  { label: "Notices",            icon: Megaphone,       href: "/teacher/notices" },
 ];
 
 const SIDEBAR_EXPANDED_W = 272;
