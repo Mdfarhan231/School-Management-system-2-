@@ -8,7 +8,6 @@ import {
   Search,
   Clock3,
   CalendarDays,
-  ArrowRightCircle,
   Info,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -259,24 +258,7 @@ export default function TeacherExamRoutinePage() {
                         </div>
                       </div>
 
-                      {/* Right: Actions */}
-                      <div className="p-4 lg:p-6 border-t lg:border-t-0 lg:border-l border-slate-100 flex items-center justify-between lg:flex-col lg:justify-center gap-4">
-                        <button className="flex items-center gap-2 text-slate-400 hover:text-indigo-600 transition-colors text-[10px] font-black uppercase tracking-widest">
-                          <Info size={14} /> Details
-                        </button>
-                        <button
-                          className={`p-4 rounded-2xl flex items-center justify-center transition-all ${
-                            isPast
-                              ? "bg-slate-100 text-slate-300 cursor-default"
-                              : "bg-slate-900 text-white hover:bg-indigo-600 shadow-lg shadow-slate-900/10"
-                          }`}
-                        >
-                          <ArrowRightCircle
-                            size={22}
-                            className={isPast ? "rotate-90" : ""}
-                          />
-                        </button>
-                      </div>
+
                     </div>
                   </motion.div>
                 );
