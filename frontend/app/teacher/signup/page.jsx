@@ -317,7 +317,7 @@ export default function TeacherSignupPage() {
       </section>
 
       <footer className="bg-[#17172f] px-4 py-6 text-center text-xs font-semibold text-white">
-        © 2026 Global Knowledge School
+        &copy; 2026 Global Knowledge School
       </footer>
     </main>
   );
