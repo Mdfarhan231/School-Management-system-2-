@@ -122,6 +122,15 @@ export default function TeacherLoginPage() {
               Sign up
             </Link>
           </p>
+
+          <p className="mt-3 text-center text-sm text-gray-700">
+            <Link
+              href="/"
+              className="font-semibold text-blue-600 hover:underline"
+            >
+              Back to Home
+            </Link>
+          </p>
         </div>
       </section>
 
