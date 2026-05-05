@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 
@@ -11,9 +10,8 @@ export default function TeacherMarksEntryPage() {
   const [teacher, setTeacher] = useState(null);
   const [exams, setExams] = useState([]);
   const [classes, setClasses] = useState([]);
-  const [subjects, setSubjects] = useState([]);
+  const [classSubjects, setClassSubjects] = useState([]);
   const [students, setStudents] = useState([]);
-  const [savedMarks, setSavedMarks] = useState([]);
   const [marksMap, setMarksMap] = useState({});
   const [loadingStudentId, setLoadingStudentId] = useState(null);
   const [tableLoading, setTableLoading] = useState(false);
@@ -39,7 +37,6 @@ export default function TeacherMarksEntryPage() {
 
       fetchExams();
       fetchClasses();
-      fetchSubjects();
     } catch {
       localStorage.removeItem("teacher");
       router.replace("/teacher/login");
@@ -49,20 +46,13 @@ export default function TeacherMarksEntryPage() {
   useEffect(() => {
     if (filter.class_id) {
       fetchStudents(filter.class_id);
+      fetchClassSubjects(filter.class_id);
     } else {
       setStudents([]);
+      setClassSubjects([]);
       setMarksMap({});
     }
   }, [filter.class_id]);
-
-  useEffect(() => {
-    if (filter.exam_id && filter.class_id && filter.subject_id) {
-      fetchSavedMarks();
-    } else {
-      setSavedMarks([]);
-      setMarksMap({});
-    }
-  }, [filter.exam_id, filter.class_id, filter.subject_id]);
 
   const teacherSubjectList = useMemo(() => {
     if (!teacher?.subjects) return [];
@@ -73,15 +63,24 @@ export default function TeacherMarksEntryPage() {
   }, [teacher]);
 
   const filteredSubjects = useMemo(() => {
-    return subjects.filter((subject) =>
+    return classSubjects.filter((subject) =>
       teacherSubjectList.includes(subject.subject_name.toLowerCase())
     );
-  }, [subjects, teacherSubjectList]);
+  }, [classSubjects, teacherSubjectList]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("teacher");
-    router.replace("/teacher/login");
-  };
+  useEffect(() => {
+    if (
+      filter.subject_id &&
+      !filteredSubjects.some(
+        (subject) => String(subject.subject_id) === String(filter.subject_id)
+      )
+    ) {
+      setFilter((prev) => ({
+        ...prev,
+        subject_id: "",
+      }));
+    }
+  }, [filter.subject_id, filteredSubjects]);
 
   const fetchExams = async () => {
     try {
@@ -103,13 +102,13 @@ export default function TeacherMarksEntryPage() {
     }
   };
 
-  const fetchSubjects = async () => {
+  const fetchClassSubjects = async (classId) => {
     try {
-      const data = await apiRequest("/subjects");
-      setSubjects(Array.isArray(data) ? data : []);
+      const data = await apiRequest(`/classes/${classId}/subjects`);
+      setClassSubjects(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Failed to fetch subjects:", err);
-      setSubjects([]);
+      console.error("Failed to fetch class subjects:", err);
+      setClassSubjects([]);
     }
   };
 
@@ -126,11 +125,10 @@ export default function TeacherMarksEntryPage() {
     }
   };
 
-  const fetchSavedMarks = async () => {
+  const fetchSavedMarks = useCallback(async () => {
     try {
       const data = await apiRequest("/student-marks/filter", "POST", filter);
       const markRows = Array.isArray(data) ? data : [];
-      setSavedMarks(markRows);
 
       const nextMap = {};
       markRows.forEach((item) => {
@@ -146,10 +144,17 @@ export default function TeacherMarksEntryPage() {
       setMarksMap(nextMap);
     } catch (err) {
       console.error("Failed to fetch saved marks:", err);
-      setSavedMarks([]);
       setMarksMap({});
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    if (filter.exam_id && filter.class_id && filter.subject_id) {
+      fetchSavedMarks();
+    } else {
+      setMarksMap({});
+    }
+  }, [filter.exam_id, filter.class_id, filter.subject_id, fetchSavedMarks]);
 
   const handleFilterChange = (e) => {
     setFilter((prev) => ({
@@ -188,6 +193,12 @@ export default function TeacherMarksEntryPage() {
     }
 
     const row = marksMap[studentId] || {};
+    const practicalMarks = Number(row.practical_marks || 0);
+
+    if (practicalMarks > 5) {
+      setError("Practical marks cannot be more than 5.");
+      return;
+    }
 
     try {
       setLoadingStudentId(studentId);
@@ -201,7 +212,7 @@ export default function TeacherMarksEntryPage() {
         teacher_id: Number(teacher.teacher_id),
         written_marks: Number(row.written_marks || 0),
         mcq_marks: Number(row.mcq_marks || 0),
-        practical_marks: Number(row.practical_marks || 0),
+        practical_marks: practicalMarks,
         assignment_marks: Number(row.assignment_marks || 0),
         viva_marks: Number(row.viva_marks || 0),
         class_test_marks: Number(row.class_test_marks || 0),
@@ -228,8 +239,6 @@ export default function TeacherMarksEntryPage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-[#e5e7eb]">
-
-
       <section className="flex-1 px-4 py-8">
         <div className="mx-auto max-w-7xl">
           <h2 className="mb-6 text-[28px] font-bold text-black">
@@ -385,10 +394,10 @@ export default function TeacherMarksEntryPage() {
 
                           <td className="px-3 py-4">
                             <input
-                              placeholder="Max 10"
+                              placeholder="Max 5"
                               type="number"
                               min="0"
-                              max="10"
+                              max="5"
                               value={row.practical_marks}
                               onChange={(e) =>
                                 handleMarkChange(
@@ -462,7 +471,9 @@ export default function TeacherMarksEntryPage() {
                               disabled={loadingStudentId === student.student_id}
                               className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-70"
                             >
-                              {loadingStudentId === student.student_id ? "Saving..." : "Save"}
+                              {loadingStudentId === student.student_id
+                                ? "Saving..."
+                                : "Save"}
                             </button>
                           </td>
                         </tr>
@@ -484,8 +495,6 @@ export default function TeacherMarksEntryPage() {
           </div>
         </div>
       </section>
-
-
     </main>
   );
 }
