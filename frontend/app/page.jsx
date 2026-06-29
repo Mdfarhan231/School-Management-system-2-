@@ -12,7 +12,7 @@ export default function HomePage() {
    */
   const slides = useMemo(
     () => [
-      { src: "/slides/slide-1.png", alt: "School image 1", caption: "From Outside" },
+      { src: "/slides/slide-1.png", alt: "School image 1", caption: "Outside View" },
       { src: "/slides/slide-2.png", alt: "School image 2", caption: "Campus View" },
     ],
     []
