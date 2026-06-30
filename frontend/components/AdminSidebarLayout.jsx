@@ -1,5 +1,5 @@
 "use client";
-
+//,,,,,,//
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -16,8 +16,6 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
-  ChevronUp,
   Megaphone,
   ListChecks,
   UserCheck,
@@ -42,21 +40,12 @@ const navItems = [
 const SIDEBAR_EXPANDED_W = 272;
 const SIDEBAR_COLLAPSED_W = 72;
 
-const academicSessions = [
-  { label: "2026-27", status: "active" },
-  { label: "2025-26", status: "archived" },
-  { label: "2024-25", status: "archived" },
-  { label: "2023-24", status: "archived" },
-];
-
 export default function AdminSidebarLayout({ children }) {
   const router   = useRouter();
   const pathname = usePathname();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [admin, setAdmin]             = useState(null);
-  const [selectedSession, setSelectedSession] = useState(academicSessions[0]);
-  const [isSessionOpen, setIsSessionOpen] = useState(false);
 
   const isAuthPage =
     pathname === "/admin/login" || pathname === "/admin/signup";
@@ -66,30 +55,14 @@ export default function AdminSidebarLayout({ children }) {
     if (isAuthPage) return;
     const saved = localStorage.getItem("admin");
     if (!saved) { router.replace("/admin/login"); return; }
-    try   {
-      const parsedAdmin = JSON.parse(saved);
-      queueMicrotask(() => setAdmin(parsedAdmin));
-    }
+    try   { setAdmin(JSON.parse(saved)); }
     catch { localStorage.removeItem("admin"); router.replace("/admin/login"); }
   }, [router, isAuthPage]);
-
-  useEffect(() => {
-    if (isAuthPage) return;
-    const savedSession = localStorage.getItem("adminAcademicSession");
-    const matchedSession = academicSessions.find((session) => session.label === savedSession);
-    if (matchedSession) queueMicrotask(() => setSelectedSession(matchedSession));
-  }, [isAuthPage]);
 
   const handleLogout = () => {
     localStorage.removeItem("admin");
     router.replace("/admin/login");
     router.refresh();
-  };
-
-  const handleSessionSelect = (session) => {
-    setSelectedSession(session);
-    localStorage.setItem("adminAcademicSession", session.label);
-    setIsSessionOpen(false);
   };
 
   const [showHeader, setShowHeader] = useState(true);
@@ -141,111 +114,33 @@ export default function AdminSidebarLayout({ children }) {
         initial={false}
         animate={{ y: showHeader ? 0 : -48 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="fixed top-0 left-0 right-0 z-[60] flex h-12 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5 shadow-sm"
+        className="fixed top-0 left-0 right-0 z-[60] flex h-12 shrink-0 items-center justify-between border-b border-[#1a3a6b] bg-[#1e3a5f] px-5 shadow-sm"
       >
-        {/* Left: academic session selector */}
-        <div className="relative flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsSessionOpen((value) => !value)}
-            className="inline-flex h-9 items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-5 text-[13px] font-extrabold uppercase tracking-[0.18em] text-slate-700 shadow-sm transition hover:bg-white"
-          >
-            <Calendar className="h-4 w-4 text-indigo-600" />
-            <span>Session: {selectedSession.label}</span>
-            <span
-              className={cn(
-                "h-2.5 w-2.5 rounded-full",
-                selectedSession.status === "active" ? "bg-emerald-400" : "bg-amber-400"
-              )}
-            />
-            {isSessionOpen ? (
-              <ChevronUp className="h-4 w-4 text-slate-400" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-slate-400" />
-            )}
-          </button>
-
-          <AnimatePresence>
-            {isSessionOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -8, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.98 }}
-                transition={{ duration: 0.18 }}
-                className="absolute left-0 top-12 z-[80] w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20"
-              >
-                <div className="border-b border-slate-100 px-5 py-4 text-[12px] font-extrabold uppercase tracking-[0.16em] text-slate-400">
-                  Select Academic Session
-                </div>
-
-                <div className="py-1">
-                  {academicSessions.map((session) => {
-                    const isSelected = selectedSession.label === session.label;
-                    const isActive = session.status === "active";
-
-                    return (
-                      <button
-                        key={session.label}
-                        type="button"
-                        onClick={() => handleSessionSelect(session)}
-                        className={cn(
-                          "flex w-full items-center justify-between px-5 py-3 text-left transition",
-                          isSelected ? "bg-indigo-50" : "hover:bg-slate-50"
-                        )}
-                      >
-                        <span className="flex items-center gap-3">
-                          <Calendar
-                            className={cn(
-                              "h-4 w-4",
-                              isSelected ? "text-indigo-600" : "text-slate-400"
-                            )}
-                          />
-                          <span
-                            className={cn(
-                              "text-base font-extrabold tracking-[0.06em]",
-                              isSelected ? "text-indigo-600" : "text-slate-600"
-                            )}
-                          >
-                            {session.label}
-                          </span>
-                        </span>
-
-                        <span
-                          className={cn(
-                            "rounded-lg px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em]",
-                            isActive
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-slate-100 text-slate-500"
-                          )}
-                        >
-                          {isActive ? "Active" : "Archived"}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {/* Left: role badge */}
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-0.5 text-[11px] font-semibold text-white">
+            <span className="h-1.5 w-1.5 rounded-full bg-white/70 animate-pulse" />
+            Admin Portal
+          </span>
         </div>
 
         {/* Right: search + bell + avatar + name */}
         <div className="flex items-center gap-3">
           <div className="relative hidden md:block mr-2">
-            <Search className="absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-white/50" />
             <input
               type="text"
               placeholder="Quick search..."
-              className="w-48 rounded-lg border border-slate-200 bg-slate-50 py-1 pl-8 pr-4 text-[11px] text-slate-700 placeholder-slate-400 transition-all focus:bg-white focus:ring-1 focus:ring-indigo-200"
+              className="w-48 rounded-lg border-none bg-white/10 py-1 pl-8 pr-4 text-[11px] text-white placeholder-white/50 transition-all focus:ring-1 focus:ring-white/30"
             />
           </div>
 
-          <button className="relative rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800">
+          <button className="relative rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white">
             <Bell className="h-4 w-4" />
-            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-white bg-rose-400" />
+            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-[#1e3a5f] bg-rose-400" />
           </button>
 
-          <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+          <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-white/10 shadow-sm">
             <img
               src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
               alt="Admin"
@@ -255,10 +150,10 @@ export default function AdminSidebarLayout({ children }) {
           </div>
 
           <div className="hidden sm:block leading-none">
-            <p className="text-xs font-bold text-slate-950">
+            <p className="text-xs font-bold text-white">
               {admin?.name?.split(" ")[0] || "Admin"}
             </p>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-indigo-600">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-blue-200">
               System Controller
             </p>
           </div>
