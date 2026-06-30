@@ -1,7 +1,5 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
+"use client";
+
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
@@ -43,6 +41,13 @@ const navItems = [
 const SIDEBAR_EXPANDED_W = 272;
 const SIDEBAR_COLLAPSED_W = 72;
 
+const defaultSessions = [
+  { id: "2026-27", label: "2026-27", status: "Active", isCurrent: true },
+  { id: "2025-26", label: "2025-26", status: "Archived", isCurrent: false },
+  { id: "2024-25", label: "2024-25", status: "Archived", isCurrent: false },
+  { id: "2023-24", label: "2023-24", status: "Archived", isCurrent: false },
+];
+
 export default function AdminSidebarLayout({ children, activePath = "/admin/dashboard", onPathChange }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [admin, setAdmin]             = useState(null);
@@ -50,20 +55,17 @@ export default function AdminSidebarLayout({ children, activePath = "/admin/dash
   const [isSessionOpen, setIsSessionOpen] = useState(false);
 
   const [sessions, setSessions] = useState(() => {
+    if (typeof window === "undefined") return defaultSessions;
+
     const saved = localStorage.getItem("gks_sessions");
     if (saved) {
       try {
         return JSON.parse(saved);
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
-    return [
-      { id: "2026-27", label: "2026-27", status: "Active", isCurrent: true },
-      { id: "2025-26", label: "2025-26", status: "Archived", isCurrent: false },
-      { id: "2024-25", label: "2024-25", status: "Archived", isCurrent: false },
-      { id: "2023-24", label: "2023-24", status: "Archived", isCurrent: false },
-    ];
+    return defaultSessions;
   });
 
   // Save sessions to localStorage
@@ -99,13 +101,14 @@ export default function AdminSidebarLayout({ children, activePath = "/admin/dash
     if (!saved) {
       const defaultAdmin = { name: "System Controller Admin" };
       localStorage.setItem("admin", JSON.stringify(defaultAdmin));
-      setAdmin(defaultAdmin);
+      queueMicrotask(() => setAdmin(defaultAdmin));
     } else {
       try {
-        setAdmin(JSON.parse(saved));
+        const parsedAdmin = JSON.parse(saved);
+        queueMicrotask(() => setAdmin(parsedAdmin));
       } catch {
         const defaultAdmin = { name: "System Controller Admin" };
-        setAdmin(defaultAdmin);
+        queueMicrotask(() => setAdmin(defaultAdmin));
       }
     }
   }, []);
