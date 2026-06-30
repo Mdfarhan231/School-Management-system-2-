@@ -1,7 +1,8 @@
 "use client";
-
-
+//,,,,,,//
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard,
@@ -11,6 +12,7 @@ import {
   CheckSquare,
   LogOut,
   Bell,
+  Search,
   BookOpen,
   ChevronLeft,
   ChevronRight,
@@ -18,10 +20,7 @@ import {
   ListChecks,
   UserCheck,
   User,
-  ChevronDown,
-  Plus,
 } from "lucide-react";
-import CreateSession from "./CreateSession";
 
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -41,82 +40,29 @@ const navItems = [
 const SIDEBAR_EXPANDED_W = 272;
 const SIDEBAR_COLLAPSED_W = 72;
 
-const defaultSessions = [
-  { id: "2026-27", label: "2026-27", status: "Active", isCurrent: true },
-  { id: "2025-26", label: "2025-26", status: "Archived", isCurrent: false },
-  { id: "2024-25", label: "2024-25", status: "Archived", isCurrent: false },
-  { id: "2023-24", label: "2023-24", status: "Archived", isCurrent: false },
-];
+export default function AdminSidebarLayout({ children }) {
+  const router   = useRouter();
+  const pathname = usePathname();
 
-export default function AdminSidebarLayout({ children, activePath = "/admin/dashboard", onPathChange }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [admin, setAdmin]             = useState(null);
-  const [selectedSession, setSelectedSession] = useState("2026-27");
-  const [isSessionOpen, setIsSessionOpen] = useState(false);
 
-  const [sessions, setSessions] = useState(() => {
-    if (typeof window === "undefined") return defaultSessions;
+  const isAuthPage =
+    pathname === "/admin/login" || pathname === "/admin/signup";
 
-    const saved = localStorage.getItem("gks_sessions");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        // ignore
-      }
-    }
-    return defaultSessions;
-  });
-
-  // Save sessions to localStorage
+  /* ── Auth guard ── */
   useEffect(() => {
-    localStorage.setItem("gks_sessions", JSON.stringify(sessions));
-  }, [sessions]);
-
-  // Modal States
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  const handleCreateSession = (newSession) => {
-    let updatedSessions = [...sessions];
-    if (newSession.isCurrent) {
-      updatedSessions = updatedSessions.map((s) => ({
-        ...s,
-        isCurrent: false,
-        status: s.status === "Active" ? "Archived" : s.status,
-      }));
-    }
-
-    updatedSessions = [newSession, ...updatedSessions];
-    setSessions(updatedSessions);
-    setSelectedSession(newSession.id);
-
-    if (onPathChange) {
-      onPathChange(activePath, newSession.id);
-    }
-  };
-
-  /* ── Auth guard / seed mock admin ── */
-  useEffect(() => {
+    if (isAuthPage) return;
     const saved = localStorage.getItem("admin");
-    if (!saved) {
-      const defaultAdmin = { name: "System Controller Admin" };
-      localStorage.setItem("admin", JSON.stringify(defaultAdmin));
-      queueMicrotask(() => setAdmin(defaultAdmin));
-    } else {
-      try {
-        const parsedAdmin = JSON.parse(saved);
-        queueMicrotask(() => setAdmin(parsedAdmin));
-      } catch {
-        const defaultAdmin = { name: "System Controller Admin" };
-        queueMicrotask(() => setAdmin(defaultAdmin));
-      }
-    }
-  }, []);
+    if (!saved) { router.replace("/admin/login"); return; }
+    try   { setAdmin(JSON.parse(saved)); }
+    catch { localStorage.removeItem("admin"); router.replace("/admin/login"); }
+  }, [router, isAuthPage]);
 
   const handleLogout = () => {
     localStorage.removeItem("admin");
-    // Simulated logout
-    alert("Simulated logout from admin panel.");
+    router.replace("/admin/login");
+    router.refresh();
   };
 
   const [showHeader, setShowHeader] = useState(true);
@@ -144,6 +90,9 @@ export default function AdminSidebarLayout({ children, activePath = "/admin/dash
       setLastScrollY(currentScrollY);
     }
   };
+
+  /* ── Early returns ── */
+  if (isAuthPage) return <>{children}</>;
 
   if (!admin) {
     return (
@@ -175,86 +124,20 @@ export default function AdminSidebarLayout({ children, activePath = "/admin/dash
           </span>
         </div>
 
-        {/* Right: session selector + bell + avatar + name */}
-        <div className="flex items-center gap-4">
-          {/* Session Dropdown Selector */}
-          <div className="relative">
-            <button
-              onClick={() => setIsSessionOpen(!isSessionOpen)}
-              className="flex items-center gap-2 px-3 py-1 bg-white/10 hover:bg-white/15 border border-white/10 rounded-lg text-[11px] font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98]"
-            >
-              <Calendar className="h-3.5 w-3.5 text-blue-200" />
-              <span>Session: {selectedSession}</span>
-              {selectedSession === "2026-27" ? (
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              ) : (
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-              )}
-              <ChevronDown className={`h-3 w-3 text-white/70 transition-transform duration-200 ${isSessionOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            <AnimatePresence>
-              {isSessionOpen && (
-                <>
-                  <div className="fixed inset-0 z-40 cursor-default" onClick={() => setIsSessionOpen(false)} />
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    className="absolute right-0 mt-2 w-56 bg-[#0F172B] border border-slate-800 rounded-xl shadow-xl py-2 z-50 overflow-hidden"
-                  >
-                    <div className="px-4 py-1.5 border-b border-slate-800/80 mb-1">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Select Academic Session</p>
-                    </div>
-                    {sessions.map((session) => (
-                      <button
-                        key={session.id}
-                        onClick={() => {
-                          setSelectedSession(session.id);
-                          setIsSessionOpen(false);
-                          if (onPathChange) {
-                            onPathChange(activePath, session.id);
-                          }
-                        }}
-                        className={`w-full px-4 py-2.5 flex items-center justify-between text-left hover:bg-white/5 transition-colors ${
-                          selectedSession === session.id ? 'text-indigo-400 font-bold' : 'text-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Calendar className={`h-3.5 w-3.5 ${selectedSession === session.id ? 'text-indigo-400' : 'text-slate-500'}`} />
-                          <span className="text-xs font-semibold uppercase tracking-wider">{session.label}</span>
-                        </div>
-                        <span className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider ${
-                          session.isCurrent 
-                            ? 'bg-emerald-500/15 text-emerald-400' 
-                            : 'bg-white/5 text-slate-400'
-                        }`}>
-                          {session.status}
-                        </span>
-                      </button>
-                    ))}
-
-                    <div className="border-t border-slate-800/80 mt-1.5 pt-1.5 px-2">
-                      <button
-                        onClick={() => {
-                          setIsSessionOpen(false);
-                          setIsCreateModalOpen(true);
-                        }}
-                        className="w-full px-3 py-2 flex items-center gap-2 rounded-lg text-left text-xs font-bold text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                        <span>Create Session</span>
-                      </button>
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
+        {/* Right: search + bell + avatar + name */}
+        <div className="flex items-center gap-3">
+          <div className="relative hidden md:block mr-2">
+            <Search className="absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-white/50" />
+            <input
+              type="text"
+              placeholder="Quick search..."
+              className="w-48 rounded-lg border-none bg-white/10 py-1 pl-8 pr-4 text-[11px] text-white placeholder-white/50 transition-all focus:ring-1 focus:ring-white/30"
+            />
           </div>
 
           <button className="relative rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white">
             <Bell className="h-4 w-4" />
-            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-[#1e3a5f] bg-rose-400 animate-pulse" />
+            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-[#1e3a5f] bg-rose-400" />
           </button>
 
           <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-white/10 shadow-sm">
@@ -352,18 +235,18 @@ export default function AdminSidebarLayout({ children, activePath = "/admin/dash
           <nav className="mt-2 flex-1 space-y-1 px-3 overflow-y-auto overflow-x-hidden">
             {navItems.map((item) => {
               const Icon     = item.icon;
-              const isActive = activePath === item.href;
+              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
 
               return (
-                <button
+                <Link
                   key={item.label}
-                  onClick={() => onPathChange && onPathChange(item.href, selectedSession)}
+                  href={item.href}
                   title={isCollapsed ? item.label : undefined}
                   className={cn(
-                    "group flex items-center rounded-xl py-2.5 transition-all duration-200 overflow-hidden w-full text-left",
-                    isCollapsed ? "justify-center px-0 w-10 mx-auto" : "px-4 gap-3",
+                    "group flex items-center rounded-xl py-2.5 transition-all duration-200 overflow-hidden",
+                    isCollapsed ? "justify-center px-0 w-10 mx-auto" : "px-4 gap-3 w-full",
                     isActive
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-semibold"
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
                       : isCollapsed
                         ? "text-slate-400 hover:bg-white/5 hover:text-white"
                         : "text-slate-300 hover:bg-white/10 hover:text-white"
@@ -372,7 +255,7 @@ export default function AdminSidebarLayout({ children, activePath = "/admin/dash
                   <Icon
                     className={cn(
                       "h-[18px] w-[18px] shrink-0 transition-colors",
-                      isActive ? "text-white" : "text-slate-400 group-hover:text-white"
+                      isActive ? "text-white" : ""
                     )}
                   />
                   <AnimatePresence initial={false}>
@@ -383,13 +266,13 @@ export default function AdminSidebarLayout({ children, activePath = "/admin/dash
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -6 }}
                         transition={{ duration: 0.15 }}
-                        className="text-xs font-bold uppercase tracking-wider whitespace-nowrap"
+                        className="text-sm font-medium whitespace-nowrap"
                       >
                         {item.label}
                       </motion.span>
                     )}
                   </AnimatePresence>
-                </button>
+                </Link>
               );
             })}
           </nav>
@@ -474,13 +357,16 @@ export default function AdminSidebarLayout({ children, activePath = "/admin/dash
             MAIN CONTENT AREA
         ══════════════════════════════════════ */}
         <main
-          className="flex min-w-0 flex-1 flex-col transition-all duration-300"
-          style={{ paddingLeft: isCollapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W }}
+          className={cn(
+            "flex min-w-0 flex-1 flex-col transition-all duration-300",
+            !isCollapsed && "blur-sm pointer-events-none select-none"
+          )}
+          style={{ paddingLeft: SIDEBAR_COLLAPSED_W }}
         >
           {/* ── Page Content ── */}
           <div 
             onScroll={handleScroll}
-            className="flex flex-1 flex-col overflow-y-auto relative p-6 md:p-10"
+            className="flex flex-1 flex-col overflow-y-auto relative"
           >
             {/* Spacer to prevent content from hiding under the fixed header when at the top */}
             <div className="h-12 shrink-0 w-full" />
@@ -490,16 +376,6 @@ export default function AdminSidebarLayout({ children, activePath = "/admin/dash
           </div>
         </main>
       </div>
-
-      {/* ══════════════════════════════════════
-          CREATE SESSION MODAL
-      ══════════════════════════════════════ */}
-      <CreateSession
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onCreate={handleCreateSession}
-        existingSessions={sessions}
-      />
     </div>
   );
 }
