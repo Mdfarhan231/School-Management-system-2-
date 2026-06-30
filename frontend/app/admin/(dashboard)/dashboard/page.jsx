@@ -246,6 +246,7 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="h-[350px] w-full">
+            {/* those are the SVG tag like: defs, responsivecontainer, lineargradient */}
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={attendanceData}>
                 <defs>
