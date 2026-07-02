@@ -1,1 +1,639 @@
-I have to update this..
+
+Project Location
+----------------
+- Root project path: E:\project\School-Management-system-2-
+- Frontend path: E:\project\School-Management-system-2-\frontend
+- Backend path: E:\project\School-Management-system-2-\backend
+
+High-Level Project
+------------------
+This is a School Management System for Global Knowledge School. The project has a frontend built with Next.js and a backend built with Laravel. The frontend is intended to be deployed on Vercel. The backend is intended to be deployed on Render. The database is PostgreSQL hosted through Supabase and can be managed using pgAdmin/Supabase tools.
+
+Important deployment rule: the frontend must never connect directly to Supabase/PostgreSQL. The frontend talks only to the Laravel API through HTTP endpoints. The Laravel backend handles database access.
+
+Frontend Tech Stack
+-------------------
+- Framework: Next.js App Router
+- React: React 19
+- Next.js: Next 16
+- Language: Mixed JavaScript/TypeScript
+  - Most pages/components are .jsx
+  - Notice admin components and shared types are .tsx/.ts
+- Styling: Tailwind CSS v4 through @tailwindcss/postcss
+- Icons: lucide-react
+- Animation: motion/react
+- Charts: recharts
+- Utility libraries: clsx, tailwind-merge, date-fns
+- Package manager: npm
+
+Frontend Commands
+-----------------
+Run these inside E:\project\School-Management-system-2-\frontend:
+
+- npm run dev      -> start local Next.js dev server
+- npm run build    -> create production build
+- npm run start    -> start production Next.js server
+- npm run lint     -> run ESLint
+
+Frontend Environment Variables
+------------------------------
+The frontend API helper reads:
+
+- NEXT_PUBLIC_API_URL
+
+This must be set in Vercel and local .env files to the Laravel/Render API base URL. Example shape:
+
+NEXT_PUBLIC_API_URL=https://your-render-backend-url.com/api
+
+The helper trims trailing slashes, so both URLs with or without a final slash are acceptable. Keep API endpoint calls relative, for example apiRequest("/students").
+
+Frontend Folder Structure
+-------------------------
+- app/
+  - Next.js App Router routes.
+  - Public homepage is app/page.jsx.
+  - Role routes are grouped under app/admin, app/teacher, and app/student.
+- components/
+  - Shared sidebar layouts for role dashboards.
+- lib/
+  - API and auth helper functions.
+- public/
+  - Static assets such as school logos and homepage slider images.
+- types/
+  - Shared TypeScript types, currently mainly Notice-related.
+
+Global Frontend Files
+---------------------
+- app/layout.tsx
+  - Root layout.
+  - Loads Geist fonts with next/font/google.
+  - Sets metadata title to "School Management App".
+  - Imports app/globals.css.
+- app/globals.css
+  - Imports Tailwind CSS.
+  - Defines background/foreground variables.
+  - Adds global box-sizing, smooth scroll, body margin reset, and font family.
+- next.config.ts
+  - Currently empty/default Next config.
+- tsconfig.json
+  - allowJs is true.
+  - strict is true.
+  - path alias @/* maps to the frontend root.
+- lib/utils.ts
+  - Exports cn() helper using clsx + tailwind-merge.
+
+API Helper
+----------
+File: frontend/lib/api.js
+
+All normal frontend API calls should use apiRequest(endpoint, method = "GET", body = null, token = null).
+
+Behavior:
+- Reads API base URL from NEXT_PUBLIC_API_URL.
+- Removes trailing slashes from API base.
+- Sends Accept: application/json.
+- Adds Authorization: Bearer <token> only when a token is passed.
+- Sends JSON by default when body is not FormData.
+- Sends FormData directly without Content-Type so the browser sets multipart boundaries.
+- Parses JSON response when possible.
+- Handles Laravel-style validation errors from data.errors by throwing the first validation message.
+- Throws data.message or "Request failed" for failed non-validation responses.
+
+Important: Some pages still use direct fetch for multipart upload. Prefer apiRequest for new code unless the existing page pattern clearly requires otherwise.
+
+Auth Storage Pattern
+--------------------
+The active pages do not consistently use token-based auth. Instead, login pages store the returned role object in localStorage:
+
+- Admin login stores localStorage["admin"] = JSON.stringify(data.admin)
+- Teacher login stores localStorage["teacher"] = JSON.stringify(data.teacher)
+- Student login stores localStorage["student"] = JSON.stringify(data.student)
+
+The sidebar layout for each role checks the matching localStorage key and redirects to that role's login page when missing or invalid.
+
+There is also frontend/lib/auth.js with token/role helpers:
+- getToken()
+- getRole()
+- clearAuth()
+- fetchCurrentUser(role) -> calls /{role}/me with Bearer token
+
+However, most current role pages use the role-specific localStorage objects instead of token/role. Before changing auth, inspect backend login responses and keep frontend/backend behavior aligned.
+
+Public Homepage
+---------------
+Route: /
+File: frontend/app/page.jsx
+
+Purpose:
+- Public school website homepage.
+- Shows top contact bar, header with logo/school name, navigation strip, portal buttons, image slider, notice marquee, and footer.
+
+Assets used:
+- public/logo.png
+- public/slides/slide-1.png
+- public/slides/slide-2.png
+
+API behavior:
+- Fetches GET /notices.
+- Filters notices for homepage display when category or target audience includes ALL or Homepage.
+- Supports both category/targetAudience and target_audience shapes because backend data may vary.
+
+Important issue:
+- Some Bengali text and symbol characters in this file look encoding-corrupted/mojibake. Do not blindly rewrite Bengali labels unless the intended Bangla text is known.
+
+Admin Frontend
+--------------
+Admin route group:
+- app/admin/login/page.jsx
+- app/admin/(dashboard)/layout.jsx
+- app/admin/(dashboard)/*
+
+Admin layout:
+- app/admin/(dashboard)/layout.jsx wraps pages in components/AdminSidebarLayout.jsx.
+- AdminSidebarLayout provides fixed animated top navbar, collapsible sidebar, active route highlighting, auth guard, and logout.
+- Admin auth guard reads localStorage["admin"] and redirects to /admin/login if missing.
+- Admin logout removes localStorage["admin"] and redirects to /admin/login.
+
+Admin sidebar links:
+- /admin/dashboard
+- /admin/students
+- /admin/all-students
+- /admin/teachers
+- /admin/all-teachers
+- /admin/exam-routines
+- /admin/mark-approvals
+- /admin/notices
+
+Admin login:
+- Route: /admin/login
+- File: app/admin/login/page.jsx
+- Form fields: name, password
+- API: POST /admin/login
+- On success: stores data.admin in localStorage["admin"], then routes to /admin/dashboard
+
+Admin dashboard:
+- Route: /admin/dashboard
+- File: app/admin/(dashboard)/dashboard/page.jsx
+- Reads admin object from localStorage.
+- Shows dashboard stats, pending mark summary, and upcoming exam routines.
+- APIs:
+  - GET /dashboard/stats
+  - GET /student-marks/pending-summary
+  - GET /exam-routines
+
+Add student:
+- Route: /admin/students
+- File: app/admin/(dashboard)/students/page.jsx
+- Form fields include name, father_name, mother_name, phone, address, class_id, shift, roll, picture.
+- Fetches classes and subjects:
+  - GET /classes
+  - GET /classes/{classId}/subjects
+- Student create uses multipart FormData:
+  - POST /students
+- Roll rule in frontend:
+  - Roll must be 1 to 10.
+  - Roll 1-5 maps to section A.
+  - Roll 6-10 maps to section B.
+
+All students:
+- Route: /admin/all-students
+- File: app/admin/(dashboard)/all-students/page.jsx
+- APIs:
+  - GET /students
+  - DELETE /students/{id}
+- Displays student list/cards/details and supports delete.
+
+Add teacher:
+- Route: /admin/teachers
+- File: app/admin/(dashboard)/teachers/page.jsx
+- Form fields include name, email, phone, shift, subjects, designation, joiningDate, picture.
+- Uses multipart FormData:
+  - POST /teachers
+- subjects are sent as a comma-separated string.
+
+All teachers:
+- Route: /admin/all-teachers
+- File: app/admin/(dashboard)/all-teachers/page.jsx
+- APIs:
+  - GET /teachers
+  - DELETE /teachers/{id}
+- Displays teacher list/cards/details and supports delete.
+
+Exam routines:
+- Route: /admin/exam-routines
+- File: app/admin/(dashboard)/exam-routines/page.jsx
+- Manages exam schedule/routine entries.
+- Form fields include exam_id, class_id, subject_id, exam_date, start_time, end_time, room.
+- APIs:
+  - GET /exam-routines
+  - GET /classes
+  - GET /classes/{classId}/subjects
+  - GET /exams
+  - POST /exam-routines
+  - DELETE /exam-routines/{id}
+- Has CSV export logic.
+
+Mark approvals:
+- Route: /admin/mark-approvals
+- File: app/admin/(dashboard)/mark-approvals/page.jsx
+- Admin reviews teacher-submitted marks.
+- APIs:
+  - GET /student-marks/pending
+  - POST /student-marks/{id}/approve
+  - POST /student-marks/{id}/reject
+  - POST /student-marks/approve-all
+- Has export logic.
+
+Notices:
+- Route: /admin/notices
+- Files:
+  - app/admin/(dashboard)/notices/page.tsx
+  - NoticeForm.tsx
+  - NoticeList.tsx
+  - ui.tsx
+- APIs:
+  - GET /notices
+  - POST /notices
+  - PUT /notices/{id}
+  - DELETE /notices/{id}
+- Notice type is defined in types/index.ts.
+- Notice category supports multi-select values such as ALL, Student, Teacher, Homepage.
+- Notice priority values: low, medium, high, urgent.
+- Notice status values: draft, published.
+
+Teacher Frontend
+----------------
+Teacher routes:
+- app/teacher/layout.jsx wraps teacher routes in components/TeacherSidebarLayout.jsx.
+- TeacherSidebarLayout provides auth guard, animated/collapsible sidebar, top navbar, and logout.
+- Auth guard reads localStorage["teacher"] and redirects to /teacher/login if missing.
+
+Teacher sidebar links:
+- /teacher/dashboard
+- /teacher/attendance
+- /teacher/attendance-history
+- /teacher/exam-routine
+- /teacher/marks-entry
+- /teacher/notices
+
+Teacher login:
+- Route: /teacher/login
+- File: app/teacher/login/page.jsx
+- Form fields: email, password
+- API: POST /teacher/login
+- On success: stores data.teacher in localStorage["teacher"], then routes to /teacher/dashboard
+
+Teacher signup:
+- Route: /teacher/signup
+- File: app/teacher/signup/page.jsx
+- Form fields: teacher_id, email, phone, password, confirm_password.
+- API: POST /teacher/signup
+- Frontend password requirements:
+  - Minimum 8 characters
+  - At least 1 uppercase letter
+  - At least 1 lowercase letter
+  - At least 1 digit
+  - At least 1 special character
+  - confirm_password must match
+
+Teacher dashboard:
+- Route: /teacher/dashboard
+- File: app/teacher/dashboard/page.jsx
+- Reads teacher from localStorage.
+- Uses teacher_id or id from stored object.
+- APIs:
+  - GET /dashboard/stats
+  - GET /teacher/exam-routines/{teacherId}
+  - GET /notices
+
+Teacher attendance:
+- Route: /teacher/attendance
+- File: app/teacher/attendance/page.jsx
+- Lets a teacher select class, shift, and date, fetch students, mark attendance, and save attendance.
+- APIs:
+  - GET /classes
+  - POST /attendance/students
+  - POST /attendance/store
+
+Teacher attendance history:
+- Route: /teacher/attendance-history
+- File: app/teacher/attendance-history/page.jsx
+- Filters history by class_id, shift, roll, and date.
+- APIs:
+  - GET /classes
+  - POST /attendance/history
+
+Teacher exam routine:
+- Route: /teacher/exam-routine
+- File: app/teacher/exam-routine/page.jsx
+- Reads teacher ID from localStorage teacher object.
+- API:
+  - GET /teacher/exam-routines/{teacherId}
+
+Teacher marks entry:
+- Route: /teacher/marks-entry
+- File: app/teacher/marks-entry/page.jsx
+- Teacher selects exam, class, subject, and enters marks per student.
+- APIs:
+  - GET /exams
+  - GET /classes
+  - GET /classes/{classId}/subjects
+  - GET /students/by-class/{classId}
+  - POST /student-marks/filter
+  - POST /student-marks
+- Mark payload includes exam_id, class_id, subject_id, student_id, teacher_id, written_marks, mcq_marks, practical_marks, class_test_marks.
+- Admin must approve marks before final student result visibility/workflow is complete.
+
+Teacher notices:
+- Route: /teacher/notices
+- File: app/teacher/notices/page.jsx
+- API:
+  - GET /notices
+- Filters notices intended for Teacher or ALL.
+
+Student Frontend
+----------------
+Student routes:
+- app/student/layout.jsx wraps student routes in components/StudentSidebarLayout.jsx.
+- StudentSidebarLayout provides auth guard, animated/collapsible sidebar, top navbar, and logout.
+- Auth guard reads localStorage["student"] and redirects to /student/login if missing.
+
+Student sidebar links:
+- /student/dashboard
+- /student/exam-routine
+- /student/attendance
+- /student/results
+- /student/notices
+
+Student login:
+- Route: /student/login
+- File: app/student/login/page.jsx
+- Form fields: student_id, password
+- API: POST /student/login
+- On success: stores data.student in localStorage["student"], then routes to /student/dashboard
+
+Student signup:
+- Route: /student/signup
+- File: app/student/signup/page.jsx
+- Form fields: student_id, phone, roll, password, confirm_password.
+- API: POST /student/signup
+- Frontend password requirements are the same as teacher signup.
+
+Student dashboard:
+- Route: /student/dashboard
+- File: app/student/dashboard/page.jsx
+- Reads student from localStorage.
+- Uses student_id or id from stored object.
+- APIs:
+  - GET /student/exam-routines/{studentId}
+  - GET /student-results/{studentId}
+  - GET /notices
+
+Student exam routine:
+- Route: /student/exam-routine
+- File: app/student/exam-routine/page.jsx
+- Reads student ID from localStorage student object.
+- API:
+  - GET /student/exam-routines/{studentId}
+
+Student attendance:
+- Route: /student/attendance
+- File: app/student/attendance/page.jsx
+- Reads student ID from localStorage student object.
+- API:
+  - GET /student/attendance/{studentId}
+
+Student results:
+- Route: /student/results
+- File: app/student/results/page.jsx
+- Reads student from localStorage.
+- API:
+  - GET /student-results/{studentId}
+- Includes GPA/grade helper functions and a results table.
+
+Student notices:
+- Route: /student/notices
+- File: app/student/notices/page.jsx
+- API:
+  - GET /notices
+- Filters notices intended for Student or ALL.
+
+Shared Role Layout Behavior
+---------------------------
+The admin, teacher, and student sidebar components are similar:
+- Client components using "use client".
+- Fixed top header that hides/shows based on scroll direction.
+- Fixed left sidebar with collapsed/expanded width.
+- Uses lucide-react icons.
+- Uses motion/react AnimatePresence and motion elements.
+- Redirects unauthenticated users to the role login page.
+- Main content area is padded for collapsed sidebar width.
+
+Important UI detail:
+When the sidebar is expanded, the main content is blurred and pointer-events are disabled. This is intentional in current code, but check UX before changing it.
+
+Public Assets
+-------------
+Important assets in frontend/public:
+- logo.png
+- logo-2.png
+- slides/slide-1.png
+- slides/slide-2.png
+- Default Next assets: next.svg, vercel.svg, file.svg, globe.svg, window.svg
+
+Potential missing assets:
+- Sidebar/profile code references /teacher-demo.png and /student-demo.png, but those files may not exist in public. Check before relying on them.
+
+Known Frontend Issues
+---------------------
+The frontend currently has saved reports:
+- frontend/ts_errors.txt
+- frontend/lint_output.txt
+
+Known TypeScript error:
+- app/admin/(dashboard)/notices/NoticeList.tsx passes size="..." to the local Button component, but the Button type in ui.tsx does not include size.
+
+Known ESLint/lint issues include:
+- Many no-explicit-any errors in notices/NoticeForm.tsx and notices/ui.tsx.
+- Some unused variables in notices components and teachers page.
+- Some React lint errors about calling setState synchronously inside effects in dashboard/sidebar auth guards.
+- Some no-img-element warnings where plain img is used instead of next/image.
+- app/admin/login/page.jsx uses an <a> tag to navigate to / instead of Next.js Link.
+- Some unescaped apostrophe errors in student dashboard text.
+
+Encoding issue:
+- Several files show corrupted characters for Bengali text, symbols, and comments. If asked to repair text, first identify the intended original Bengali labels; do not guess important public-facing text.
+
+Frontend Coding Rules For Future AI
+-----------------------------------
+- Keep the App Router route structure: app/admin, app/teacher, app/student.
+- Prefer apiRequest from lib/api.js for new API calls.
+- Keep NEXT_PUBLIC_API_URL as the single frontend API base config.
+- Do not hard-code localhost or deployment URLs in components.
+- Do not connect directly to Supabase from the frontend.
+- Keep Laravel API field names exactly aligned with backend request validation.
+- Use FormData for file uploads such as student/teacher pictures.
+- Keep localStorage key names consistent unless also updating every dependent page/layout:
+  - admin
+  - teacher
+  - student
+- Preserve role separation. Admin pages should not depend on teacher/student localStorage and vice versa.
+- Use Tailwind CSS utility classes, matching existing visual style.
+- Prefer lucide-react icons if adding new dashboard/sidebar actions.
+- Be careful when changing notices because both homepage and role portals depend on the /notices response shape.
+- For deployment on Vercel, ensure the frontend builds without TypeScript/ESLint blockers.
+
+Most Important User Flows
+-------------------------
+1. Public visitor opens homepage, sees school info, slider, portal links, and homepage notices.
+2. Admin logs in, adds students/teachers, manages exam routines, creates notices, and approves/rejects marks.
+3. Teacher signs up/logs in, takes attendance, views attendance history, views routines, enters marks, and reads notices.
+4. Student signs up/logs in, views dashboard, exam routine, attendance, approved results, and notices.
+
+Quick Mental Model
+------------------
+Frontend = role-based Next.js dashboard UI.
+Backend = Laravel REST API deployed on Render.
+Database = Supabase PostgreSQL, managed outside frontend.
+Vercel frontend must call Render backend through NEXT_PUBLIC_API_URL.
+Authentication in current frontend is localStorage-object based, not consistently token based.
+Notices are shared across homepage/admin/teacher/student and filtered by category/audience.
+Marks are submitted by teachers and approved by admins before becoming final.
+
+Backend Folder
+==============
+
+Path
+----
+- E:\project\School-Management-system-2-\backend
+
+Tech
+----
+- Laravel 12
+- PHP 8.2+
+- PostgreSQL on Supabase
+- Render deployment
+- Apache Docker image: php:8.4-apache
+- Main routes file: routes/api.php
+- Controllers: app/Http/Controllers/Api
+- Backend mostly uses DB::table(), not Eloquent models.
+
+Commands
+--------
+- composer install
+- php artisan serve
+- php artisan test
+- php artisan config:clear
+
+Env
+---
+- APP_KEY
+- APP_ENV
+- APP_DEBUG
+- APP_URL
+- DB_CONNECTION=pgsql
+- DB_HOST
+- DB_PORT=5432
+- DB_DATABASE
+- DB_USERNAME
+- DB_PASSWORD
+- SUPABASE_URL
+- SUPABASE_KEY
+- SUPABASE_BUCKET
+- PORT
+
+Database Tables
+---------------
+- class_subjects
+- classes
+- exam_routines
+- exams
+- notices
+- student_accounts
+- student_attendances
+- student_marks
+- students
+- subjects
+- teacher_accounts
+- teachers
+- users
+
+API Routes
+----------
+- POST /api/admin/login
+- GET /api/teachers
+- POST /api/teachers
+- DELETE /api/teachers/{id}
+- GET /api/classes
+- GET /api/classes/{id}/subjects
+- GET /api/students
+- POST /api/students
+- DELETE /api/students/{id}
+- POST /api/teacher/signup
+- POST /api/teacher/login
+- POST /api/student/signup
+- POST /api/student/login
+- GET /api/exam-routines
+- POST /api/exam-routines
+- DELETE /api/exam-routines/{id}
+- GET /api/exams
+- GET /api/subjects
+- GET /api/teacher/exam-routines/{teacherId}
+- GET /api/student/exam-routines/{studentId}
+- GET /api/students/by-class/{classId}
+- POST /api/student-marks/filter
+- POST /api/student-marks
+- GET /api/student-marks/pending
+- GET /api/student-marks/pending-summary
+- POST /api/student-marks/{id}/approve
+- POST /api/student-marks/{id}/reject
+- POST /api/student-marks/approve-all
+- GET /api/student-results/{studentId}
+- POST /api/attendance/students
+- POST /api/attendance/store
+- POST /api/attendance/history
+- GET /api/student/attendance/{studentId}
+- GET /api/notices
+- POST /api/notices
+- PUT /api/notices/{id}
+- DELETE /api/notices/{id}
+- GET /api/dashboard/stats
+- GET /api/db-test
+- GET /api/test-supabase-upload
+
+Controllers
+-----------
+- AdminAuthController: admin login from users table.
+- TeacherController: teacher list/create/delete and Supabase image upload.
+- StudentController: student list/create/delete, classes, class subjects, Supabase image upload.
+- TeacherAuthController: teacher signup/login using teachers and teacher_accounts.
+- StudentAuthController: student signup/login using students and student_accounts.
+- ExamRoutineController: routines for admin, teacher, and student.
+- StudentMarkController: mark entry, pending approvals, approve/reject, student approved results.
+- TeacherAttendanceController: attendance students, save attendance, history, student history.
+- NoticeController: notice CRUD.
+
+Auth
+----
+- No token middleware in active routes.
+- Admin login checks users.name and users.password directly.
+- Teacher login checks teacher_accounts.email and teacher_accounts.password directly.
+- Student login checks student_accounts.student_id and student_accounts.password directly.
+- Passwords are currently plain text in controller logic.
+
+Uploads
+-------
+- Student and teacher pictures upload to Supabase Storage.
+- Required env: SUPABASE_URL, SUPABASE_KEY, SUPABASE_BUCKET.
+- Stored public URL is saved in students.picture or teachers.picture.
+
+Rules
+-----
+- Do not connect the frontend directly to Supabase tables.
+- Keep frontend API base as NEXT_PUBLIC_API_URL pointing to this Laravel API.
+- Do not run migrations on Supabase production unless schema is verified; current Supabase tables are mostly existing/manual.
+- Keep database table names exactly as listed above.
+- Notices use PostgreSQL text[] style strings for category and target_audience.
+- Exam routine times are saved as UTC and returned in Asia/Dhaka format.
+- Attendance writes to student_attendances with one row per student/class/shift/date.
+- Student marks start as pending; admin approval changes status to approved.
