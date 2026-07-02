@@ -1,5 +1,5 @@
 "use client";
-//,,,,,,//
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -20,7 +20,12 @@ import {
   ListChecks,
   UserCheck,
   User,
+  ChevronDown,
+  Plus,
 } from "lucide-react";
+
+// Import the CreateSession component
+import CreateSession from "./CreateSession";
 
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -44,8 +49,30 @@ export default function AdminSidebarLayout({ children }) {
   const router   = useRouter();
   const pathname = usePathname();
 
+  // ── State for sidebar ──
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [admin, setAdmin]             = useState(null);
+
+  // ── State for session management ──
+  const [selectedSession, setSelectedSession] = useState("2026-27");
+  const [isSessionOpen, setIsSessionOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [sessions, setSessions] = useState(() => {
+    const saved = localStorage.getItem("gks_sessions");
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { id: "2026-27", label: "2026-27", status: "Active", isCurrent: true },
+      { id: "2025-26", label: "2025-26", status: "Archived", isCurrent: false },
+      { id: "2024-25", label: "2024-25", status: "Archived", isCurrent: false },
+      { id: "2023-24", label: "2023-24", status: "Archived", isCurrent: false },
+    ];
+  });
+
+  // ── Scroll state ──
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   const isAuthPage =
     pathname === "/admin/login" || pathname === "/admin/signup";
@@ -59,19 +86,20 @@ export default function AdminSidebarLayout({ children }) {
     catch { localStorage.removeItem("admin"); router.replace("/admin/login"); }
   }, [router, isAuthPage]);
 
+  /* ── Save sessions to localStorage when they change ── */
+  useEffect(() => {
+    localStorage.setItem("gks_sessions", JSON.stringify(sessions));
+  }, [sessions]);
+
   const handleLogout = () => {
     localStorage.removeItem("admin");
     router.replace("/admin/login");
     router.refresh();
   };
 
-  const [showHeader, setShowHeader] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-
   const handleScroll = (e) => {
     const currentScrollY = e.currentTarget.scrollTop;
     
-    // Always show at the very top
     if (currentScrollY <= 50) {
       setShowHeader(true);
       setLastScrollY(currentScrollY);
@@ -81,14 +109,32 @@ export default function AdminSidebarLayout({ children }) {
     const diff = currentScrollY - lastScrollY;
     
     if (diff > 10) {
-      // Scrolling down
       setShowHeader(false);
       setLastScrollY(currentScrollY);
     } else if (diff < -10) {
-      // Scrolling up
       setShowHeader(true);
       setLastScrollY(currentScrollY);
     }
+  };
+
+  // ── Handle creating a new session ──
+  const handleCreateSession = (newSession) => {
+    let updatedSessions = [...sessions];
+    if (newSession.isCurrent) {
+      updatedSessions = updatedSessions.map((s) => ({
+        ...s,
+        isCurrent: false,
+        status: s.status === "Active" ? "Archived" : s.status,
+      }));
+    }
+    updatedSessions = [newSession, ...updatedSessions];
+    setSessions(updatedSessions);
+    setSelectedSession(newSession.id);
+    
+    // You can add additional logic here if needed
+    // if (onPathChange) {
+    //   onPathChange(activePath, newSession.id);
+    // }
   };
 
   /* ── Early returns ── */
@@ -116,7 +162,7 @@ export default function AdminSidebarLayout({ children }) {
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className="fixed top-0 left-0 right-0 z-[60] flex h-12 shrink-0 items-center justify-between border-b border-[#1a3a6b] bg-[#1e3a5f] px-5 shadow-sm"
       >
-        {/* Left: role badge */}
+        {/* ── Left: Admin Portal Badge ── */}
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-0.5 text-[11px] font-semibold text-white">
             <span className="h-1.5 w-1.5 rounded-full bg-white/70 animate-pulse" />
@@ -124,22 +170,96 @@ export default function AdminSidebarLayout({ children }) {
           </span>
         </div>
 
-        {/* Right: search + bell + avatar + name */}
-        <div className="flex items-center gap-3">
-          <div className="relative hidden md:block mr-2">
-            <Search className="absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-white/50" />
-            <input
-              type="text"
-              placeholder="Quick search..."
-              className="w-48 rounded-lg border-none bg-white/10 py-1 pl-8 pr-4 text-[11px] text-white placeholder-white/50 transition-all focus:ring-1 focus:ring-white/30"
-            />
+        {/* ── Right: Session Selector + Notifications + Avatar ── */}
+        <div className="flex items-center gap-4">
+          {/* Session Dropdown Selector */}
+          <div className="relative">
+            <button
+              onClick={() => setIsSessionOpen(!isSessionOpen)}
+              className="flex items-center gap-2 px-3 py-1 bg-white/10 hover:bg-white/15 border border-white/10 rounded-lg text-[11px] font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98]"
+            >
+              <Calendar className="h-3.5 w-3.5 text-blue-200" />
+              <span>Session: {selectedSession}</span>
+              {selectedSession === "2026-27" ? (
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              ) : (
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              )}
+              <ChevronDown className={`h-3 w-3 text-white/70 transition-transform duration-200 ${isSessionOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            <AnimatePresence>
+              {isSessionOpen && (
+                <>
+                  {/* Backdrop listener to close when clicked outside */}
+                  <div className="fixed inset-0 z-40 cursor-default" onClick={() => setIsSessionOpen(false)} />
+                  
+                  {/* Dropdown Menu Card */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    className="absolute right-0 mt-2 w-56 bg-[#0F172B] border border-slate-800 rounded-xl shadow-xl py-2 z-50 overflow-hidden"
+                  >
+                    <div className="px-4 py-1.5 border-b border-slate-800/80 mb-1">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Select Academic Session</p>
+                    </div>
+                    
+                    {sessions.map((session) => (
+                      <button
+                        key={session.id}
+                        onClick={() => {
+                          setSelectedSession(session.id);
+                          setIsSessionOpen(false);
+                          // You can add additional logic here
+                          // if (onPathChange) {
+                          //   onPathChange(activePath, session.id);
+                          // }
+                        }}
+                        className={`w-full px-4 py-2.5 flex items-center justify-between text-left hover:bg-white/5 transition-colors ${
+                          selectedSession === session.id ? 'text-indigo-400 font-bold' : 'text-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Calendar className={`h-3.5 w-3.5 ${selectedSession === session.id ? 'text-indigo-400' : 'text-slate-500'}`} />
+                          <span className="text-xs font-semibold uppercase tracking-wider">{session.label}</span>
+                        </div>
+                        <span className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider ${
+                          session.isCurrent 
+                            ? 'bg-emerald-500/15 text-emerald-400' 
+                            : 'bg-white/5 text-slate-400'
+                        }`}>
+                          {session.status}
+                        </span>
+                      </button>
+                    ))}
+
+                    {/* Create Session Footer Trigger */}
+                    <div className="border-t border-slate-800/80 mt-1.5 pt-1.5 px-2">
+                      <button
+                        onClick={() => {
+                          setIsSessionOpen(false);
+                          setIsCreateModalOpen(true);
+                        }}
+                        className="w-full px-3 py-2 flex items-center gap-2 rounded-lg text-left text-xs font-bold text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>Create Session</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
 
+          {/* Notification Bell */}
           <button className="relative rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white">
             <Bell className="h-4 w-4" />
             <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-[#1e3a5f] bg-rose-400" />
           </button>
 
+          {/* Admin Avatar */}
           <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-white/10 shadow-sm">
             <img
               src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
@@ -149,6 +269,7 @@ export default function AdminSidebarLayout({ children }) {
             />
           </div>
 
+          {/* Admin Name */}
           <div className="hidden sm:block leading-none">
             <p className="text-xs font-bold text-white">
               {admin?.name?.split(" ")[0] || "Admin"}
@@ -160,9 +281,22 @@ export default function AdminSidebarLayout({ children }) {
         </div>
       </motion.header>
 
+      {/* ══════════════════════════════════════
+          CREATE SESSION MODAL
+      ══════════════════════════════════════ */}
+      <AnimatePresence>
+        {isCreateModalOpen && (
+          <CreateSession
+            onClose={() => setIsCreateModalOpen(false)}
+            onCreate={handleCreateSession}
+            sessions={sessions}
+          />
+        )}
+      </AnimatePresence>
+
       <div className="flex flex-1 overflow-hidden">
         {/* ══════════════════════════════════════
-            FIXED OVERLAY SIDEBAR (Adjusts on Scroll)
+            FIXED OVERLAY SIDEBAR
         ══════════════════════════════════════ */}
         <motion.aside
           initial={false}
@@ -182,7 +316,7 @@ export default function AdminSidebarLayout({ children }) {
             borderRight: "1px solid rgba(15,23,43,0.8)",
           }}
         >
-          {/* ── Brand / Logo Row (Smaller for top-aligned sidebar) ── */}
+          {/* ── Brand / Logo Row ── */}
           <div
             className={cn(
               "flex h-12 shrink-0 items-center px-4",
@@ -363,12 +497,10 @@ export default function AdminSidebarLayout({ children }) {
           )}
           style={{ paddingLeft: SIDEBAR_COLLAPSED_W }}
         >
-          {/* ── Page Content ── */}
           <div 
             onScroll={handleScroll}
             className="flex flex-1 flex-col overflow-y-auto relative"
           >
-            {/* Spacer to prevent content from hiding under the fixed header when at the top */}
             <div className="h-12 shrink-0 w-full" />
             <div className="flex flex-1 flex-col">
               {children}
