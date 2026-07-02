@@ -24,7 +24,6 @@ import {
   Plus,
 } from "lucide-react";
 
-// Import the CreateSession component
 import CreateSession from "./CreateSession";
 
 function cn(...classes) {
@@ -49,15 +48,21 @@ export default function AdminSidebarLayout({ children }) {
   const router   = useRouter();
   const pathname = usePathname();
 
-  // ── State for sidebar ──
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [admin, setAdmin]             = useState(null);
 
-  // ── State for session management ──
+  // ── FIXED: Session state with server-side guard ──
   const [selectedSession, setSelectedSession] = useState("2026-27");
   const [isSessionOpen, setIsSessionOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [sessions, setSessions] = useState(() => {
+    // Guard: Only run on the client
+    if (typeof window === 'undefined') {
+      return [
+        { id: "2026-27", label: "2026-27", status: "Active", isCurrent: true },
+      ];
+    }
+    
     const saved = localStorage.getItem("gks_sessions");
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
@@ -70,7 +75,6 @@ export default function AdminSidebarLayout({ children }) {
     ];
   });
 
-  // ── Scroll state ──
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -86,9 +90,12 @@ export default function AdminSidebarLayout({ children }) {
     catch { localStorage.removeItem("admin"); router.replace("/admin/login"); }
   }, [router, isAuthPage]);
 
-  /* ── Save sessions to localStorage when they change ── */
+  // ── FIXED: Save sessions to localStorage with client-side guard ──
   useEffect(() => {
-    localStorage.setItem("gks_sessions", JSON.stringify(sessions));
+    // Guard: Only run on the client
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("gks_sessions", JSON.stringify(sessions));
+    }
   }, [sessions]);
 
   const handleLogout = () => {
@@ -117,7 +124,6 @@ export default function AdminSidebarLayout({ children }) {
     }
   };
 
-  // ── Handle creating a new session ──
   const handleCreateSession = (newSession) => {
     let updatedSessions = [...sessions];
     if (newSession.isCurrent) {
@@ -130,11 +136,6 @@ export default function AdminSidebarLayout({ children }) {
     updatedSessions = [newSession, ...updatedSessions];
     setSessions(updatedSessions);
     setSelectedSession(newSession.id);
-    
-    // You can add additional logic here if needed
-    // if (onPathChange) {
-    //   onPathChange(activePath, newSession.id);
-    // }
   };
 
   /* ── Early returns ── */
@@ -151,6 +152,7 @@ export default function AdminSidebarLayout({ children }) {
     );
   }
 
+  // ── The rest of your JSX remains the same ──
   return (
     <div className="flex h-screen flex-col bg-[#f8fafc] font-sans text-slate-900 overflow-hidden relative">
       {/* ══════════════════════════════════════
@@ -162,7 +164,7 @@ export default function AdminSidebarLayout({ children }) {
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className="fixed top-0 left-0 right-0 z-[60] flex h-12 shrink-0 items-center justify-between border-b border-[#1a3a6b] bg-[#1e3a5f] px-5 shadow-sm"
       >
-        {/* ── Left: Admin Portal Badge ── */}
+        {/* Left: Admin Portal Badge */}
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-0.5 text-[11px] font-semibold text-white">
             <span className="h-1.5 w-1.5 rounded-full bg-white/70 animate-pulse" />
@@ -170,7 +172,7 @@ export default function AdminSidebarLayout({ children }) {
           </span>
         </div>
 
-        {/* ── Right: Session Selector + Notifications + Avatar ── */}
+        {/* Right: Session Selector + Notifications + Avatar */}
         <div className="flex items-center gap-4">
           {/* Session Dropdown Selector */}
           <div className="relative">
@@ -191,10 +193,7 @@ export default function AdminSidebarLayout({ children }) {
             <AnimatePresence>
               {isSessionOpen && (
                 <>
-                  {/* Backdrop listener to close when clicked outside */}
                   <div className="fixed inset-0 z-40 cursor-default" onClick={() => setIsSessionOpen(false)} />
-                  
-                  {/* Dropdown Menu Card */}
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -211,10 +210,6 @@ export default function AdminSidebarLayout({ children }) {
                         onClick={() => {
                           setSelectedSession(session.id);
                           setIsSessionOpen(false);
-                          // You can add additional logic here
-                          // if (onPathChange) {
-                          //   onPathChange(activePath, session.id);
-                          // }
                         }}
                         className={`w-full px-4 py-2.5 flex items-center justify-between text-left hover:bg-white/5 transition-colors ${
                           selectedSession === session.id ? 'text-indigo-400 font-bold' : 'text-slate-300'
@@ -234,7 +229,6 @@ export default function AdminSidebarLayout({ children }) {
                       </button>
                     ))}
 
-                    {/* Create Session Footer Trigger */}
                     <div className="border-t border-slate-800/80 mt-1.5 pt-1.5 px-2">
                       <button
                         onClick={() => {
@@ -253,13 +247,11 @@ export default function AdminSidebarLayout({ children }) {
             </AnimatePresence>
           </div>
 
-          {/* Notification Bell */}
           <button className="relative rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white">
             <Bell className="h-4 w-4" />
             <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-[#1e3a5f] bg-rose-400" />
           </button>
 
-          {/* Admin Avatar */}
           <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-white/10 shadow-sm">
             <img
               src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
@@ -269,7 +261,6 @@ export default function AdminSidebarLayout({ children }) {
             />
           </div>
 
-          {/* Admin Name */}
           <div className="hidden sm:block leading-none">
             <p className="text-xs font-bold text-white">
               {admin?.name?.split(" ")[0] || "Admin"}
@@ -281,9 +272,7 @@ export default function AdminSidebarLayout({ children }) {
         </div>
       </motion.header>
 
-      {/* ══════════════════════════════════════
-          CREATE SESSION MODAL
-      ══════════════════════════════════════ */}
+      {/* Create Session Modal */}
       <AnimatePresence>
         {isCreateModalOpen && (
           <CreateSession
@@ -295,9 +284,7 @@ export default function AdminSidebarLayout({ children }) {
       </AnimatePresence>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* ══════════════════════════════════════
-            FIXED OVERLAY SIDEBAR
-        ══════════════════════════════════════ */}
+        {/* Sidebar remains the same */}
         <motion.aside
           initial={false}
           animate={{
@@ -316,7 +303,7 @@ export default function AdminSidebarLayout({ children }) {
             borderRight: "1px solid rgba(15,23,43,0.8)",
           }}
         >
-          {/* ── Brand / Logo Row ── */}
+          {/* Brand Row */}
           <div
             className={cn(
               "flex h-12 shrink-0 items-center px-4",
@@ -355,7 +342,7 @@ export default function AdminSidebarLayout({ children }) {
             </div>
           </div>
 
-          {/* ── Toggle Button ── */}
+          {/* Toggle Button */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="absolute -right-3 top-10 z-50 flex h-6 w-6 items-center justify-center rounded-full shadow-md border border-slate-600 bg-[#0F172B] text-slate-300 hover:bg-slate-700 transition-colors"
@@ -365,7 +352,7 @@ export default function AdminSidebarLayout({ children }) {
               : <ChevronLeft  className="h-3.5 w-3.5" />}
           </button>
 
-          {/* ── Navigation Items ── */}
+          {/* Navigation Items */}
           <nav className="mt-2 flex-1 space-y-1 px-3 overflow-y-auto overflow-x-hidden">
             {navItems.map((item) => {
               const Icon     = item.icon;
@@ -411,7 +398,7 @@ export default function AdminSidebarLayout({ children }) {
             })}
           </nav>
 
-          {/* ── Bottom Section ── */}
+          {/* Bottom Section */}
           <div className="p-3 shrink-0">
             <div
               className={cn(
@@ -487,9 +474,7 @@ export default function AdminSidebarLayout({ children }) {
           </div>
         </motion.aside>
 
-        {/* ══════════════════════════════════════
-            MAIN CONTENT AREA
-        ══════════════════════════════════════ */}
+        {/* Main Content Area */}
         <main
           className={cn(
             "flex min-w-0 flex-1 flex-col transition-all duration-300",
