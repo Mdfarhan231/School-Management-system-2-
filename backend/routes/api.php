@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\ExamRoutineController;
 use App\Http\Controllers\Api\StudentMarkController;
 use App\Http\Controllers\Api\TeacherAttendanceController;
 use App\Http\Controllers\Api\NoticeController;
+use App\Http\Controllers\Api\SessionController;
 
 // testing supabase bucket connection
 Route::get('/test-supabase-upload', [TeacherController::class, 'testSupabaseUpload']);
@@ -71,6 +72,16 @@ Route::get('/notices', [NoticeController::class, 'index']);
 Route::post('/notices', [NoticeController::class, 'store']);
 Route::put('/notices/{id}', [NoticeController::class, 'update']);
 Route::delete('/notices/{id}', [NoticeController::class, 'destroy']);
+
+// ── Session Management Routes ──
+Route::prefix('sessions')->group(function () {
+    Route::get('/', [SessionController::class, 'index']);
+    Route::get('/current', [SessionController::class, 'current']);
+    Route::post('/', [SessionController::class, 'store']);
+    Route::put('/{id}', [SessionController::class, 'update']);
+    Route::delete('/{id}', [SessionController::class, 'destroy']);
+    Route::patch('/{id}/set-current', [SessionController::class, 'setCurrent']);
+});
 
 // Dashboard stats
 Route::get('/dashboard/stats', function () {
