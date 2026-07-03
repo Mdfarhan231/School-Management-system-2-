@@ -1,24 +1,53 @@
 "use client";
 
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Calendar, X } from "lucide-react";
+import { Calendar, X, AlertCircle } from "lucide-react";
 
 export default function CreateSession({ isOpen, onClose, onCreate, existingSessions = [] }) {
   const [newSessionLabel, setNewSessionLabel] = useState("");
   const [newSessionStatus, setNewSessionStatus] = useState("Active");
   const [isNewSessionCurrent, setIsNewSessionCurrent] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setNewSessionLabel("");
+      setNewSessionStatus("Active");
+      setIsNewSessionCurrent(false);
+      setCreateError("");
+      setStartDate("");
+      setEndDate("");
+    }
+  }, [isOpen]);
+
+  // Auto-generate session label from dates
+  useEffect(() => {
+    if (startDate && endDate) {
+      const startYear = new Date(startDate).getFullYear();
+      const endYear = new Date(endDate).getFullYear();
+      if (startYear && endYear && startYear !== endYear) {
+        const suggested = `${startYear}-${String(endYear).slice(-2)}`;
+        if (!existingSessions.some(s => s.label === suggested)) {
+          setNewSessionLabel(suggested);
+        }
+      }
+    }
+  }, [startDate, endDate, existingSessions]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const label = newSessionLabel.trim();
+    
     if (!label) {
       setCreateError("Session name is required");
       return;
     }
 
+    // Check for existing session
     if (existingSessions.some((s) => s.label.toLowerCase() === label.toLowerCase())) {
       setCreateError("This session already exists");
       return;
@@ -29,16 +58,12 @@ export default function CreateSession({ isOpen, onClose, onCreate, existingSessi
       label: label,
       status: newSessionStatus,
       isCurrent: isNewSessionCurrent,
+      startDate: startDate || null,
+      endDate: endDate || null,
+      createdAt: new Date().toISOString(),
     };
 
     onCreate(newSession);
-
-    // Reset Form
-    setNewSessionLabel("");
-    setNewSessionStatus("Active");
-    setIsNewSessionCurrent(false);
-    setCreateError("");
-    onClose();
   };
 
   return (
@@ -84,11 +109,13 @@ export default function CreateSession({ isOpen, onClose, onCreate, existingSessi
 
             <form onSubmit={handleSubmit} className="space-y-5">
               {createError && (
-                <div className="p-3 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-xs font-semibold">
-                  {createError}
+                <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-xs font-semibold">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{createError}</span>
                 </div>
               )}
 
+              {/* Session Name */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Session Name / Year</label>
                 <input
@@ -97,10 +124,34 @@ export default function CreateSession({ isOpen, onClose, onCreate, existingSessi
                   placeholder="e.g. 2027-28 or 2028 Spring"
                   value={newSessionLabel}
                   onChange={(e) => setNewSessionLabel(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-50/20 focus:border-indigo-500 transition-all font-medium"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
                 />
+                <p className="text-[10px] text-slate-400">Format: YYYY-YY (e.g., 2027-28)</p>
               </div>
 
+              {/* Date Range */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Start Date</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">End Date</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Status */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Initial Status</label>
                 <div className="grid grid-cols-3 gap-3">
@@ -121,6 +172,7 @@ export default function CreateSession({ isOpen, onClose, onCreate, existingSessi
                 </div>
               </div>
 
+              {/* Current Session Toggle */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
                 <div className="space-y-0.5 pr-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-700 block">Set as Current Session</label>
@@ -141,6 +193,7 @@ export default function CreateSession({ isOpen, onClose, onCreate, existingSessi
                 </button>
               </div>
 
+              {/* Buttons */}
               <div className="flex items-center gap-3 pt-2">
                 <button
                   type="button"
@@ -153,7 +206,7 @@ export default function CreateSession({ isOpen, onClose, onCreate, existingSessi
                   type="submit"
                   className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-indigo-600/15 active:scale-98 transition-all"
                 >
-                  Create
+                  Create Session
                 </button>
               </div>
             </form>

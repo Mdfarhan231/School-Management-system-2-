@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
@@ -12,7 +12,6 @@ import {
   CheckSquare,
   LogOut,
   Bell,
-  Search,
   BookOpen,
   ChevronLeft,
   ChevronRight,
@@ -23,7 +22,6 @@ import {
   ChevronDown,
   Plus,
 } from "lucide-react";
-
 import CreateSession from "./CreateSession";
 
 function cn(...classes) {
@@ -31,79 +29,106 @@ function cn(...classes) {
 }
 
 const navItems = [
-  { label: "Dashboard",      icon: LayoutDashboard, href: "/admin/dashboard" },
-  { label: "Students",       icon: GraduationCap,   href: "/admin/students" },
-  { label: "All Students",   icon: ListChecks,      href: "/admin/all-students" },
-  { label: "Teachers",       icon: Users,           href: "/admin/teachers" },
-  { label: "All Teachers",   icon: UserCheck,       href: "/admin/all-teachers" },
-  { label: "Exam Routine",   icon: Calendar,        href: "/admin/exam-routines" },
-  { label: "Mark Approvals", icon: CheckSquare,     href: "/admin/mark-approvals" },
-  { label: "Notices",        icon: Megaphone,       href: "/admin/notices" },
+  { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
+  { label: "Students", icon: GraduationCap, href: "/admin/students" },
+  { label: "All Students", icon: ListChecks, href: "/admin/all-students" },
+  { label: "Teachers", icon: Users, href: "/admin/teachers" },
+  { label: "All Teachers", icon: UserCheck, href: "/admin/all-teachers" },
+  { label: "Exam Routine", icon: Calendar, href: "/admin/exam-routines" },
+  { label: "Mark Approvals", icon: CheckSquare, href: "/admin/mark-approvals" },
+  { label: "Notices", icon: Megaphone, href: "/admin/notices" },
 ];
 
 const SIDEBAR_EXPANDED_W = 272;
 const SIDEBAR_COLLAPSED_W = 72;
 
 export default function AdminSidebarLayout({ children }) {
-  const router   = useRouter();
+  const router = useRouter();
   const pathname = usePathname();
 
+  // ── State ──
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [admin, setAdmin]             = useState(null);
-
-  // ── FIXED: Session state with server-side guard ──
-  const [selectedSession, setSelectedSession] = useState("2026-27");
+  const [admin, setAdmin] = useState(null);
+  const [selectedSession, setSelectedSession] = useState(null);
   const [isSessionOpen, setIsSessionOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [sessions, setSessions] = useState(() => {
-    // Guard: Only run on the client
-    if (typeof window === 'undefined') {
-      return [
-        { id: "2026-27", label: "2026-27", status: "Active", isCurrent: true },
-      ];
-    }
+  const [sessions, setSessions] = useState([]);
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const isAuthPage = pathname === "/admin/login" || pathname === "/admin/signup";
+
+  // ── Load sessions from localStorage ──
+  const loadSessions = useCallback(() => {
+    if (typeof window === 'undefined') return [];
     
     const saved = localStorage.getItem("gks_sessions");
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
+      try {
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        console.error("Failed to parse sessions:", e);
+        return [];
+      }
     }
-    return [
-      { id: "2026-27", label: "2026-27", status: "Active", isCurrent: true },
-      { id: "2025-26", label: "2025-26", status: "Archived", isCurrent: false },
-      { id: "2024-25", label: "2024-25", status: "Archived", isCurrent: false },
-      { id: "2023-24", label: "2023-24", status: "Archived", isCurrent: false },
-    ];
-  });
+    return [];
+  }, []);
 
-  const [showHeader, setShowHeader] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  // ── Save sessions to localStorage ──
+  const saveSessions = useCallback((newSessions) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("gks_sessions", JSON.stringify(newSessions));
+    }
+  }, []);
 
-  const isAuthPage =
-    pathname === "/admin/login" || pathname === "/admin/signup";
+  // ── Initialize sessions ──
+  useEffect(() => {
+    const initialSessions = loadSessions();
+    if (initialSessions.length === 0) {
+      // Default sessions if none exist
+      const defaultSessions = [
+        { id: "2026-27", label: "2026-27", status: "Active", isCurrent: true },
+        { id: "2025-26", label: "2025-26", status: "Archived", isCurrent: false },
+        { id: "2024-25", label: "2024-25", status: "Archived", isCurrent: false },
+      ];
+      setSessions(defaultSessions);
+      saveSessions(defaultSessions);
+      setSelectedSession("2026-27");
+    } else {
+      setSessions(initialSessions);
+      // Find current session or default to first
+      const current = initialSessions.find(s => s.isCurrent);
+      setSelectedSession(current ? current.id : initialSessions[0]?.id || null);
+    }
+    setIsLoading(false);
+  }, [loadSessions, saveSessions]);
 
-  /* ── Auth guard ── */
+  // ── Auth guard ──
   useEffect(() => {
     if (isAuthPage) return;
     const saved = localStorage.getItem("admin");
-    if (!saved) { router.replace("/admin/login"); return; }
-    try   { setAdmin(JSON.parse(saved)); }
-    catch { localStorage.removeItem("admin"); router.replace("/admin/login"); }
+    if (!saved) {
+      router.replace("/admin/login");
+      return;
+    }
+    try {
+      setAdmin(JSON.parse(saved));
+    } catch {
+      localStorage.removeItem("admin");
+      router.replace("/admin/login");
+    }
   }, [router, isAuthPage]);
 
-  // ── FIXED: Save sessions to localStorage with client-side guard ──
-  useEffect(() => {
-    // Guard: Only run on the client
-    if (typeof window !== 'undefined') {
-      localStorage.setItem("gks_sessions", JSON.stringify(sessions));
-    }
-  }, [sessions]);
-
+  // ── Handle logout ──
   const handleLogout = () => {
     localStorage.removeItem("admin");
     router.replace("/admin/login");
     router.refresh();
   };
 
+  // ── Scroll handler ──
   const handleScroll = (e) => {
     const currentScrollY = e.currentTarget.scrollTop;
     
@@ -124,8 +149,11 @@ export default function AdminSidebarLayout({ children }) {
     }
   };
 
+  // ── Handle create session ──
   const handleCreateSession = (newSession) => {
     let updatedSessions = [...sessions];
+    
+    // If new session is set as current, update all others
     if (newSession.isCurrent) {
       updatedSessions = updatedSessions.map((s) => ({
         ...s,
@@ -133,13 +161,51 @@ export default function AdminSidebarLayout({ children }) {
         status: s.status === "Active" ? "Archived" : s.status,
       }));
     }
+    
+    // Add new session at the top
     updatedSessions = [newSession, ...updatedSessions];
+    
     setSessions(updatedSessions);
+    saveSessions(updatedSessions);
     setSelectedSession(newSession.id);
+    setIsCreateModalOpen(false);
   };
 
-  /* ── Early returns ── */
+  // ── Handle session change ──
+  const handleSessionChange = (sessionId) => {
+    setSelectedSession(sessionId);
+    setIsSessionOpen(false);
+    
+    // Update localStorage to remember selection
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("gks_selected_session", sessionId);
+    }
+  };
+
+  // ── Get current session label ──
+  const getCurrentSessionLabel = () => {
+    const session = sessions.find(s => s.id === selectedSession);
+    return session ? session.label : "Select Session";
+  };
+
+  // ── Get current session status ──
+  const getCurrentSessionStatus = () => {
+    const session = sessions.find(s => s.id === selectedSession);
+    return session ? session.status : "";
+  };
+
+  // ── Early returns ──
   if (isAuthPage) return <>{children}</>;
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
+        <div className="flex flex-col items-center">
+          <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3" />
+          <p className="text-sm font-medium text-slate-500">Loading Session Data…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!admin) {
     return (
@@ -152,11 +218,10 @@ export default function AdminSidebarLayout({ children }) {
     );
   }
 
-  // ── The rest of your JSX remains the same ──
   return (
     <div className="flex h-screen flex-col bg-[#f8fafc] font-sans text-slate-900 overflow-hidden relative">
       {/* ══════════════════════════════════════
-          ANIMATED TOP NAVBAR (Hide on Scroll)
+          TOP NAVBAR
       ══════════════════════════════════════ */}
       <motion.header
         initial={false}
@@ -178,22 +243,31 @@ export default function AdminSidebarLayout({ children }) {
           <div className="relative">
             <button
               onClick={() => setIsSessionOpen(!isSessionOpen)}
-              className="flex items-center gap-2 px-3 py-1 bg-white/10 hover:bg-white/15 border border-white/10 rounded-lg text-[11px] font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98]"
+              className="flex items-center gap-2 px-3 py-1 bg-white/10 hover:bg-white/15 border border-white/10 rounded-lg text-[11px] font-bold uppercase tracking-wider text-white transition-all active:scale-[0.98] min-w-[150px] justify-between"
             >
-              <Calendar className="h-3.5 w-3.5 text-blue-200" />
-              <span>Session: {selectedSession}</span>
-              {selectedSession === "2026-27" ? (
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              ) : (
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-              )}
-              <ChevronDown className={`h-3 w-3 text-white/70 transition-transform duration-200 ${isSessionOpen ? "rotate-180" : ""}`} />
+              <div className="flex items-center gap-2">
+                <Calendar className="h-3.5 w-3.5 text-blue-200" />
+                <span>Session: {getCurrentSessionLabel()}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {getCurrentSessionStatus() === "Active" ? (
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                ) : getCurrentSessionStatus() === "Upcoming" ? (
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                ) : (
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                )}
+                <ChevronDown className={`h-3 w-3 text-white/70 transition-transform duration-200 ${isSessionOpen ? "rotate-180" : ""}`} />
+              </div>
             </button>
 
             <AnimatePresence>
               {isSessionOpen && (
                 <>
+                  {/* Backdrop */}
                   <div className="fixed inset-0 z-40 cursor-default" onClick={() => setIsSessionOpen(false)} />
+                  
+                  {/* Dropdown Menu */}
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -207,10 +281,7 @@ export default function AdminSidebarLayout({ children }) {
                     {sessions.map((session) => (
                       <button
                         key={session.id}
-                        onClick={() => {
-                          setSelectedSession(session.id);
-                          setIsSessionOpen(false);
-                        }}
+                        onClick={() => handleSessionChange(session.id)}
                         className={`w-full px-4 py-2.5 flex items-center justify-between text-left hover:bg-white/5 transition-colors ${
                           selectedSession === session.id ? 'text-indigo-400 font-bold' : 'text-slate-300'
                         }`}
@@ -222,6 +293,8 @@ export default function AdminSidebarLayout({ children }) {
                         <span className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider ${
                           session.isCurrent 
                             ? 'bg-emerald-500/15 text-emerald-400' 
+                            : session.status === 'Upcoming'
+                            ? 'bg-amber-500/15 text-amber-400'
                             : 'bg-white/5 text-slate-400'
                         }`}>
                           {session.status}
@@ -229,6 +302,7 @@ export default function AdminSidebarLayout({ children }) {
                       </button>
                     ))}
 
+                    {/* Create Session Footer */}
                     <div className="border-t border-slate-800/80 mt-1.5 pt-1.5 px-2">
                       <button
                         onClick={() => {
@@ -238,7 +312,7 @@ export default function AdminSidebarLayout({ children }) {
                         className="w-full px-3 py-2 flex items-center gap-2 rounded-lg text-left text-xs font-bold text-indigo-400 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors"
                       >
                         <Plus className="h-3.5 w-3.5" />
-                        <span>Create Session</span>
+                        <span>Create New Session</span>
                       </button>
                     </div>
                   </motion.div>
@@ -247,11 +321,13 @@ export default function AdminSidebarLayout({ children }) {
             </AnimatePresence>
           </div>
 
+          {/* Notification Bell */}
           <button className="relative rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white">
             <Bell className="h-4 w-4" />
             <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-[#1e3a5f] bg-rose-400" />
           </button>
 
+          {/* Admin Avatar */}
           <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-white/10 shadow-sm">
             <img
               src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
@@ -261,6 +337,7 @@ export default function AdminSidebarLayout({ children }) {
             />
           </div>
 
+          {/* Admin Name */}
           <div className="hidden sm:block leading-none">
             <p className="text-xs font-bold text-white">
               {admin?.name?.split(" ")[0] || "Admin"}
@@ -272,19 +349,21 @@ export default function AdminSidebarLayout({ children }) {
         </div>
       </motion.header>
 
-      {/* Create Session Modal */}
-      <AnimatePresence>
-        {isCreateModalOpen && (
-          <CreateSession
-            onClose={() => setIsCreateModalOpen(false)}
-            onCreate={handleCreateSession}
-            sessions={sessions}
-          />
-        )}
-      </AnimatePresence>
+      {/* ══════════════════════════════════════
+          CREATE SESSION MODAL
+      ══════════════════════════════════════ */}
+      <CreateSession
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreate={handleCreateSession}
+        existingSessions={sessions}
+      />
 
+      {/* ══════════════════════════════════════
+          SIDEBAR + MAIN CONTENT
+      ══════════════════════════════════════ */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar remains the same */}
+        {/* Sidebar */}
         <motion.aside
           initial={false}
           animate={{
@@ -334,7 +413,7 @@ export default function AdminSidebarLayout({ children }) {
                       GKS Admin
                     </p>
                     <p className="text-[8px] font-bold uppercase tracking-widest text-slate-400">
-                      System Controller
+                      {getCurrentSessionLabel()}
                     </p>
                   </motion.div>
                 )}
@@ -349,13 +428,13 @@ export default function AdminSidebarLayout({ children }) {
           >
             {isCollapsed
               ? <ChevronRight className="h-3.5 w-3.5" />
-              : <ChevronLeft  className="h-3.5 w-3.5" />}
+              : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>
 
-          {/* Navigation Items */}
+          {/* Navigation */}
           <nav className="mt-2 flex-1 space-y-1 px-3 overflow-y-auto overflow-x-hidden">
             {navItems.map((item) => {
-              const Icon     = item.icon;
+              const Icon = item.icon;
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
 
               return (
@@ -474,7 +553,7 @@ export default function AdminSidebarLayout({ children }) {
           </div>
         </motion.aside>
 
-        {/* Main Content Area */}
+        {/* Main Content */}
         <main
           className={cn(
             "flex min-w-0 flex-1 flex-col transition-all duration-300",
