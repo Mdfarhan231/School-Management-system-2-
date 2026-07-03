@@ -13,7 +13,6 @@ class SessionController extends Controller
 {
     /**
      * Get all sessions
-     * GET /api/sessions
      */
     public function index()
     {
@@ -37,7 +36,6 @@ class SessionController extends Controller
 
     /**
      * Get current session
-     * GET /api/sessions/current
      */
     public function current()
     {
@@ -66,14 +64,14 @@ class SessionController extends Controller
 
     /**
      * Create a new session
-     * POST /api/sessions
+     * New sessions are always Active and NOT current by default
      */
     public function store(Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
                 'session_label' => 'required|string|max:50|unique:academic_sessions,session_label',
-                'session_status' => 'required|in:Active,Upcoming,Archived',
+                'session_status' => 'sometimes|in:Active,Upcoming,Archived',
                 'is_current' => 'boolean',
                 'start_date' => 'nullable|date',
                 'end_date' => 'nullable|date|after_or_equal:start_date',
@@ -86,18 +84,16 @@ class SessionController extends Controller
                 ], 422);
             }
 
-            // The database trigger will handle making only one session current
+            // ── New sessions are ALWAYS Active and NOT current ──
+            // Users can set as current later from the dropdown
             $session = AcademicSession::create([
                 'session_label' => $request->session_label,
-                'session_status' => $request->session_status,
-                'is_current' => $request->is_current ?? false,
+                'session_status' => $request->session_status ?? 'Active',
+                'is_current' => false, // Always false by default
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
                 'created_by' => Auth::id(),
             ]);
-
-            // If this session is set as current, update other sessions via trigger
-            // The trigger 'enforce_single_current_session' handles this automatically
 
             return response()->json([
                 'success' => true,
@@ -116,7 +112,6 @@ class SessionController extends Controller
 
     /**
      * Update a session
-     * PUT /api/sessions/{id}
      */
     public function update(Request $request, $id)
     {
@@ -146,6 +141,16 @@ class SessionController extends Controller
                 ], 422);
             }
 
+            // ── If setting as current, auto-archive the previous current ──
+            if ($request->has('is_current') && $request->is_current === true) {
+                AcademicSession::where('is_current', true)
+                    ->where('id', '!=', $id)
+                    ->update([
+                        'is_current' => false,
+                        'session_status' => 'Archived'
+                    ]);
+            }
+
             $session->update($request->all());
 
             return response()->json([
@@ -165,14 +170,12 @@ class SessionController extends Controller
 
     /**
      * Delete a session (Soft Delete)
-     * DELETE /api/sessions/{id}
      */
     public function destroy($id)
     {
         try {
             $session = AcademicSession::findOrFail($id);
             
-            // ── BLOCK: Prevent deleting Archived sessions ──
             if ($session->session_status === 'Archived') {
                 return response()->json([
                     'success' => false,
@@ -180,7 +183,6 @@ class SessionController extends Controller
                 ], 403);
             }
 
-            // Prevent deleting the last session
             if (AcademicSession::count() <= 1) {
                 return response()->json([
                     'success' => false,
@@ -188,7 +190,6 @@ class SessionController extends Controller
                 ], 422);
             }
 
-            // Soft delete
             $session->delete();
 
             return response()->json([
@@ -207,14 +208,13 @@ class SessionController extends Controller
 
     /**
      * Set a session as current
-     * PATCH /api/sessions/{id}/set-current
+     * This will automatically archive the previous current session
      */
     public function setCurrent($id)
     {
         try {
             $session = AcademicSession::findOrFail($id);
             
-            // ── BLOCK: Prevent setting Archived sessions as current ──
             if ($session->session_status === 'Archived') {
                 return response()->json([
                     'success' => false,
@@ -222,12 +222,27 @@ class SessionController extends Controller
                 ], 403);
             }
 
-            // The trigger will handle updating other sessions
-            $session->update(['is_current' => true]);
+            // ── Auto-archive the previous current session ──
+            $previousCurrent = AcademicSession::where('is_current', true)
+                ->where('id', '!=', $id)
+                ->first();
+            
+            if ($previousCurrent) {
+                $previousCurrent->update([
+                    'is_current' => false,
+                    'session_status' => 'Archived'
+                ]);
+            }
+
+            // ── Set this session as current ──
+            $session->update([
+                'is_current' => true,
+                'session_status' => 'Active'
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Session set as current successfully',
+                'message' => 'Session set as current successfully. Previous session archived.',
                 'data' => $session
             ]);
 
@@ -242,7 +257,6 @@ class SessionController extends Controller
 
     /**
      * Restore a soft-deleted session
-     * PATCH /api/sessions/{id}/restore
      */
     public function restore($id)
     {

@@ -52,8 +52,8 @@ class TeacherController extends Controller
                 $filePath = 'teachers/' . $fileName;
 
                 $fileContent = file_get_contents($file->getRealPath());
-
-                $response = Http::withHeaders([
+                
+                $response = Http:: withHeaders([
                     'Authorization' => 'Bearer ' . env('SUPABASE_KEY'),
                     'Content-Type' => $file->getMimeType(),
                 ])->withBody($fileContent, $file->getMimeType())->put(

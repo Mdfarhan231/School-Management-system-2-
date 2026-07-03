@@ -33,7 +33,6 @@ export const fetchCurrentSession = async (token) => {
 
 /**
  * Create a new session
- * Expected body: { session_label, session_status, is_current, start_date, end_date }
  */
 export const createSessionApi = async (sessionData, token) => {
     try {
@@ -73,6 +72,7 @@ export const deleteSessionApi = async (id, token) => {
 
 /**
  * Set a session as current
+ * This will automatically archive the previous current session
  */
 export const setCurrentSessionApi = async (id, token) => {
     try {
@@ -80,6 +80,19 @@ export const setCurrentSessionApi = async (id, token) => {
         return response.data;
     } catch (error) {
         console.error('Failed to set current session:', error);
+        throw error;
+    }
+};
+
+/**
+ * Restore a soft-deleted session
+ */
+export const restoreSessionApi = async (id, token) => {
+    try {
+        const response = await apiRequest(`/sessions/${id}/restore`, 'PATCH', null, token);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to restore session:', error);
         throw error;
     }
 };
