@@ -21,7 +21,7 @@ import {
   User,
   ChevronDown,
   Plus,
-  Trash2, // ✅ Added for delete functionality
+  Trash2,
 } from "lucide-react";
 import CreateSession from "./CreateSession";
 import { useSession } from "@/context/SessionContext";
@@ -56,6 +56,7 @@ export default function AdminSidebarLayout({ children }) {
     selectSession,
     createSession,
     deleteSession,
+    refreshSessions,
     isLoading: sessionsLoading 
   } = useSession();
 
@@ -114,17 +115,23 @@ export default function AdminSidebarLayout({ children }) {
   };
 
   // ── Handle create session ──
-  const handleCreateSession = (newSession) => {
-    createSession(newSession);
-    setIsCreateModalOpen(false);
+  const handleCreateSession = async (newSession) => {
+    try {
+      await createSession(newSession);
+      setIsCreateModalOpen(false);
+      // Refresh sessions list
+      await refreshSessions();
+    } catch (error) {
+      console.error('Failed to create session:', error);
+      alert(error.message || 'Failed to create session');
+    }
   };
 
   // ── Handle delete session ──
-  const handleDeleteSession = (sessionId, e) => {
+  const handleDeleteSession = async (sessionId, e) => {
     // Prevent the click event from triggering the parent session switch action
     e.stopPropagation();
     
-    // Show confirmation dialog (optional but recommended)
     const sessionToDelete = sessions.find(s => s.id === sessionId);
     if (!sessionToDelete) return;
     
@@ -135,22 +142,28 @@ export default function AdminSidebarLayout({ children }) {
     }
     
     // Confirm deletion
-    if (!confirm(`Are you sure you want to delete session "${sessionToDelete.label}"?`)) {
+    if (!confirm(`Are you sure you want to delete session "${sessionToDelete.session_label || sessionToDelete.label}"?`)) {
       return;
     }
     
-    // Delete the session using context
-    deleteSession(sessionId);
+    try {
+      await deleteSession(sessionId);
+      // Refresh sessions list
+      await refreshSessions();
+    } catch (error) {
+      console.error('Failed to delete session:', error);
+      alert(error.message || 'Failed to delete session');
+    }
   };
 
   // ── Get current session label ──
   const getCurrentSessionLabel = () => {
-    return selectedSession?.label || "Select Session";
+    return selectedSession?.session_label || selectedSession?.label || "Select Session";
   };
 
   // ── Get current session status ──
   const getCurrentSessionStatus = () => {
-    return selectedSession?.status || "";
+    return selectedSession?.session_status || selectedSession?.status || "";
   };
 
   // ── Early returns ──
@@ -232,56 +245,73 @@ export default function AdminSidebarLayout({ children }) {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
-                    className="absolute right-0 mt-2 w-56 bg-[#0F172B] border border-slate-800 rounded-xl shadow-xl py-2 z-50 overflow-hidden"
+                    className="absolute right-0 mt-2 w-56 bg-[#0F172B] border border-slate-800 rounded-xl shadow-xl py-2 z-50 overflow-hidden max-h-80 overflow-y-auto"
                   >
-                    <div className="px-4 py-1.5 border-b border-slate-800/80 mb-1">
+                    <div className="px-4 py-1.5 border-b border-slate-800/80 mb-1 sticky top-0 bg-[#0F172B] z-10">
                       <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Select Academic Session</p>
                     </div>
                     
-                    {sessions.map((session) => (
-                      <button
-                        key={session.id}
-                        onClick={() => {
-                          selectSession(session.id);
-                          setIsSessionOpen(false);
-                        }}
-                        // Added 'group' to enable group-hover transitions
-                        className={`group w-full px-4 py-2.5 flex items-center justify-between text-left hover:bg-white/5 transition-colors ${
-                          selectedSessionId === session.id ? 'text-indigo-400 font-bold' : 'text-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Calendar className={`h-3.5 w-3.5 ${selectedSessionId === session.id ? 'text-indigo-400' : 'text-slate-500'}`} />
-                          <span className="text-xs font-semibold uppercase tracking-wider">{session.label}</span>
-                        </div>
-
-                        {/* Relative wrapper container that hosts the dynamic toggle badge & delete button */}
-                        <div className="relative flex items-center justify-end w-14 h-5">
-                          {/* 1. Status Badge: Fades out and shrinks on group hover */}
-                          <span className={`absolute right-0 px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider transition-all duration-200 group-hover:opacity-0 group-hover:scale-75 ${
-                            session.isCurrent 
-                              ? 'bg-emerald-500/15 text-emerald-400' 
-                              : session.status === 'Upcoming'
-                              ? 'bg-amber-500/15 text-amber-400'
-                              : 'bg-white/5 text-slate-400'
-                          }`}>
-                            {session.status}
-                          </span>
-
-                          {/* 2. Trash Button: Fades in and scales up on group hover */}
-                          <span
-                            onClick={(e) => handleDeleteSession(session.id, e)}
-                            title="Delete Session"
-                            className="absolute right-0 p-1 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/15 opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 cursor-pointer"
+                    {sessions.length === 0 ? (
+                      <div className="px-4 py-6 text-center">
+                        <p className="text-xs text-slate-400">No sessions found</p>
+                        <p className="text-[10px] text-slate-500 mt-1">Create a new session below</p>
+                      </div>
+                    ) : (
+                      sessions.map((session) => {
+                        const sessionLabel = session.session_label || session.label;
+                        const sessionStatus = session.session_status || session.status;
+                        const isCurrent = session.is_current || session.isCurrent;
+                        const isArchived = sessionStatus === 'Archived';
+                        
+                        return (
+                          <button
+                            key={session.id}
+                            onClick={() => {
+                              selectSession(session.id);
+                              setIsSessionOpen(false);
+                            }}
+                            className={`group w-full px-4 py-2.5 flex items-center justify-between text-left hover:bg-white/5 transition-colors ${
+                              selectedSessionId === session.id ? 'text-indigo-400 font-bold' : 'text-slate-300'
+                            } ${isArchived ? 'opacity-75' : ''}`}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </span>
-                        </div>
-                      </button>
-                    ))}
+                            <div className="flex items-center gap-2">
+                              <Calendar className={`h-3.5 w-3.5 ${selectedSessionId === session.id ? 'text-indigo-400' : 'text-slate-500'}`} />
+                              <span className="text-xs font-semibold uppercase tracking-wider">{sessionLabel}</span>
+                            </div>
+
+                            {/* Status Badge + Delete Button */}
+                            <div className="relative flex items-center justify-end w-14 h-5">
+                              {/* Status Badge */}
+                              <span className={`absolute right-0 px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider transition-all duration-200 ${
+                                isArchived ? 'group-hover:opacity-0 group-hover:scale-75' : 'group-hover:opacity-0 group-hover:scale-75'
+                              } ${
+                                isCurrent 
+                                  ? 'bg-emerald-500/15 text-emerald-400' 
+                                  : sessionStatus === 'Upcoming'
+                                  ? 'bg-amber-500/15 text-amber-400'
+                                  : 'bg-white/5 text-slate-400'
+                              }`}>
+                                {sessionStatus}
+                              </span>
+
+                              {/* Delete Button - Only show for non-archived sessions and if more than 1 session */}
+                              {!isArchived && sessions.length > 1 && (
+                                <span
+                                  onClick={(e) => handleDeleteSession(session.id, e)}
+                                  title="Delete Session"
+                                  className="absolute right-0 p-1 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/15 opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 cursor-pointer"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
 
                     {/* Create Session Footer */}
-                    <div className="border-t border-slate-800/80 mt-1.5 pt-1.5 px-2">
+                    <div className="border-t border-slate-800/80 mt-1.5 pt-1.5 px-2 sticky bottom-0 bg-[#0F172B]">
                       <button
                         onClick={() => {
                           setIsSessionOpen(false);

@@ -13,6 +13,7 @@ class SessionController extends Controller
 {
     /**
      * Get all sessions
+     * GET /api/sessions
      */
     public function index()
     {
@@ -36,11 +37,12 @@ class SessionController extends Controller
 
     /**
      * Get current session
+     * GET /api/sessions/current
      */
     public function current()
     {
         try {
-            $session = AcademicSession::current()->first();
+            $session = AcademicSession::where('is_current', true)->first();
             
             if (!$session) {
                 return response()->json([
@@ -64,6 +66,7 @@ class SessionController extends Controller
 
     /**
      * Create a new session
+     * POST /api/sessions
      */
     public function store(Request $request)
     {
@@ -83,7 +86,7 @@ class SessionController extends Controller
                 ], 422);
             }
 
-            // If setting as current, the trigger will handle it
+            // The database trigger will handle making only one session current
             $session = AcademicSession::create([
                 'session_label' => $request->session_label,
                 'session_status' => $request->session_status,
@@ -92,6 +95,9 @@ class SessionController extends Controller
                 'end_date' => $request->end_date,
                 'created_by' => Auth::id(),
             ]);
+
+            // If this session is set as current, update other sessions via trigger
+            // The trigger 'enforce_single_current_session' handles this automatically
 
             return response()->json([
                 'success' => true,
@@ -110,11 +116,20 @@ class SessionController extends Controller
 
     /**
      * Update a session
+     * PUT /api/sessions/{id}
      */
     public function update(Request $request, $id)
     {
         try {
             $session = AcademicSession::findOrFail($id);
+            
+            // ── BLOCK: Prevent updating Archived sessions ──
+            if ($session->session_status === 'Archived') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot modify an archived session'
+                ], 403);
+            }
 
             $validator = Validator::make($request->all(), [
                 'session_label' => 'sometimes|string|max:50|unique:academic_sessions,session_label,' . $id,
@@ -149,12 +164,21 @@ class SessionController extends Controller
     }
 
     /**
-     * Delete a session
+     * Delete a session (Soft Delete)
+     * DELETE /api/sessions/{id}
      */
     public function destroy($id)
     {
         try {
             $session = AcademicSession::findOrFail($id);
+            
+            // ── BLOCK: Prevent deleting Archived sessions ──
+            if ($session->session_status === 'Archived') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete an archived session'
+                ], 403);
+            }
 
             // Prevent deleting the last session
             if (AcademicSession::count() <= 1) {
@@ -183,12 +207,21 @@ class SessionController extends Controller
 
     /**
      * Set a session as current
+     * PATCH /api/sessions/{id}/set-current
      */
     public function setCurrent($id)
     {
         try {
             $session = AcademicSession::findOrFail($id);
             
+            // ── BLOCK: Prevent setting Archived sessions as current ──
+            if ($session->session_status === 'Archived') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot set an archived session as current'
+                ], 403);
+            }
+
             // The trigger will handle updating other sessions
             $session->update(['is_current' => true]);
 
@@ -203,6 +236,31 @@ class SessionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to set current session'
+            ], 500);
+        }
+    }
+
+    /**
+     * Restore a soft-deleted session
+     * PATCH /api/sessions/{id}/restore
+     */
+    public function restore($id)
+    {
+        try {
+            $session = AcademicSession::withTrashed()->findOrFail($id);
+            $session->restore();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Session restored successfully',
+                'data' => $session
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to restore session: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to restore session'
             ], 500);
         }
     }
