@@ -21,6 +21,7 @@ import {
   User,
   ChevronDown,
   Plus,
+  Trash2, // ✅ Added for delete functionality
 } from "lucide-react";
 import CreateSession from "./CreateSession";
 import { useSession } from "@/context/SessionContext";
@@ -54,6 +55,7 @@ export default function AdminSidebarLayout({ children }) {
     selectedSession,
     selectSession,
     createSession,
+    deleteSession,
     isLoading: sessionsLoading 
   } = useSession();
 
@@ -115,6 +117,30 @@ export default function AdminSidebarLayout({ children }) {
   const handleCreateSession = (newSession) => {
     createSession(newSession);
     setIsCreateModalOpen(false);
+  };
+
+  // ── Handle delete session ──
+  const handleDeleteSession = (sessionId, e) => {
+    // Prevent the click event from triggering the parent session switch action
+    e.stopPropagation();
+    
+    // Show confirmation dialog (optional but recommended)
+    const sessionToDelete = sessions.find(s => s.id === sessionId);
+    if (!sessionToDelete) return;
+    
+    // Don't allow deleting the only session
+    if (sessions.length <= 1) {
+      alert("Cannot delete the last session. You need at least one session.");
+      return;
+    }
+    
+    // Confirm deletion
+    if (!confirm(`Are you sure you want to delete session "${sessionToDelete.label}"?`)) {
+      return;
+    }
+    
+    // Delete the session using context
+    deleteSession(sessionId);
   };
 
   // ── Get current session label ──
@@ -219,7 +245,8 @@ export default function AdminSidebarLayout({ children }) {
                           selectSession(session.id);
                           setIsSessionOpen(false);
                         }}
-                        className={`w-full px-4 py-2.5 flex items-center justify-between text-left hover:bg-white/5 transition-colors ${
+                        // Added 'group' to enable group-hover transitions
+                        className={`group w-full px-4 py-2.5 flex items-center justify-between text-left hover:bg-white/5 transition-colors ${
                           selectedSessionId === session.id ? 'text-indigo-400 font-bold' : 'text-slate-300'
                         }`}
                       >
@@ -227,15 +254,29 @@ export default function AdminSidebarLayout({ children }) {
                           <Calendar className={`h-3.5 w-3.5 ${selectedSessionId === session.id ? 'text-indigo-400' : 'text-slate-500'}`} />
                           <span className="text-xs font-semibold uppercase tracking-wider">{session.label}</span>
                         </div>
-                        <span className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider ${
-                          session.isCurrent 
-                            ? 'bg-emerald-500/15 text-emerald-400' 
-                            : session.status === 'Upcoming'
-                            ? 'bg-amber-500/15 text-amber-400'
-                            : 'bg-white/5 text-slate-400'
-                        }`}>
-                          {session.status}
-                        </span>
+
+                        {/* Relative wrapper container that hosts the dynamic toggle badge & delete button */}
+                        <div className="relative flex items-center justify-end w-14 h-5">
+                          {/* 1. Status Badge: Fades out and shrinks on group hover */}
+                          <span className={`absolute right-0 px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider transition-all duration-200 group-hover:opacity-0 group-hover:scale-75 ${
+                            session.isCurrent 
+                              ? 'bg-emerald-500/15 text-emerald-400' 
+                              : session.status === 'Upcoming'
+                              ? 'bg-amber-500/15 text-amber-400'
+                              : 'bg-white/5 text-slate-400'
+                          }`}>
+                            {session.status}
+                          </span>
+
+                          {/* 2. Trash Button: Fades in and scales up on group hover */}
+                          <span
+                            onClick={(e) => handleDeleteSession(session.id, e)}
+                            title="Delete Session"
+                            className="absolute right-0 p-1 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/15 opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </span>
+                        </div>
                       </button>
                     ))}
 
