@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
@@ -23,6 +23,7 @@ import {
   Plus,
 } from "lucide-react";
 import CreateSession from "./CreateSession";
+import { useSession } from "@/context/SessionContext";
 
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -46,64 +47,25 @@ export default function AdminSidebarLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // ── State ──
+  // ── Use session context ──
+  const { 
+    sessions, 
+    selectedSessionId, 
+    selectedSession,
+    selectSession,
+    createSession,
+    isLoading: sessionsLoading 
+  } = useSession();
+
+  // ── Local state ──
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [admin, setAdmin] = useState(null);
-  const [selectedSession, setSelectedSession] = useState(null);
   const [isSessionOpen, setIsSessionOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [sessions, setSessions] = useState([]);
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
 
   const isAuthPage = pathname === "/admin/login" || pathname === "/admin/signup";
-
-  // ── Load sessions from localStorage ──
-  const loadSessions = useCallback(() => {
-    if (typeof window === 'undefined') return [];
-    
-    const saved = localStorage.getItem("gks_sessions");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (e) {
-        console.error("Failed to parse sessions:", e);
-        return [];
-      }
-    }
-    return [];
-  }, []);
-
-  // ── Save sessions to localStorage ──
-  const saveSessions = useCallback((newSessions) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem("gks_sessions", JSON.stringify(newSessions));
-    }
-  }, []);
-
-  // ── Initialize sessions ──
-  useEffect(() => {
-    const initialSessions = loadSessions();
-    if (initialSessions.length === 0) {
-      // Default sessions if none exist
-      const defaultSessions = [
-        { id: "2026-27", label: "2026-27", status: "Active", isCurrent: true },
-        { id: "2025-26", label: "2025-26", status: "Archived", isCurrent: false },
-        { id: "2024-25", label: "2024-25", status: "Archived", isCurrent: false },
-      ];
-      setSessions(defaultSessions);
-      saveSessions(defaultSessions);
-      setSelectedSession("2026-27");
-    } else {
-      setSessions(initialSessions);
-      // Find current session or default to first
-      const current = initialSessions.find(s => s.isCurrent);
-      setSelectedSession(current ? current.id : initialSessions[0]?.id || null);
-    }
-    setIsLoading(false);
-  }, [loadSessions, saveSessions]);
 
   // ── Auth guard ──
   useEffect(() => {
@@ -151,52 +113,24 @@ export default function AdminSidebarLayout({ children }) {
 
   // ── Handle create session ──
   const handleCreateSession = (newSession) => {
-    let updatedSessions = [...sessions];
-    
-    // If new session is set as current, update all others
-    if (newSession.isCurrent) {
-      updatedSessions = updatedSessions.map((s) => ({
-        ...s,
-        isCurrent: false,
-        status: s.status === "Active" ? "Archived" : s.status,
-      }));
-    }
-    
-    // Add new session at the top
-    updatedSessions = [newSession, ...updatedSessions];
-    
-    setSessions(updatedSessions);
-    saveSessions(updatedSessions);
-    setSelectedSession(newSession.id);
+    createSession(newSession);
     setIsCreateModalOpen(false);
-  };
-
-  // ── Handle session change ──
-  const handleSessionChange = (sessionId) => {
-    setSelectedSession(sessionId);
-    setIsSessionOpen(false);
-    
-    // Update localStorage to remember selection
-    if (typeof window !== 'undefined') {
-      localStorage.setItem("gks_selected_session", sessionId);
-    }
   };
 
   // ── Get current session label ──
   const getCurrentSessionLabel = () => {
-    const session = sessions.find(s => s.id === selectedSession);
-    return session ? session.label : "Select Session";
+    return selectedSession?.label || "Select Session";
   };
 
   // ── Get current session status ──
   const getCurrentSessionStatus = () => {
-    const session = sessions.find(s => s.id === selectedSession);
-    return session ? session.status : "";
+    return selectedSession?.status || "";
   };
 
   // ── Early returns ──
   if (isAuthPage) return <>{children}</>;
-  if (isLoading) {
+  
+  if (sessionsLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
         <div className="flex flex-col items-center">
@@ -281,13 +215,16 @@ export default function AdminSidebarLayout({ children }) {
                     {sessions.map((session) => (
                       <button
                         key={session.id}
-                        onClick={() => handleSessionChange(session.id)}
+                        onClick={() => {
+                          selectSession(session.id);
+                          setIsSessionOpen(false);
+                        }}
                         className={`w-full px-4 py-2.5 flex items-center justify-between text-left hover:bg-white/5 transition-colors ${
-                          selectedSession === session.id ? 'text-indigo-400 font-bold' : 'text-slate-300'
+                          selectedSessionId === session.id ? 'text-indigo-400 font-bold' : 'text-slate-300'
                         }`}
                       >
                         <div className="flex items-center gap-2">
-                          <Calendar className={`h-3.5 w-3.5 ${selectedSession === session.id ? 'text-indigo-400' : 'text-slate-500'}`} />
+                          <Calendar className={`h-3.5 w-3.5 ${selectedSessionId === session.id ? 'text-indigo-400' : 'text-slate-500'}`} />
                           <span className="text-xs font-semibold uppercase tracking-wider">{session.label}</span>
                         </div>
                         <span className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider ${
