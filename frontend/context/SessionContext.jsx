@@ -170,42 +170,68 @@ export function SessionProvider({ children }) {
         console.log('🟢 Local session created:', sessionToAdd);
         return sessionToAdd;
     };
+   // ── Delete session ──
+const deleteSession = useCallback(async (sessionId) => {
+    console.log('🟢 Deleting session:', sessionId);
+    
+    // Prevent deleting the last session
+    if (sessions.length <= 1) {
+        alert('Cannot delete the last session. You need at least one session.');
+        return false;
+    }
 
-    // ── Delete session ──
-    const deleteSession = useCallback(async (sessionId) => {
-        if (sessions.length <= 1) {
-            alert('Cannot delete the last session');
+    try {
+        // ── Check if this session exists in the database ──
+        const sessionToDelete = sessions.find(s => s.id === sessionId);
+        if (!sessionToDelete) {
+            console.warn('🟡 Session not found in state:', sessionId);
             return false;
         }
 
+        console.log('🟢 Session to delete:', sessionToDelete);
+
+        // ── Try API delete first ──
         try {
-            // ── Try API first ──
-            try {
-                await deleteSessionApi(sessionId);
-                await loadSessions();
-                console.log('🟢 Session deleted from API');
-                return true;
-            } catch (apiError) {
-                console.warn('🟡 API delete failed, using localStorage:', apiError);
-            }
+            await deleteSessionApi(sessionId);
+            console.log('🟢 API delete successful');
             
-            // ── Fallback to localStorage ──
-            const updatedSessions = sessions.filter(s => s.id !== sessionId);
-            setSessions(updatedSessions);
-            localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
-            
-            if (selectedSessionId === sessionId) {
-                const newSelection = updatedSessions[0]?.id || null;
-                setSelectedSessionId(newSelection);
-                localStorage.setItem('gks_selected_session', newSelection);
-            }
+            // ── Reload sessions from API ──
+            await loadSessions();
+            console.log('🟢 Sessions reloaded after delete');
             return true;
             
-        } catch (error) {
-            console.error('🔴 Delete failed:', error);
-            return false;
+        } catch (apiError) {
+            console.warn('🟡 API delete failed, using localStorage:', apiError);
+            
+            // ── If API fails, check if it's a local-only session ──
+            const isLocalOnly = !sessionToDelete.created_at || 
+                              !sessionToDelete.id.startsWith('sess_');
+            
+            if (isLocalOnly) {
+                console.log('🟢 Local-only session, deleting from localStorage');
+                // Remove from localStorage
+                const updatedSessions = sessions.filter(s => s.id !== sessionId);
+                setSessions(updatedSessions);
+                localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
+                
+                // Update selected session if needed
+                if (selectedSessionId === sessionId) {
+                    const newSelection = updatedSessions[0]?.id || null;
+                    setSelectedSessionId(newSelection);
+                    localStorage.setItem('gks_selected_session', newSelection);
+                }
+                return true;
+            }
+            
+            throw apiError; // Re-throw if not local-only
         }
-    }, [sessions, selectedSessionId, loadSessions]);
+        
+    } catch (error) {
+        console.error('🔴 Delete failed:', error);
+        alert('Failed to delete session. Please try again.');
+        return false;
+    }
+}, [sessions, selectedSessionId, loadSessions]);
 
     // ── Select session ──
     const selectSession = useCallback(async (sessionId) => {

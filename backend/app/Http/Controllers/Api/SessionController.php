@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class SessionController extends Controller
@@ -64,7 +63,6 @@ class SessionController extends Controller
 
     /**
      * Create a new session
-     * New sessions are always Active and NOT current by default
      */
     public function store(Request $request)
     {
@@ -84,15 +82,13 @@ class SessionController extends Controller
                 ], 422);
             }
 
-            // ── New sessions are ALWAYS Active and NOT current ──
-            // Users can set as current later from the dropdown
             $session = AcademicSession::create([
                 'session_label' => $request->session_label,
                 'session_status' => $request->session_status ?? 'Active',
-                'is_current' => false, // Always false by default
+                'is_current' => $request->is_current ?? false,
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
-                'created_by' => Auth::id(),
+                'created_by' => null, // No auth for now
             ]);
 
             return response()->json([
@@ -117,14 +113,6 @@ class SessionController extends Controller
     {
         try {
             $session = AcademicSession::findOrFail($id);
-            
-            // ── BLOCK: Prevent updating Archived sessions ──
-            if ($session->session_status === 'Archived') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot modify an archived session'
-                ], 403);
-            }
 
             $validator = Validator::make($request->all(), [
                 'session_label' => 'sometimes|string|max:50|unique:academic_sessions,session_label,' . $id,
@@ -141,7 +129,7 @@ class SessionController extends Controller
                 ], 422);
             }
 
-            // ── If setting as current, auto-archive the previous current ──
+            // If setting as current, auto-archive the previous current
             if ($request->has('is_current') && $request->is_current === true) {
                 AcademicSession::where('is_current', true)
                     ->where('id', '!=', $id)
@@ -169,20 +157,14 @@ class SessionController extends Controller
     }
 
     /**
-     * Delete a session (Soft Delete)
+     * Delete a session (Hard Delete - Removes from database)
      */
     public function destroy($id)
     {
         try {
             $session = AcademicSession::findOrFail($id);
             
-            if ($session->session_status === 'Archived') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot delete an archived session'
-                ], 403);
-            }
-
+            // ── Prevent deleting the last session ──
             if (AcademicSession::count() <= 1) {
                 return response()->json([
                     'success' => false,
@@ -190,7 +172,19 @@ class SessionController extends Controller
                 ], 422);
             }
 
-            $session->delete();
+            // ── If deleting the current session, make another session current ──
+            if ($session->is_current) {
+                $nextSession = AcademicSession::where('id', '!=', $id)->first();
+                if ($nextSession) {
+                    $nextSession->update([
+                        'is_current' => true,
+                        'session_status' => 'Active'
+                    ]);
+                }
+            }
+
+            // ── Hard delete (remove from database) ──
+            $session->forceDelete();
 
             return response()->json([
                 'success' => true,
@@ -201,26 +195,18 @@ class SessionController extends Controller
             Log::error('Failed to delete session: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete session'
+                'message' => 'Failed to delete session: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
      * Set a session as current
-     * This will automatically archive the previous current session
      */
     public function setCurrent($id)
     {
         try {
             $session = AcademicSession::findOrFail($id);
-            
-            if ($session->session_status === 'Archived') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cannot set an archived session as current'
-                ], 403);
-            }
 
             // ── Auto-archive the previous current session ──
             $previousCurrent = AcademicSession::where('is_current', true)
@@ -242,7 +228,7 @@ class SessionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Session set as current successfully. Previous session archived.',
+                'message' => 'Session set as current successfully',
                 'data' => $session
             ]);
 
