@@ -125,71 +125,83 @@ export function SessionProvider({ children }) {
     }, [loadSessions]);
 
     // ── Create session ──
-    const createSession = useCallback(async (newSession) => {
-        try {
-            const token = getAuthToken();
-            
-            if (token && !isOffline) {
-                // ── Prepare data for API ──
-                const apiData = {
-                    session_label: newSession.session_label || newSession.label,
-                    session_status: newSession.session_status || newSession.status || 'Active',
-                    is_current: false, // Always false by default
-                    start_date: newSession.start_date || null,
-                    end_date: newSession.end_date || null,
-                };
-                
+const createSession = useCallback(async (newSession) => {
+    console.log('🟢 SessionContext: Creating session:', newSession);
+    
+    try {
+        const token = getAuthToken();
+        console.log('🟢 SessionContext: Token:', token ? 'Present' : 'Missing');
+        
+        // ── Prepare data for API ──
+        const apiData = {
+            session_label: newSession.session_label || newSession.label,
+            session_status: 'Active', // Always Active by default
+            is_current: false, // Always false by default
+            start_date: newSession.start_date || null,
+            end_date: newSession.end_date || null,
+        };
+        
+        console.log('🟢 SessionContext: API Data:', apiData);
+        
+        if (token) {
+            try {
+                // ── Call API ──
                 const result = await createSessionApi(apiData, token);
+                console.log('🟢 SessionContext: API Success:', result);
                 
                 if (result) {
                     // ── Reload sessions from API ──
                     await loadSessions();
+                    console.log('🟢 SessionContext: Sessions reloaded');
                     return result;
                 }
+            } catch (apiError) {
+                console.error('🔴 SessionContext: API Error:', apiError);
+                // Fall through to localStorage fallback
             }
-            
-            // ── Fallback to localStorage ──
-            console.warn('API failed, saving to localStorage only');
-            let updatedSessions = [...sessions];
-            
-            // Auto-archive: if new session is set as current, archive others
-            if (newSession.isCurrent || newSession.is_current) {
-                updatedSessions = updatedSessions.map((s) => ({
-                    ...s,
-                    isCurrent: false,
-                    is_current: false,
-                    status: s.status === 'Active' ? 'Archived' : s.status,
-                    session_status: s.session_status === 'Active' ? 'Archived' : s.session_status,
-                }));
-            }
-            
-            // Create new session object
-            const sessionToAdd = {
-                id: newSession.id || newSession.session_label?.toLowerCase().replace(/\s+/g, '-') || Date.now().toString(),
-                session_label: newSession.session_label || newSession.label,
-                label: newSession.session_label || newSession.label,
-                session_status: newSession.session_status || newSession.status || 'Active',
-                status: newSession.session_status || newSession.status || 'Active',
-                is_current: newSession.is_current || newSession.isCurrent || false,
-                isCurrent: newSession.is_current || newSession.isCurrent || false,
-                start_date: newSession.start_date || null,
-                end_date: newSession.end_date || null,
-                created_at: new Date().toISOString(),
-            };
-            
-            updatedSessions = [sessionToAdd, ...updatedSessions];
-            setSessions(updatedSessions);
-            localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
-            setSelectedSessionId(sessionToAdd.id);
-            localStorage.setItem('gks_selected_session', sessionToAdd.id);
-            
-            return sessionToAdd;
-            
-        } catch (error) {
-            console.error('Failed to create session:', error);
-            throw error;
         }
-    }, [sessions, isOffline, loadSessions, getAuthToken]);
+        
+        // ── Fallback to localStorage ──
+        console.warn('🟡 SessionContext: Using localStorage fallback');
+        return createSessionLocal(newSession);
+        
+    } catch (error) {
+        console.error('🔴 SessionContext: Create failed:', error);
+        throw error;
+    }
+}, [getAuthToken, loadSessions]);
+
+// ── Create session in localStorage (fallback) ──
+const createSessionLocal = (newSession) => {
+    console.log('🟢 SessionContext: Creating in localStorage');
+    
+    // Auto-archive: if new session is set as current, archive others
+    let updatedSessions = [...sessions];
+    
+    // Create new session object
+    const sessionToAdd = {
+        id: newSession.id || newSession.session_label?.toLowerCase().replace(/\s+/g, '-') || Date.now().toString(),
+        session_label: newSession.session_label || newSession.label,
+        label: newSession.session_label || newSession.label,
+        session_status: 'Active',
+        status: 'Active',
+        is_current: false,
+        isCurrent: false,
+        start_date: newSession.start_date || null,
+        end_date: newSession.end_date || null,
+        created_at: new Date().toISOString(),
+    };
+    
+    updatedSessions = [sessionToAdd, ...updatedSessions];
+    setSessions(updatedSessions);
+    localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
+    setSelectedSessionId(sessionToAdd.id);
+    localStorage.setItem('gks_selected_session', sessionToAdd.id);
+    
+    console.log('🟢 SessionContext: Local session created:', sessionToAdd);
+    return sessionToAdd;
+};
+
 
     // ── Delete session ──
     const deleteSession = useCallback(async (sessionId) => {

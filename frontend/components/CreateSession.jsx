@@ -10,17 +10,20 @@ import { Calendar, X, PlusCircle } from "lucide-react";
 export default function CreateSession({ isOpen, onClose, onCreate, existingSessions = [] }) {
   const [newSessionLabel, setNewSessionLabel] = useState("");
   const [createError, setCreateError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ── Reset form when modal opens ──
   useEffect(() => {
     if (isOpen) {
       setNewSessionLabel("");
       setCreateError("");
+      setIsSubmitting(false);
     }
   }, [isOpen]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
     const label = newSessionLabel.trim();
     
     if (!label) {
@@ -28,7 +31,7 @@ export default function CreateSession({ isOpen, onClose, onCreate, existingSessi
       return;
     }
 
-    // Check for duplicate session (handles both label and session_label)
+    // Check for duplicate session
     const duplicate = existingSessions.some(
       (s) => (s.session_label || s.label).toLowerCase() === label.toLowerCase()
     );
@@ -38,30 +41,44 @@ export default function CreateSession({ isOpen, onClose, onCreate, existingSessi
       return;
     }
 
-    // ── Create session object matching your backend schema ──
-    const newSession = {
-      session_label: label,           // For backend API
-      label: label,                   // For frontend compatibility
-      session_status: "Active",       // Always active by default
-      status: "Active",               // Frontend compatibility
-      is_current: false,              // Default to false (user can set from dropdown)
-      isCurrent: false,               // Frontend compatibility
-    };
+    setIsSubmitting(true);
 
-    // Pass to parent (SessionContext)
-    onCreate(newSession);
+    try {
+      // ── Create session object ──
+      const newSession = {
+        session_label: label,
+        label: label,
+        session_status: "Active",
+        status: "Active",
+        is_current: false,
+        isCurrent: false,
+      };
 
-    // Reset form and close
-    setNewSessionLabel("");
-    setCreateError("");
-    onClose();
+      console.log('🟢 CreateSession: Submitting:', newSession); // DEBUG
+
+      // ── Call the parent's onCreate function ──
+      await onCreate(newSession);
+
+      console.log('🟢 CreateSession: Success!'); // DEBUG
+
+      // Reset and close
+      setNewSessionLabel("");
+      setCreateError("");
+      setIsSubmitting(false);
+      onClose();
+
+    } catch (error) {
+      console.error('🔴 CreateSession: Error:', error);
+      setCreateError(error.message || 'Failed to create session');
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          {/* Backdrop with a premium, smooth blur */}
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -84,6 +101,7 @@ export default function CreateSession({ isOpen, onClose, onCreate, existingSessi
                 type="button"
                 onClick={onClose}
                 className="p-1.5 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors"
+                disabled={isSubmitting}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -125,6 +143,7 @@ export default function CreateSession({ isOpen, onClose, onCreate, existingSessi
                     onChange={(e) => setNewSessionLabel(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-medium text-slate-800"
                     autoFocus
+                    disabled={isSubmitting}
                   />
                 </div>
                 <p className="text-[10px] text-slate-400 leading-normal">
@@ -132,7 +151,7 @@ export default function CreateSession({ isOpen, onClose, onCreate, existingSessi
                 </p>
               </div>
 
-              {/* Status Badge Block (Clean, non-interactive visual indicator) */}
+              {/* Status Badge Block */}
               <div className="bg-slate-50/80 p-3.5 rounded-xl border border-slate-100 flex items-center justify-between">
                 <div className="space-y-0.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
@@ -157,15 +176,26 @@ export default function CreateSession({ isOpen, onClose, onCreate, existingSessi
                   type="button"
                   onClick={onClose}
                   className="flex-1 py-2 px-4 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-600 hover:bg-slate-50 font-bold text-xs uppercase tracking-wider transition-all"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-indigo-600/10 hover:shadow-indigo-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                  disabled={isSubmitting}
+                  className="flex-1 py-2 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-indigo-600/10 hover:shadow-indigo-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  <span>Create</span>
+                  {isSubmitting ? (
+                    <>
+                      <span className="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      <span>Create</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

@@ -81,8 +81,8 @@ Route::prefix('sessions')->group(function () {
     Route::put('/{id}', [SessionController::class, 'update']);
     Route::delete('/{id}', [SessionController::class, 'destroy']);
     Route::patch('/{id}/set-current', [SessionController::class, 'setCurrent']);
+    Route::patch('/{id}/restore', [SessionController::class, 'restore']);
 });
-
 // Dashboard stats
 Route::get('/dashboard/stats', function () {
     return response()->json([
