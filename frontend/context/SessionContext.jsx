@@ -172,6 +172,7 @@ export function SessionProvider({ children }) {
     };
    // ── Delete session ──
 // ── Delete session ──
+ // ── Delete session ──
 const deleteSession = useCallback(async (sessionId) => {
     console.log('🟢 Deleting session:', sessionId);
     console.log('🟢 Session ID type:', typeof sessionId);
@@ -184,7 +185,7 @@ const deleteSession = useCallback(async (sessionId) => {
 
     try {
         // ── Check if this session exists in the state ──
-        const sessionToDelete = sessions.find(s => s.id == sessionId); // Use == for type coercion
+        const sessionToDelete = sessions.find(s => s.id == sessionId);
         if (!sessionToDelete) {
             console.warn('🟡 Session not found in state:', sessionId);
             return false;
@@ -192,7 +193,30 @@ const deleteSession = useCallback(async (sessionId) => {
 
         console.log('🟢 Session to delete:', sessionToDelete);
 
-        // ── Try API delete first ──
+        // ── Check if this is a numeric ID (local-only session) ──
+        const isNumericId = typeof sessionId === 'number' || /^\d+$/.test(String(sessionId));
+        const isLocalOnly = isNumericId || sessionId.length < 20 || !sessionId.includes('-');
+        
+        if (isLocalOnly) {
+            console.log('🟢 Local-only session, deleting from localStorage only');
+            
+            // Remove from localStorage
+            const updatedSessions = sessions.filter(s => s.id != sessionId);
+            setSessions(updatedSessions);
+            localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
+            
+            // Update selected session if needed
+            if (selectedSessionId == sessionId) {
+                const newSelection = updatedSessions[0]?.id || null;
+                setSelectedSessionId(newSelection);
+                localStorage.setItem('gks_selected_session', newSelection);
+            }
+            
+            // Don't try to call the API for local-only sessions
+            return true;
+        }
+
+        // ── UUID format - try API delete ──
         try {
             await deleteSessionApi(sessionId);
             console.log('🟢 API delete successful');
@@ -203,30 +227,19 @@ const deleteSession = useCallback(async (sessionId) => {
             return true;
             
         } catch (apiError) {
-            console.warn('🟡 API delete failed, using localStorage:', apiError);
+            console.warn('🟡 API delete failed:', apiError);
             
-            // ── Check if this is a local-only session (numeric ID or no UUID) ──
-            const isLocalOnly = typeof sessionId === 'number' || 
-                               !sessionId.includes('-') || 
-                               sessionId.length < 20;
+            // ── Fallback: remove from localStorage ──
+            const updatedSessions = sessions.filter(s => s.id != sessionId);
+            setSessions(updatedSessions);
+            localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
             
-            if (isLocalOnly) {
-                console.log('🟢 Local-only session, deleting from localStorage');
-                // Remove from localStorage
-                const updatedSessions = sessions.filter(s => s.id != sessionId); // Use != for type coercion
-                setSessions(updatedSessions);
-                localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
-                
-                // Update selected session if needed
-                if (selectedSessionId == sessionId) {
-                    const newSelection = updatedSessions[0]?.id || null;
-                    setSelectedSessionId(newSelection);
-                    localStorage.setItem('gks_selected_session', newSelection);
-                }
-                return true;
+            if (selectedSessionId == sessionId) {
+                const newSelection = updatedSessions[0]?.id || null;
+                setSelectedSessionId(newSelection);
+                localStorage.setItem('gks_selected_session', newSelection);
             }
-            
-            throw apiError; // Re-throw if not local-only
+            return true;
         }
         
     } catch (error) {
@@ -236,29 +249,47 @@ const deleteSession = useCallback(async (sessionId) => {
     }
 }, [sessions, selectedSessionId, loadSessions]);
     // ── Select session ──
-    const selectSession = useCallback(async (sessionId) => {
-        console.log('🟢 Selecting session:', sessionId);
-        
-        setSelectedSessionId(sessionId);
-        localStorage.setItem('gks_selected_session', sessionId);
-        
-        // ── Try API to set as current ──
-        try {
-            await setCurrentSessionApi(sessionId);
-            await loadSessions(); // Refresh to get updated statuses
-            console.log('🟢 Session set as current on API');
-        } catch (apiError) {
-            console.warn('🟡 API set-current failed, using localStorage:', apiError);
-            // Update localStorage to reflect current session
-            const updatedSessions = sessions.map(s => ({
-                ...s,
-                is_current: s.id === sessionId,
-                isCurrent: s.id === sessionId,
-            }));
-            setSessions(updatedSessions);
-            localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
-        }
-    }, [sessions, loadSessions]);
+    // ── Select session ──
+const selectSession = useCallback(async (sessionId) => {
+    console.log('🟢 Selecting session:', sessionId);
+    
+    setSelectedSessionId(sessionId);
+    localStorage.setItem('gks_selected_session', sessionId);
+    
+    // ── Check if this is a numeric ID (local-only) ──
+    const isNumericId = typeof sessionId === 'number' || /^\d+$/.test(String(sessionId));
+    const isLocalOnly = isNumericId || sessionId.length < 20 || !sessionId.includes('-');
+    
+    if (isLocalOnly) {
+        console.log('🟢 Local-only session, not calling API');
+        // Just update localStorage
+        const updatedSessions = sessions.map(s => ({
+            ...s,
+            is_current: s.id == sessionId,
+            isCurrent: s.id == sessionId,
+        }));
+        setSessions(updatedSessions);
+        localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
+        return;
+    }
+    
+    // ── UUID format - try API to set as current ──
+    try {
+        await setCurrentSessionApi(sessionId);
+        await loadSessions(); // Refresh to get updated statuses
+        console.log('🟢 Session set as current on API');
+    } catch (apiError) {
+        console.warn('🟡 API set-current failed, using localStorage:', apiError);
+        // Update localStorage to reflect current session
+        const updatedSessions = sessions.map(s => ({
+            ...s,
+            is_current: s.id == sessionId,
+            isCurrent: s.id == sessionId,
+        }));
+        setSessions(updatedSessions);
+        localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
+    }
+}, [sessions, loadSessions]);
 
     // ── Refresh sessions ──
     const refreshSessions = useCallback(async () => {

@@ -306,15 +306,16 @@ const handleDeleteSession = async (sessionId, e) => {
                               </span>
 
                               {/* Delete Button - Only show for non-archived sessions and if more than 1 session */}
-                              {!isArchived && sessions.length > 1 && (
+{/* Delete Button - Show for ALL sessions if more than 1 session exists */}
+                                {sessions.length > 1 && (
                                 <span
-                                  onClick={(e) => handleDeleteSession(session.id, e)}
+                                onClick={(e) => handleDeleteSession(session.id, e)}
                                   title="Delete Session"
                                   className="absolute right-0 p-1 rounded-md text-slate-500 hover:text-rose-400 hover:bg-rose-500/15 opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 cursor-pointer"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </span>
-                              )}
+                                      >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                     </span>
+                                  )}
                             </div>
                           </button>
                         );
