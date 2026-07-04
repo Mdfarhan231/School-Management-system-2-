@@ -1,16 +1,16 @@
-import {apiRequest} from './api';
+import { apiRequest } from './api';
 
 /**
  * Session Management API Calls
- * All functions use the base apiRequest from api.js
+ * No token required - using session-based auth
  */
 
 /**
  * Fetch all sessions from backend
  */
-export const fetchSessions = async (token) => {
+export const fetchSessions = async () => {
     try {
-        const response = await apiRequest('/sessions', 'GET', null, token);
+        const response = await apiRequest('/sessions', 'GET');
         return response.data || [];
     } catch (error) {
         console.error('Failed to fetch sessions:', error);
@@ -21,9 +21,9 @@ export const fetchSessions = async (token) => {
 /**
  * Fetch current session
  */
-export const fetchCurrentSession = async (token) => {
+export const fetchCurrentSession = async () => {
     try {
-        const response = await apiRequest('/sessions/current', 'GET', null, token);
+        const response = await apiRequest('/sessions/current', 'GET');
         return response.data || null;
     } catch (error) {
         console.error('Failed to fetch current session:', error);
@@ -34,9 +34,9 @@ export const fetchCurrentSession = async (token) => {
 /**
  * Create a new session
  */
-export const createSessionApi = async (sessionData, token) => {
+export const createSessionApi = async (sessionData) => {
     try {
-        const response = await apiRequest('/sessions', 'POST', sessionData, token);
+        const response = await apiRequest('/sessions', 'POST', sessionData);
         return response.data;
     } catch (error) {
         console.error('Failed to create session:', error);
@@ -47,9 +47,9 @@ export const createSessionApi = async (sessionData, token) => {
 /**
  * Update a session
  */
-export const updateSessionApi = async (id, sessionData, token) => {
+export const updateSessionApi = async (id, sessionData) => {
     try {
-        const response = await apiRequest(`/sessions/${id}`, 'PUT', sessionData, token);
+        const response = await apiRequest(`/sessions/${id}`, 'PUT', sessionData);
         return response.data;
     } catch (error) {
         console.error('Failed to update session:', error);
@@ -60,9 +60,9 @@ export const updateSessionApi = async (id, sessionData, token) => {
 /**
  * Delete a session
  */
-export const deleteSessionApi = async (id, token) => {
+export const deleteSessionApi = async (id) => {
     try {
-        const response = await apiRequest(`/sessions/${id}`, 'DELETE', null, token);
+        const response = await apiRequest(`/sessions/${id}`, 'DELETE');
         return response.data;
     } catch (error) {
         console.error('Failed to delete session:', error);
@@ -72,11 +72,10 @@ export const deleteSessionApi = async (id, token) => {
 
 /**
  * Set a session as current
- * This will automatically archive the previous current session
  */
-export const setCurrentSessionApi = async (id, token) => {
+export const setCurrentSessionApi = async (id) => {
     try {
-        const response = await apiRequest(`/sessions/${id}/set-current`, 'PATCH', null, token);
+        const response = await apiRequest(`/sessions/${id}/set-current`, 'PATCH');
         return response.data;
     } catch (error) {
         console.error('Failed to set current session:', error);
@@ -87,9 +86,9 @@ export const setCurrentSessionApi = async (id, token) => {
 /**
  * Restore a soft-deleted session
  */
-export const restoreSessionApi = async (id, token) => {
+export const restoreSessionApi = async (id) => {
     try {
-        const response = await apiRequest(`/sessions/${id}/restore`, 'PATCH', null, token);
+        const response = await apiRequest(`/sessions/${id}/restore`, 'PATCH');
         return response.data;
     } catch (error) {
         console.error('Failed to restore session:', error);

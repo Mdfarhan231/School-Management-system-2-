@@ -74,6 +74,8 @@ Route::put('/notices/{id}', [NoticeController::class, 'update']);
 Route::delete('/notices/{id}', [NoticeController::class, 'destroy']);
 
 // ── Session Management Routes ──
+
+// ── Session Management Routes (No auth required for now) ──
 Route::prefix('sessions')->group(function () {
     Route::get('/', [SessionController::class, 'index']);
     Route::get('/current', [SessionController::class, 'current']);
