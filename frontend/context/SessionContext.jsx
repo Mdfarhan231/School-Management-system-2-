@@ -171,8 +171,10 @@ export function SessionProvider({ children }) {
         return sessionToAdd;
     };
    // ── Delete session ──
+// ── Delete session ──
 const deleteSession = useCallback(async (sessionId) => {
     console.log('🟢 Deleting session:', sessionId);
+    console.log('🟢 Session ID type:', typeof sessionId);
     
     // Prevent deleting the last session
     if (sessions.length <= 1) {
@@ -181,8 +183,8 @@ const deleteSession = useCallback(async (sessionId) => {
     }
 
     try {
-        // ── Check if this session exists in the database ──
-        const sessionToDelete = sessions.find(s => s.id === sessionId);
+        // ── Check if this session exists in the state ──
+        const sessionToDelete = sessions.find(s => s.id == sessionId); // Use == for type coercion
         if (!sessionToDelete) {
             console.warn('🟡 Session not found in state:', sessionId);
             return false;
@@ -203,19 +205,20 @@ const deleteSession = useCallback(async (sessionId) => {
         } catch (apiError) {
             console.warn('🟡 API delete failed, using localStorage:', apiError);
             
-            // ── If API fails, check if it's a local-only session ──
-            const isLocalOnly = !sessionToDelete.created_at || 
-                              !sessionToDelete.id.startsWith('sess_');
+            // ── Check if this is a local-only session (numeric ID or no UUID) ──
+            const isLocalOnly = typeof sessionId === 'number' || 
+                               !sessionId.includes('-') || 
+                               sessionId.length < 20;
             
             if (isLocalOnly) {
                 console.log('🟢 Local-only session, deleting from localStorage');
                 // Remove from localStorage
-                const updatedSessions = sessions.filter(s => s.id !== sessionId);
+                const updatedSessions = sessions.filter(s => s.id != sessionId); // Use != for type coercion
                 setSessions(updatedSessions);
                 localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
                 
                 // Update selected session if needed
-                if (selectedSessionId === sessionId) {
+                if (selectedSessionId == sessionId) {
                     const newSelection = updatedSessions[0]?.id || null;
                     setSelectedSessionId(newSelection);
                     localStorage.setItem('gks_selected_session', newSelection);
@@ -232,7 +235,6 @@ const deleteSession = useCallback(async (sessionId) => {
         return false;
     }
 }, [sessions, selectedSessionId, loadSessions]);
-
     // ── Select session ──
     const selectSession = useCallback(async (sessionId) => {
         console.log('🟢 Selecting session:', sessionId);

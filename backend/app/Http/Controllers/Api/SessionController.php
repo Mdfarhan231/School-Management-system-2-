@@ -7,6 +7,7 @@ use App\Models\AcademicSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class SessionController extends Controller
 {
@@ -82,13 +83,15 @@ class SessionController extends Controller
                 ], 422);
             }
 
+            // ── Generate UUID for new session ──
             $session = AcademicSession::create([
+                'id' => (string) Str::uuid(), // ✅ Generate proper UUID
                 'session_label' => $request->session_label,
                 'session_status' => $request->session_status ?? 'Active',
                 'is_current' => $request->is_current ?? false,
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
-                'created_by' => null, // No auth for now
+                'created_by' => null,
             ]);
 
             return response()->json([
@@ -112,10 +115,18 @@ class SessionController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $session = AcademicSession::findOrFail($id);
+            // ── Find by ID (works with both UUID and numeric) ──
+            $session = AcademicSession::where('id', $id)->first();
+            
+            if (!$session) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session not found'
+                ], 404);
+            }
 
             $validator = Validator::make($request->all(), [
-                'session_label' => 'sometimes|string|max:50|unique:academic_sessions,session_label,' . $id,
+                'session_label' => 'sometimes|string|max:50|unique:academic_sessions,session_label,' . $id . ',id',
                 'session_status' => 'sometimes|in:Active,Upcoming,Archived',
                 'is_current' => 'boolean',
                 'start_date' => 'nullable|date',
@@ -151,18 +162,26 @@ class SessionController extends Controller
             Log::error('Failed to update session: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update session'
+                'message' => 'Failed to update session: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Delete a session (Hard Delete - Removes from database)
+     * Delete a session (Hard Delete)
      */
     public function destroy($id)
     {
         try {
-            $session = AcademicSession::findOrFail($id);
+            // ── Find by ID (works with both UUID and numeric) ──
+            $session = AcademicSession::where('id', $id)->first();
+            
+            if (!$session) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session not found'
+                ], 404);
+            }
             
             // ── Prevent deleting the last session ──
             if (AcademicSession::count() <= 1) {
@@ -183,7 +202,7 @@ class SessionController extends Controller
                 }
             }
 
-            // ── Hard delete (remove from database) ──
+            // ── Hard delete ──
             $session->forceDelete();
 
             return response()->json([
@@ -206,7 +225,15 @@ class SessionController extends Controller
     public function setCurrent($id)
     {
         try {
-            $session = AcademicSession::findOrFail($id);
+            // ── Find by ID (works with both UUID and numeric) ──
+            $session = AcademicSession::where('id', $id)->first();
+            
+            if (!$session) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session not found'
+                ], 404);
+            }
 
             // ── Auto-archive the previous current session ──
             $previousCurrent = AcademicSession::where('is_current', true)
@@ -236,7 +263,7 @@ class SessionController extends Controller
             Log::error('Failed to set current session: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to set current session'
+                'message' => 'Failed to set current session: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -247,7 +274,15 @@ class SessionController extends Controller
     public function restore($id)
     {
         try {
-            $session = AcademicSession::withTrashed()->findOrFail($id);
+            $session = AcademicSession::withTrashed()->where('id', $id)->first();
+            
+            if (!$session) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session not found'
+                ], 404);
+            }
+            
             $session->restore();
 
             return response()->json([
@@ -260,7 +295,7 @@ class SessionController extends Controller
             Log::error('Failed to restore session: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to restore session'
+                'message' => 'Failed to restore session: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -2,12 +2,8 @@ import { apiRequest } from './api';
 
 /**
  * Session Management API Calls
- * No token required - using session-based auth
  */
 
-/**
- * Fetch all sessions from backend
- */
 export const fetchSessions = async () => {
     try {
         const response = await apiRequest('/sessions', 'GET');
@@ -18,9 +14,6 @@ export const fetchSessions = async () => {
     }
 };
 
-/**
- * Fetch current session
- */
 export const fetchCurrentSession = async () => {
     try {
         const response = await apiRequest('/sessions/current', 'GET');
@@ -31,9 +24,6 @@ export const fetchCurrentSession = async () => {
     }
 };
 
-/**
- * Create a new session
- */
 export const createSessionApi = async (sessionData) => {
     try {
         const response = await apiRequest('/sessions', 'POST', sessionData);
@@ -44,9 +34,6 @@ export const createSessionApi = async (sessionData) => {
     }
 };
 
-/**
- * Update a session
- */
 export const updateSessionApi = async (id, sessionData) => {
     try {
         const response = await apiRequest(`/sessions/${id}`, 'PUT', sessionData);
@@ -57,9 +44,6 @@ export const updateSessionApi = async (id, sessionData) => {
     }
 };
 
-/**
- * Delete a session
- */
 export const deleteSessionApi = async (id) => {
     try {
         const response = await apiRequest(`/sessions/${id}`, 'DELETE');
@@ -70,9 +54,6 @@ export const deleteSessionApi = async (id) => {
     }
 };
 
-/**
- * Set a session as current
- */
 export const setCurrentSessionApi = async (id) => {
     try {
         const response = await apiRequest(`/sessions/${id}/set-current`, 'PATCH');
@@ -83,9 +64,6 @@ export const setCurrentSessionApi = async (id) => {
     }
 };
 
-/**
- * Restore a soft-deleted session
- */
 export const restoreSessionApi = async (id) => {
     try {
         const response = await apiRequest(`/sessions/${id}/restore`, 'PATCH');
