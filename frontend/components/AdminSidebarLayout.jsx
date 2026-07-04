@@ -127,34 +127,45 @@ export default function AdminSidebarLayout({ children }) {
     }
   };
 
-  // ── Handle delete session ──
-  const handleDeleteSession = async (sessionId, e) => {
-    // Prevent the click event from triggering the parent session switch action
+  
+ // ── Handle delete session ──
+const handleDeleteSession = async (sessionId, e) => {
+    // Prevent click from selecting the session
     e.stopPropagation();
     
     const sessionToDelete = sessions.find(s => s.id === sessionId);
     if (!sessionToDelete) return;
     
+    // Get the session label for confirmation message
+    const sessionLabel = sessionToDelete.session_label || sessionToDelete.label || sessionId;
+    
     // Don't allow deleting the only session
     if (sessions.length <= 1) {
-      alert("Cannot delete the last session. You need at least one session.");
-      return;
+        alert("Cannot delete the last session. You need at least one session.");
+        return;
     }
     
     // Confirm deletion
-    if (!confirm(`Are you sure you want to delete session "${sessionToDelete.session_label || sessionToDelete.label}"?`)) {
-      return;
+    if (!confirm(`Are you sure you want to delete session "${sessionLabel}"?`)) {
+        return;
     }
     
     try {
-      await deleteSession(sessionId);
-      // Refresh sessions list
-      await refreshSessions();
+        console.log('🟢 Deleting session:', sessionId);
+        const success = await deleteSession(sessionId);
+        
+        if (success) {
+            console.log('🟢 Session deleted successfully');
+            // Refresh sessions list
+            await refreshSessions();
+        } else {
+            alert('Failed to delete session. Please try again.');
+        }
     } catch (error) {
-      console.error('Failed to delete session:', error);
-      alert(error.message || 'Failed to delete session');
+        console.error('🔴 Failed to delete session:', error);
+        alert(error.message || 'Failed to delete session');
     }
-  };
+};
 
   // ── Get current session label ──
   const getCurrentSessionLabel = () => {
