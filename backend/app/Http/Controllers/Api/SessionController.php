@@ -7,7 +7,6 @@ use App\Models\AcademicSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class SessionController extends Controller
 {
@@ -83,9 +82,7 @@ class SessionController extends Controller
                 ], 422);
             }
 
-            // ── Generate UUID for new session ──
             $session = AcademicSession::create([
-                'id' => (string) Str::uuid(), // ✅ Generate proper UUID
                 'session_label' => $request->session_label,
                 'session_status' => $request->session_status ?? 'Active',
                 'is_current' => $request->is_current ?? false,
@@ -115,18 +112,10 @@ class SessionController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            // ── Find by ID (works with both UUID and numeric) ──
-            $session = AcademicSession::where('id', $id)->first();
-            
-            if (!$session) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Session not found'
-                ], 404);
-            }
+            $session = AcademicSession::findOrFail($id);
 
             $validator = Validator::make($request->all(), [
-                'session_label' => 'sometimes|string|max:50|unique:academic_sessions,session_label,' . $id . ',id',
+                'session_label' => 'sometimes|string|max:50|unique:academic_sessions,session_label,' . $id,
                 'session_status' => 'sometimes|in:Active,Upcoming,Archived',
                 'is_current' => 'boolean',
                 'start_date' => 'nullable|date',
@@ -170,153 +159,102 @@ class SessionController extends Controller
     /**
      * Delete a session (Hard Delete)
      */
-   
-    /**
- * Delete a session (Hard Delete)
- */
-public function destroy($id)
-{
-    try {
-        // ── Check if ID is numeric (from localStorage) ──
-        if (is_numeric($id)) {
-            // Try to find by session_label instead
-            $session = AcademicSession::where('session_label', $id)->first();
+    public function destroy($id)
+    {
+        try {
+            Log::info('Attempting to delete session with ID: ' . $id);
             
-            if (!$session) {
-                // If not found, try to find the session with the closest label
-                // or just return success (it's a local-only session)
+            $session = AcademicSession::findOrFail($id);
+            
+            Log::info('Found session to delete: ' . $session->id . ' - ' . $session->session_label);
+            
+            // ── Prevent deleting the last session ──
+            if (AcademicSession::count() <= 1) {
                 return response()->json([
-                    'success' => true,
-                    'message' => 'Session removed from local storage'
-                ]);
+                    'success' => false,
+                    'message' => 'Cannot delete the last session'
+                ], 422);
             }
-        } else {
-            // ── UUID format - find by ID ──
-            $session = AcademicSession::where('id', $id)->first();
-        }
-        
-        if (!$session) {
+
+            // ── If deleting the current session, make another session current ──
+            if ($session->is_current) {
+                $nextSession = AcademicSession::where('id', '!=', $id)->first();
+                if ($nextSession) {
+                    $nextSession->update([
+                        'is_current' => true,
+                        'session_status' => 'Active'
+                    ]);
+                    Log::info('Set next session as current: ' . $nextSession->id);
+                }
+            }
+
+            // ── Hard delete ──
+            $session->forceDelete();
+            Log::info('Session deleted successfully: ' . $id);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Session not found in database'
+                'message' => 'Session deleted successfully'
             ]);
-        }
-        
-        // ── Prevent deleting the last session ──
-        if (AcademicSession::count() <= 1) {
+
+        } catch (\Exception $e) {
+            Log::error('Failed to delete session: ' . $e->getMessage());
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Cannot delete the last session'
-            ], 422);
+                'message' => 'Failed to delete session: ' . $e->getMessage()
+            ], 500);
         }
-
-        // ── If deleting the current session, make another session current ──
-        if ($session->is_current) {
-            $nextSession = AcademicSession::where('id', '!=', $session->id)->first();
-            if ($nextSession) {
-                $nextSession->update([
-                    'is_current' => true,
-                    'session_status' => 'Active'
-                ]);
-            }
-        }
-
-        // ── Hard delete ──
-        $session->forceDelete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Session deleted successfully'
-        ]);
-
-    } catch (\Exception $e) {
-        Log::error('Failed to delete session: ' . $e->getMessage());
-        
-        // ── If error is about UUID format, it's a local session ──
-        if (strpos($e->getMessage(), 'invalid input syntax for type uuid') !== false) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Local session removed from storage'
-            ]);
-        }
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to delete session: ' . $e->getMessage()
-        ], 500);
     }
-}
 
     /**
      * Set a session as current
      */
-   /**
- * Set a session as current
- */
-public function setCurrent($id)
-{
-    try {
-        // ── Check if ID is numeric (from localStorage) ──
-        if (is_numeric($id)) {
-            $session = AcademicSession::where('session_label', $id)->first();
-        } else {
-            $session = AcademicSession::where('id', $id)->first();
-        }
-        
-        if (!$session) {
+    public function setCurrent($id)
+    {
+        try {
+            $session = AcademicSession::findOrFail($id);
+
+            // ── Auto-archive the previous current session ──
+            $previousCurrent = AcademicSession::where('is_current', true)
+                ->where('id', '!=', $id)
+                ->first();
+            
+            if ($previousCurrent) {
+                $previousCurrent->update([
+                    'is_current' => false,
+                    'session_status' => 'Archived'
+                ]);
+            }
+
+            // ── Set this session as current ──
+            $session->update([
+                'is_current' => true,
+                'session_status' => 'Active'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Session set as current successfully',
+                'data' => $session
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to set current session: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Session not found'
-            ], 404);
+                'message' => 'Failed to set current session: ' . $e->getMessage()
+            ], 500);
         }
-
-        // ── Auto-archive the previous current session ──
-        $previousCurrent = AcademicSession::where('is_current', true)
-            ->where('id', '!=', $session->id)
-            ->first();
-        
-        if ($previousCurrent) {
-            $previousCurrent->update([
-                'is_current' => false,
-                'session_status' => 'Archived'
-            ]);
-        }
-
-        // ── Set this session as current ──
-        $session->update([
-            'is_current' => true,
-            'session_status' => 'Active'
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Session set as current successfully',
-            'data' => $session
-        ]);
-
-    } catch (\Exception $e) {
-        Log::error('Failed to set current session: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to set current session: ' . $e->getMessage()
-        ], 500);
     }
-}
+
     /**
      * Restore a soft-deleted session
      */
     public function restore($id)
     {
         try {
-            $session = AcademicSession::withTrashed()->where('id', $id)->first();
-            
-            if (!$session) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Session not found'
-                ], 404);
-            }
-            
+            $session = AcademicSession::withTrashed()->findOrFail($id);
             $session->restore();
 
             return response()->json([

@@ -22,6 +22,7 @@ class AcademicSession extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',  // ✅ Now integer, not UUID
         'is_current' => 'boolean',
         'start_date' => 'date',
         'end_date' => 'date',
@@ -76,17 +77,5 @@ class AcademicSession extends Model
     public function isCurrent(): bool
     {
         return $this->is_current === true;
-    }
-
-    // ── Boot method for auto-creating UUID ──
-    protected static function boot()
-    {
-        parent::boot();
-        
-        static::creating(function ($model) {
-            if (empty($model->id)) {
-                $model->id = (string) \Illuminate\Support\Str::uuid();
-            }
-        });
     }
 }

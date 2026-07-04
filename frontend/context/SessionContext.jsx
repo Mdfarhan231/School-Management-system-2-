@@ -147,29 +147,33 @@ export function SessionProvider({ children }) {
     }, [loadSessions]);
 
     // ── Create session in localStorage (fallback) ──
-    const createSessionLocal = (newSession) => {
-        const sessionToAdd = {
-            id: newSession.session_label?.toLowerCase().replace(/\s+/g, '-') || Date.now().toString(),
-            session_label: newSession.session_label || newSession.label,
-            label: newSession.session_label || newSession.label,
-            session_status: 'Active',
-            status: 'Active',
-            is_current: false,
-            isCurrent: false,
-            start_date: newSession.start_date || null,
-            end_date: newSession.end_date || null,
-            created_at: new Date().toISOString(),
-        };
-        
-        const updatedSessions = [sessionToAdd, ...sessions];
-        setSessions(updatedSessions);
-        localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
-        setSelectedSessionId(sessionToAdd.id);
-        localStorage.setItem('gks_selected_session', sessionToAdd.id);
-        
-        console.log('🟢 Local session created:', sessionToAdd);
-        return sessionToAdd;
+// ── Create session in localStorage (fallback) ──
+const createSessionLocal = (newSession) => {
+    // Generate a random integer ID
+    const newId = Math.floor(Math.random() * 1000000) + 1;
+    
+    const sessionToAdd = {
+        id: newId,  // ✅ Now using integer
+        session_label: newSession.session_label || newSession.label,
+        label: newSession.session_label || newSession.label,
+        session_status: 'Active',
+        status: 'Active',
+        is_current: false,
+        isCurrent: false,
+        start_date: newSession.start_date || null,
+        end_date: newSession.end_date || null,
+        created_at: new Date().toISOString(),
     };
+    
+    const updatedSessions = [sessionToAdd, ...sessions];
+    setSessions(updatedSessions);
+    localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
+    setSelectedSessionId(sessionToAdd.id);
+    localStorage.setItem('gks_selected_session', String(sessionToAdd.id));
+    
+    console.log('🟢 Local session created:', sessionToAdd);
+    return sessionToAdd;
+};
    // ── Delete session ──
 // ── Delete session ──
  // ── Delete session ──
