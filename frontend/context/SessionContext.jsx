@@ -91,8 +91,8 @@ export function SessionProvider({ children }) {
         } else {
             // Default sessions
             const defaults = [
-                { id: '2026-27', label: '2026-27', status: 'Active', isCurrent: true },
-                { id: '2025-26', label: '2025-26', status: 'Archived', isCurrent: false },
+                { id: '2026-27', label: '2026-27', status: 'Active', isCurrent: true, source: 'local' },
+                { id: '2025-26', label: '2025-26', status: 'Archived', isCurrent: false, source: 'local' },
             ];
             setSessions(defaults);
             localStorage.setItem('gks_sessions', JSON.stringify(defaults));
@@ -115,7 +115,7 @@ export function SessionProvider({ children }) {
             const apiData = {
                 session_label: newSession.session_label || newSession.label,
                 session_status: 'Active',
-                is_current: false,
+                is_current: true,
                 start_date: newSession.start_date || null,
                 end_date: newSession.end_date || null,
             };
@@ -128,6 +128,7 @@ export function SessionProvider({ children }) {
                 console.log('🟢 API Success:', result);
                 
                 if (result) {
+                    localStorage.setItem('gks_selected_session', String(result.id));
                     // ── Reload sessions from API ──
                     await loadSessions();
                     console.log('🟢 Sessions reloaded from API');
@@ -159,15 +160,30 @@ const createSessionLocal = (newSession) => {
         label: newSession.session_label || newSession.label,
         session_status: 'Active',
         status: 'Active',
-        is_current: false,
-        isCurrent: false,
+        is_current: true,
+        isCurrent: true,
         start_date: newSession.start_date || null,
         end_date: newSession.end_date || null,
         created_at: new Date().toISOString(),
         source: 'local',
     };
     
-    const updatedSessions = [sessionToAdd, ...sessions];
+    const updatedSessions = [
+        sessionToAdd,
+        ...sessions.map(session => {
+            const shouldArchive = session.is_current || session.isCurrent || session.session_status === 'Active' || session.status === 'Active';
+
+            return shouldArchive
+                ? {
+                    ...session,
+                    session_status: 'Archived',
+                    status: 'Archived',
+                    is_current: false,
+                    isCurrent: false,
+                }
+                : session;
+        }),
+    ];
     setSessions(updatedSessions);
     localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
     setSelectedSessionId(sessionToAdd.id);
@@ -199,7 +215,7 @@ const deleteSession = useCallback(async (sessionId) => {
 
         console.log('🟢 Session to delete:', sessionToDelete);
 
-        const isLocalOnly = sessionToDelete.source === 'local';
+        const isLocalOnly = sessionToDelete.source !== 'api';
         
         if (isLocalOnly) {
             console.log('🟢 Local-only session, deleting from localStorage only');
@@ -261,7 +277,7 @@ const selectSession = useCallback(async (sessionId) => {
     localStorage.setItem('gks_selected_session', sessionId);
     
     const sessionToSelect = sessions.find(s => s.id == sessionId);
-    const isLocalOnly = sessionToSelect?.source === 'local';
+    const isLocalOnly = sessionToSelect?.source !== 'api';
     
     if (isLocalOnly) {
         console.log('🟢 Local-only session, not calling API');

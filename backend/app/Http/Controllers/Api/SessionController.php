@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 
@@ -82,14 +83,25 @@ class SessionController extends Controller
                 ], 422);
             }
 
-            $session = AcademicSession::create([
-                'session_label' => $request->session_label,
-                'session_status' => $request->session_status ?? 'Active',
-                'is_current' => $request->is_current ?? false,
-                'start_date' => $request->start_date,
-                'end_date' => $request->end_date,
-                'created_by' => null,
-            ]);
+            $session = DB::transaction(function () use ($request) {
+                AcademicSession::where(function ($query) {
+                        $query->where('is_current', true)
+                            ->orWhere('session_status', 'Active');
+                    })
+                    ->update([
+                        'is_current' => false,
+                        'session_status' => 'Archived',
+                    ]);
+
+                return AcademicSession::create([
+                    'session_label' => $request->session_label,
+                    'session_status' => 'Active',
+                    'is_current' => true,
+                    'start_date' => $request->start_date,
+                    'end_date' => $request->end_date,
+                    'created_by' => null,
+                ]);
+            });
 
             return response()->json([
                 'success' => true,
