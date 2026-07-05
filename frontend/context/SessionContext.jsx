@@ -50,7 +50,8 @@ export function SessionProvider({ children }) {
                 // Set selected session
                 const savedSelection = localStorage.getItem('gks_selected_session');
                 const current = mappedSessions.find(s => s.is_current);
-                const selected = savedSelection || current?.id || mappedSessions[0]?.id || null;
+                const savedSession = mappedSessions.find(s => s.id == savedSelection);
+                const selected = savedSession?.id || current?.id || mappedSessions[0]?.id || null;
                 setSelectedSessionId(selected);
                 if (selected) {
                     localStorage.setItem('gks_selected_session', selected);
@@ -80,7 +81,8 @@ export function SessionProvider({ children }) {
                 setSessions(parsed);
                 const savedSelection = localStorage.getItem('gks_selected_session');
                 const current = parsed.find(s => s.is_current || s.isCurrent);
-                const selected = savedSelection || current?.id || parsed[0]?.id || null;
+                const savedSession = parsed.find(s => s.id == savedSelection);
+                const selected = savedSession?.id || current?.id || parsed[0]?.id || null;
                 setSelectedSessionId(selected);
                 if (selected) {
                     localStorage.setItem('gks_selected_session', selected);
@@ -317,7 +319,7 @@ const selectSession = useCallback(async (sessionId) => {
 
     // ── Get current session ──
     const getCurrentSession = useCallback(() => {
-        return sessions.find(s => s.id === selectedSessionId) || null;
+        return sessions.find(s => s.id == selectedSessionId) || null;
     }, [sessions, selectedSessionId]);
 
     const value = {

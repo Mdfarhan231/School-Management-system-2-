@@ -282,11 +282,11 @@ const handleDeleteSession = async (sessionId, e) => {
                               setIsSessionOpen(false);
                             }}
                             className={`group w-full px-4 py-2.5 flex items-center justify-between text-left hover:bg-white/5 transition-colors ${
-                              selectedSessionId === session.id ? 'text-indigo-400 font-bold' : 'text-slate-300'
+                              selectedSessionId == session.id ? 'text-indigo-400 font-bold' : 'text-slate-300'
                             } ${isArchived ? 'opacity-75' : ''}`}
                           >
                             <div className="flex items-center gap-2">
-                              <Calendar className={`h-3.5 w-3.5 ${selectedSessionId === session.id ? 'text-indigo-400' : 'text-slate-500'}`} />
+                              <Calendar className={`h-3.5 w-3.5 ${selectedSessionId == session.id ? 'text-indigo-400' : 'text-slate-500'}`} />
                               <span className="text-xs font-semibold uppercase tracking-wider">{sessionLabel}</span>
                             </div>
 
