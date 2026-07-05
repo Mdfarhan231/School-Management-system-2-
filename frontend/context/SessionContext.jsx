@@ -37,6 +37,7 @@ export function SessionProvider({ children }) {
                     end_date: s.end_date,
                     created_at: s.created_at,
                     updated_at: s.updated_at,
+                    source: 'api',
                 }));
                 
                 console.log('🟢 Mapped sessions:', mappedSessions);
@@ -163,6 +164,7 @@ const createSessionLocal = (newSession) => {
         start_date: newSession.start_date || null,
         end_date: newSession.end_date || null,
         created_at: new Date().toISOString(),
+        source: 'local',
     };
     
     const updatedSessions = [sessionToAdd, ...sessions];
@@ -197,9 +199,7 @@ const deleteSession = useCallback(async (sessionId) => {
 
         console.log('🟢 Session to delete:', sessionToDelete);
 
-        // ── Check if this is a numeric ID (local-only session) ──
-        const isNumericId = typeof sessionId === 'number' || /^\d+$/.test(String(sessionId));
-        const isLocalOnly = isNumericId || sessionId.length < 20 || !sessionId.includes('-');
+        const isLocalOnly = sessionToDelete.source === 'local';
         
         if (isLocalOnly) {
             console.log('🟢 Local-only session, deleting from localStorage only');
@@ -220,7 +220,7 @@ const deleteSession = useCallback(async (sessionId) => {
             return true;
         }
 
-        // ── UUID format - try API delete ──
+        // ── API-backed session - try API delete ──
         try {
             await deleteSessionApi(sessionId);
             console.log('🟢 API delete successful');
@@ -260,9 +260,8 @@ const selectSession = useCallback(async (sessionId) => {
     setSelectedSessionId(sessionId);
     localStorage.setItem('gks_selected_session', sessionId);
     
-    // ── Check if this is a numeric ID (local-only) ──
-    const isNumericId = typeof sessionId === 'number' || /^\d+$/.test(String(sessionId));
-    const isLocalOnly = isNumericId || sessionId.length < 20 || !sessionId.includes('-');
+    const sessionToSelect = sessions.find(s => s.id == sessionId);
+    const isLocalOnly = sessionToSelect?.source === 'local';
     
     if (isLocalOnly) {
         console.log('🟢 Local-only session, not calling API');
@@ -277,7 +276,7 @@ const selectSession = useCallback(async (sessionId) => {
         return;
     }
     
-    // ── UUID format - try API to set as current ──
+    // ── API-backed session - try API to set as current ──
     try {
         await setCurrentSessionApi(sessionId);
         await loadSessions(); // Refresh to get updated statuses
