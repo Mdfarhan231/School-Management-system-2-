@@ -4,8 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { 
     fetchSessions, 
     createSessionApi, 
-    deleteSessionApi,
-    setCurrentSessionApi
+    deleteSessionApi
 } from '@/lib/sessionApi';
 
 const SessionContext = createContext();
@@ -15,6 +14,35 @@ export function SessionProvider({ children }) {
     const [selectedSessionId, setSelectedSessionId] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isUsingApi, setIsUsingApi] = useState(false);
+
+    const loadFromLocalStorage = useCallback(() => {
+        const saved = localStorage.getItem('gks_sessions');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                setSessions(parsed);
+                const savedSelection = localStorage.getItem('gks_selected_session');
+                const current = parsed.find(s => s.is_current || s.isCurrent);
+                const savedSession = parsed.find(s => s.id == savedSelection);
+                const selected = savedSession?.id || current?.id || parsed[0]?.id || null;
+                setSelectedSessionId(selected);
+                if (selected) {
+                    localStorage.setItem('gks_selected_session', selected);
+                }
+            } catch {
+                setSessions([]);
+            }
+        } else {
+            const defaults = [
+                { id: '2026-27', label: '2026-27', status: 'Active', isCurrent: true, source: 'local' },
+                { id: '2025-26', label: '2025-26', status: 'Archived', isCurrent: false, source: 'local' },
+            ];
+            setSessions(defaults);
+            localStorage.setItem('gks_sessions', JSON.stringify(defaults));
+            setSelectedSessionId('2026-27');
+        }
+        setIsLoading(false);
+    }, []);
 
     // ── Load sessions from API or localStorage ──
     const loadSessions = useCallback(async () => {
@@ -70,43 +98,57 @@ export function SessionProvider({ children }) {
             loadFromLocalStorage();
             setIsUsingApi(false);
         }
-    }, []);
+    }, [loadFromLocalStorage]);
 
     // ── Load from localStorage ──
-    const loadFromLocalStorage = () => {
-        const saved = localStorage.getItem('gks_sessions');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                setSessions(parsed);
-                const savedSelection = localStorage.getItem('gks_selected_session');
-                const current = parsed.find(s => s.is_current || s.isCurrent);
-                const savedSession = parsed.find(s => s.id == savedSelection);
-                const selected = savedSession?.id || current?.id || parsed[0]?.id || null;
-                setSelectedSessionId(selected);
-                if (selected) {
-                    localStorage.setItem('gks_selected_session', selected);
-                }
-            } catch (e) {
-                setSessions([]);
-            }
-        } else {
-            // Default sessions
-            const defaults = [
-                { id: '2026-27', label: '2026-27', status: 'Active', isCurrent: true, source: 'local' },
-                { id: '2025-26', label: '2025-26', status: 'Archived', isCurrent: false, source: 'local' },
-            ];
-            setSessions(defaults);
-            localStorage.setItem('gks_sessions', JSON.stringify(defaults));
-            setSelectedSessionId('2026-27');
-        }
-        setIsLoading(false);
-    };
-
     // ── Initial load ──
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         loadSessions();
-    }, []);
+    }, [loadSessions]);
+
+    const createSessionLocal = useCallback((newSession) => {
+        // Generate a random integer ID
+        const newId = Math.floor(Math.random() * 1000000) + 1;
+
+        const sessionToAdd = {
+            id: newId,
+            session_label: newSession.session_label || newSession.label,
+            label: newSession.session_label || newSession.label,
+            session_status: 'Active',
+            status: 'Active',
+            is_current: true,
+            isCurrent: true,
+            start_date: newSession.start_date || null,
+            end_date: newSession.end_date || null,
+            created_at: new Date().toISOString(),
+            source: 'local',
+        };
+
+        const updatedSessions = [
+            sessionToAdd,
+            ...sessions.map(session => {
+                const shouldArchive = session.is_current || session.isCurrent || session.session_status === 'Active' || session.status === 'Active';
+
+                return shouldArchive
+                    ? {
+                        ...session,
+                        session_status: 'Archived',
+                        status: 'Archived',
+                        is_current: false,
+                        isCurrent: false,
+                    }
+                    : session;
+            }),
+        ];
+        setSessions(updatedSessions);
+        localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
+        setSelectedSessionId(sessionToAdd.id);
+        localStorage.setItem('gks_selected_session', String(sessionToAdd.id));
+
+        console.log('ðŸŸ¢ Local session created:', sessionToAdd);
+        return sessionToAdd;
+    }, [sessions]);
 
     // ── Create session ──
     const createSession = useCallback(async (newSession) => {
@@ -148,52 +190,10 @@ export function SessionProvider({ children }) {
             console.error('🔴 Create failed:', error);
             throw error;
         }
-    }, [loadSessions]);
+    }, [loadSessions, createSessionLocal]);
 
     // ── Create session in localStorage (fallback) ──
 // ── Create session in localStorage (fallback) ──
-const createSessionLocal = (newSession) => {
-    // Generate a random integer ID
-    const newId = Math.floor(Math.random() * 1000000) + 1;
-    
-    const sessionToAdd = {
-        id: newId,  // ✅ Now using integer
-        session_label: newSession.session_label || newSession.label,
-        label: newSession.session_label || newSession.label,
-        session_status: 'Active',
-        status: 'Active',
-        is_current: true,
-        isCurrent: true,
-        start_date: newSession.start_date || null,
-        end_date: newSession.end_date || null,
-        created_at: new Date().toISOString(),
-        source: 'local',
-    };
-    
-    const updatedSessions = [
-        sessionToAdd,
-        ...sessions.map(session => {
-            const shouldArchive = session.is_current || session.isCurrent || session.session_status === 'Active' || session.status === 'Active';
-
-            return shouldArchive
-                ? {
-                    ...session,
-                    session_status: 'Archived',
-                    status: 'Archived',
-                    is_current: false,
-                    isCurrent: false,
-                }
-                : session;
-        }),
-    ];
-    setSessions(updatedSessions);
-    localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
-    setSelectedSessionId(sessionToAdd.id);
-    localStorage.setItem('gks_selected_session', String(sessionToAdd.id));
-    
-    console.log('🟢 Local session created:', sessionToAdd);
-    return sessionToAdd;
-};
    // ── Delete session ──
 // ── Delete session ──
  // ── Delete session ──
@@ -274,43 +274,18 @@ const deleteSession = useCallback(async (sessionId) => {
     // ── Select session ──
 const selectSession = useCallback(async (sessionId) => {
     console.log('🟢 Selecting session:', sessionId);
-    
-    setSelectedSessionId(sessionId);
-    localStorage.setItem('gks_selected_session', sessionId);
-    
+
     const sessionToSelect = sessions.find(s => s.id == sessionId);
-    const isLocalOnly = sessionToSelect?.source !== 'api';
-    
-    if (isLocalOnly) {
-        console.log('🟢 Local-only session, not calling API');
-        // Just update localStorage
-        const updatedSessions = sessions.map(s => ({
-            ...s,
-            is_current: s.id == sessionId,
-            isCurrent: s.id == sessionId,
-        }));
-        setSessions(updatedSessions);
-        localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
+    if (!sessionToSelect) {
+        console.warn('🟡 Session not found in state:', sessionId);
         return;
     }
-    
-    // ── API-backed session - try API to set as current ──
-    try {
-        await setCurrentSessionApi(sessionId);
-        await loadSessions(); // Refresh to get updated statuses
-        console.log('🟢 Session set as current on API');
-    } catch (apiError) {
-        console.warn('🟡 API set-current failed, using localStorage:', apiError);
-        // Update localStorage to reflect current session
-        const updatedSessions = sessions.map(s => ({
-            ...s,
-            is_current: s.id == sessionId,
-            isCurrent: s.id == sessionId,
-        }));
-        setSessions(updatedSessions);
-        localStorage.setItem('gks_sessions', JSON.stringify(updatedSessions));
-    }
-}, [sessions, loadSessions]);
+
+    // Selecting a session is only a UI filter/view choice.
+    // It must not change is_current or session_status in localStorage or the API.
+    setSelectedSessionId(sessionId);
+    localStorage.setItem('gks_selected_session', String(sessionId));
+}, [sessions]);
 
     // ── Refresh sessions ──
     const refreshSessions = useCallback(async () => {

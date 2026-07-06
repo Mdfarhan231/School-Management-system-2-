@@ -82,7 +82,6 @@ Route::prefix('sessions')->group(function () {
     Route::post('/', [SessionController::class, 'store']);
     Route::put('/{id}', [SessionController::class, 'update']);
     Route::delete('/{id}', [SessionController::class, 'destroy']);
-    Route::patch('/{id}/set-current', [SessionController::class, 'setCurrent']);
     Route::patch('/{id}/restore', [SessionController::class, 'restore']);
 });
 // Dashboard stats

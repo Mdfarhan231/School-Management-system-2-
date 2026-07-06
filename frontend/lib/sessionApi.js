@@ -54,16 +54,6 @@ export const deleteSessionApi = async (id) => {
     }
 };
 
-export const setCurrentSessionApi = async (id) => {
-    try {
-        const response = await apiRequest(`/sessions/${id}/set-current`, 'PATCH');
-        return response.data;
-    } catch (error) {
-        console.error('Failed to set current session:', error);
-        throw error;
-    }
-};
-
 export const restoreSessionApi = async (id) => {
     try {
         const response = await apiRequest(`/sessions/${id}/restore`, 'PATCH');

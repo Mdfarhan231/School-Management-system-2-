@@ -128,8 +128,6 @@ class SessionController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'session_label' => 'sometimes|string|max:50|unique:academic_sessions,session_label,' . $id,
-                'session_status' => 'sometimes|in:Active,Upcoming,Archived',
-                'is_current' => 'boolean',
                 'start_date' => 'nullable|date',
                 'end_date' => 'nullable|date|after_or_equal:start_date',
             ]);
@@ -141,17 +139,11 @@ class SessionController extends Controller
                 ], 422);
             }
 
-            // If setting as current, auto-archive the previous current
-            if ($request->has('is_current') && $request->is_current === true) {
-                AcademicSession::where('is_current', true)
-                    ->where('id', '!=', $id)
-                    ->update([
-                        'is_current' => false,
-                        'session_status' => 'Archived'
-                    ]);
-            }
-
-            $session->update($request->all());
+            $session->update($request->only([
+                'session_label',
+                'start_date',
+                'end_date',
+            ]));
 
             return response()->json([
                 'success' => true,
@@ -188,18 +180,6 @@ class SessionController extends Controller
                 ], 422);
             }
 
-            // ── If deleting the current session, make another session current ──
-            if ($session->is_current) {
-                $nextSession = AcademicSession::where('id', '!=', $id)->first();
-                if ($nextSession) {
-                    $nextSession->update([
-                        'is_current' => true,
-                        'session_status' => 'Active'
-                    ]);
-                    Log::info('Set next session as current: ' . $nextSession->id);
-                }
-            }
-
             // ── Hard delete ──
             $session->forceDelete();
             Log::info('Session deleted successfully: ' . $id);
@@ -215,47 +195,6 @@ class SessionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete session: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Set a session as current
-     */
-    public function setCurrent($id)
-    {
-        try {
-            $session = AcademicSession::findOrFail($id);
-
-            // ── Auto-archive the previous current session ──
-            $previousCurrent = AcademicSession::where('is_current', true)
-                ->where('id', '!=', $id)
-                ->first();
-            
-            if ($previousCurrent) {
-                $previousCurrent->update([
-                    'is_current' => false,
-                    'session_status' => 'Archived'
-                ]);
-            }
-
-            // ── Set this session as current ──
-            $session->update([
-                'is_current' => true,
-                'session_status' => 'Active'
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Session set as current successfully',
-                'data' => $session
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Failed to set current session: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to set current session: ' . $e->getMessage()
             ], 500);
         }
     }
