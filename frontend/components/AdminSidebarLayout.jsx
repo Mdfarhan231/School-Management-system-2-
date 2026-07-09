@@ -34,6 +34,7 @@ const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
   { label: "Students", icon: GraduationCap, href: "/admin/students" },
   { label: "Manage Subjects", icon: BookOpen, href: "/admin/subjects" },
+  { label: "Manage Classes", icon: Layers, href: "/admin/classes" },
   { label: "All Students", icon: ListChecks, href: "/admin/all-students" },
   { label: "Teachers", icon: Users, href: "/admin/teachers" },
   { label: "All Teachers", icon: UserCheck, href: "/admin/all-teachers" },
