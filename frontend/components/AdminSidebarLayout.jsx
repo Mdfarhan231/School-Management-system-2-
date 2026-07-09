@@ -22,6 +22,7 @@ import {
   ChevronDown,
   Plus,
   Trash2,
+  Layers,
 } from "lucide-react";
 import CreateSession from "./CreateSession";
 import { useSession } from "@/context/SessionContext";
