@@ -180,6 +180,14 @@ Admin dashboard:
   - GET /dashboard/stats
   - GET /student-marks/pending-summary
   - GET /exam-routines
+session Frontend:
+frontend/context/SessionContext.jsx - The main session management
+
+frontend/components/AdminSidebarLayout.jsx - Where delete is triggered
+
+frontend/lib/sessionApi.js - API calls
+
+frontend/lib/api.js - Your base API helper
 
 Add student:
 - Route: /admin/students
@@ -612,6 +620,11 @@ Controllers
 - StudentMarkController: mark entry, pending approvals, approve/reject, student approved results.
 - TeacherAttendanceController: attendance students, save attendance, history, student history.
 - NoticeController: notice CRUD.
+
+Session Backend:
+backend/app/Http/Controllers/Api/SessionController.php - The delete logic
+
+backend/routes/api.php - Route definitions
 
 Auth
 ----
