@@ -146,7 +146,7 @@ export function SessionProvider({ children }) {
         setSelectedSessionId(sessionToAdd.id);
         localStorage.setItem('gks_selected_session', String(sessionToAdd.id));
 
-        console.log('ðŸŸ¢ Local session created:', sessionToAdd);
+        console.log('Local session created:', sessionToAdd);
         return sessionToAdd;
     }, [sessions]);
 
