@@ -491,6 +491,14 @@ const loadClassSubjects = useCallback(async (classId) => {
             <p className="text-xs font-medium text-slate-500">
               Create sections for classes, set student capacity, and assign section-wise subject teachers.
             </p>
+
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+              <p>
+                Create subjects and assign teachers first from the{" "}
+                <span className="font-black">Manage Subjects</span> tab before creating sections.
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
