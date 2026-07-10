@@ -95,15 +95,39 @@ function normalizeSection(item) {
 }
 
 function normalizeClassSubject(item) {
+  const availableTeachers = Array.isArray(item.available_teachers)
+    ? item.available_teachers.map((teacher) => ({
+        id: String(teacher.teacher_id ?? teacher.id),
+        teacher_id: teacher.teacher_id ?? teacher.id,
+        name: teacher.name ?? teacher.teacher_name ?? "Unnamed Teacher",
+        email: teacher.email ?? "",
+      }))
+    : [];
+
   return {
     id: String(item.class_subject_id ?? item.id ?? `${item.class_id}-${item.subject_id}`),
     classSubjectId: item.class_subject_id ?? item.id,
     classId: String(item.class_id ?? item.classId),
     subjectId: String(item.subject_id ?? item.subjectId),
-    subjectName: item.subject_name ?? item.subject?.subject_name ?? item.subject?.name ?? "Unknown Subject",
-    subjectCode: item.subject_code ?? item.subject?.subject_code ?? item.subject?.code ?? "",
+    subjectName:
+      item.subject_name ??
+      item.subject?.subject_name ??
+      item.subject?.name ??
+      "Unknown Subject",
+    subjectCode:
+      item.subject_code ??
+      item.subject?.subject_code ??
+      item.subject?.code ??
+      "",
     teacherId: item.teacher_id ? String(item.teacher_id) : UNASSIGNED_TEACHER,
     teacherName: item.teacher_name ?? "",
+    teacherLabel:
+      item.teacher_label ??
+      (item.teacher_id ? item.teacher_name : "No teacher assigned yet"),
+    teacherStatus:
+      item.teacher_status ??
+      (item.teacher_id ? "assigned" : "not_assigned"),
+    availableTeachers,
   };
 }
 
@@ -116,10 +140,11 @@ export default function ManageSectionsPage() {
     selectedSession?.name ||
     "Current Session";
 
-  const [sections, setSections] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [teachers, setTeachers] = useState([]);
-  const [classSubjects, setClassSubjects] = useState([]);
+const [sections, setSections] = useState([]);
+const [classes, setClasses] = useState([]);
+const [teachers, setTeachers] = useState([]);
+const [classSubjects, setClassSubjects] = useState([]);
+const [classSubjectsByClass, setClassSubjectsByClass] = useState({});
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClassFilter, setSelectedClassFilter] = useState("all");
@@ -173,40 +198,62 @@ export default function ManageSectionsPage() {
     [teachers]
   );
 
-  const loadClassSubjects = useCallback(async (classId) => {
-    if (!classId) {
-      setClassSubjects([]);
-      setFormSubjectTeachers({});
-      return;
-    }
+const loadClassSubjects = useCallback(async (classId) => {
+  if (!classId) {
+    setClassSubjects([]);
+    setFormSubjectTeachers({});
+    return;
+  }
 
-    try {
-      setIsSubjectsLoading(true);
+  try {
+    setIsSubjectsLoading(true);
 
-      const payload = await apiRequest(`/classes/${classId}/subjects`);
-      const normalized = toArray(payload).map(normalizeClassSubject);
+    const payload = await apiRequest(`/classes/${classId}/subjects`);
+    const normalized = toArray(payload).map(normalizeClassSubject);
 
-      setClassSubjects(normalized);
+    setClassSubjects(normalized);
 
-      setFormSubjectTeachers((current) => {
-        const next = {};
+    setClassSubjectsByClass((current) => ({
+      ...current,
+      [String(classId)]: normalized,
+    }));
 
-        normalized.forEach((mapping) => {
-          next[mapping.subjectId] =
-            current[mapping.subjectId] ||
-            mapping.teacherId ||
-            UNASSIGNED_TEACHER;
-        });
+    setFormSubjectTeachers((current) => {
+      const next = {};
 
-        return next;
+      normalized.forEach((mapping) => {
+        next[mapping.subjectId] =
+          current[mapping.subjectId] ||
+          mapping.teacherId ||
+          UNASSIGNED_TEACHER;
       });
-    } catch (err) {
-      setClassSubjects([]);
-      showError(err.message || "Failed to load class subjects.");
-    } finally {
-      setIsSubjectsLoading(false);
-    }
-  }, []);
+
+      return next;
+    });
+  } catch (err) {
+    setClassSubjects([]);
+    showError(err.message || "Failed to load class subjects.");
+  } finally {
+    setIsSubjectsLoading(false);
+  }
+}, []);
+
+  const loadClassSubjectsForClasses = useCallback(async (classList) => {
+  const entries = await Promise.all(
+    classList.map(async (classItem) => {
+      try {
+        const payload = await apiRequest(`/classes/${classItem.id}/subjects`);
+        const normalized = toArray(payload).map(normalizeClassSubject);
+
+        return [classItem.id, normalized];
+      } catch {
+        return [classItem.id, []];
+      }
+    })
+  );
+
+  setClassSubjectsByClass(Object.fromEntries(entries));
+}, []);
 
   const loadInitialData = useCallback(async () => {
     try {
@@ -227,12 +274,14 @@ export default function ManageSectionsPage() {
       setClasses(normalizedClasses);
       setTeachers(normalizedTeachers);
       setSections(normalizedSections);
+
+      await loadClassSubjectsForClasses(normalizedClasses);
     } catch (err) {
       showError(err.message || "Failed to load section management data.");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadClassSubjectsForClasses]);
 
   useEffect(() => {
     loadInitialData();
@@ -640,30 +689,67 @@ export default function ManageSectionsPage() {
                       Subject Teacher Overrides
                     </h3>
 
-                    {Object.keys(section.subjectTeachers || {}).length > 0 ? (
-                      <div className="max-h-40 space-y-1.5 overflow-y-auto pr-1">
-                        {Object.entries(section.subjectTeachers).map(
-                          ([subjectId, teacherId]) => (
-                            <div
-                              key={subjectId}
-                              className="flex items-center justify-between rounded-lg bg-slate-50 px-2 py-1.5 text-xs"
-                            >
-                              <span className="font-mono text-[10px] font-bold text-slate-500">
-                                Subject #{subjectId}
-                              </span>
+                 {(() => {
+  const subjectsForClass = classSubjectsByClass[section.classId] || [];
+  const noTeacherCount = subjectsForClass.filter(
+    (mapping) => mapping.teacherId === UNASSIGNED_TEACHER
+  ).length;
 
-                              <span className="rounded bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
-                                {getTeacherName(teacherId)}
-                              </span>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    ) : (
-                      <div className="py-4 text-center text-[11px] font-bold text-slate-400">
-                        No section-specific teacher overrides.
-                      </div>
-                    )}
+  if (subjectsForClass.length === 0) {
+    return (
+      <div className="py-4 text-center text-[11px] font-bold text-slate-400">
+        Create subject first.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {noTeacherCount > 0 && (
+        <div className="rounded-lg border border-amber-100 bg-amber-50 px-2.5 py-2 text-[10px] font-bold text-amber-700">
+          {noTeacherCount} subject{noTeacherCount > 1 ? "s" : ""} have no teacher assigned yet.
+        </div>
+      )}
+
+      <div className="max-h-40 space-y-1.5 overflow-y-auto pr-1">
+        {subjectsForClass.map((mapping) => {
+          const sectionTeacherId = section.subjectTeachers?.[mapping.subjectId];
+
+          const effectiveTeacherId =
+            sectionTeacherId && sectionTeacherId !== UNASSIGNED_TEACHER
+              ? sectionTeacherId
+              : mapping.teacherId;
+
+          const hasTeacher =
+            effectiveTeacherId && effectiveTeacherId !== UNASSIGNED_TEACHER;
+
+          return (
+            <div
+              key={mapping.subjectId}
+              className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2 py-1.5 text-xs"
+            >
+              <span className="truncate text-[11px] font-bold text-slate-700">
+                {mapping.subjectName}
+              </span>
+
+              <span
+                className={`shrink-0 rounded px-2 py-0.5 text-[10px] font-bold ${
+                  hasTeacher
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "bg-rose-50 text-rose-700"
+                }`}
+              >
+                {hasTeacher
+                  ? getTeacherName(effectiveTeacherId)
+                  : "No teacher assigned yet"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+})()}
                   </div>
                 </div>
 
@@ -909,8 +995,10 @@ export default function ManageSectionsPage() {
                                 </span>
 
                                 <span className="block font-mono text-[9px] font-bold uppercase text-slate-400">
-                                  {mapping.subjectCode || `SUB-${mapping.subjectId}`} • Class Teacher:{" "}
-                                  {mapping.teacherName || getTeacherName(mapping.teacherId)}
+                                  {mapping.subjectCode || `SUB-${mapping.subjectId}`} •{" "}
+                                  {mapping.teacherId === UNASSIGNED_TEACHER
+                                    ? "No teacher assigned yet"
+                                    : `Assigned Teacher: ${mapping.teacherName || getTeacherName(mapping.teacherId)}`}
                                 </span>
                               </div>
 
@@ -918,25 +1006,27 @@ export default function ManageSectionsPage() {
                                 <select
                                   value={
                                     formSubjectTeachers[mapping.subjectId] ||
+                                    mapping.teacherId ||
                                     UNASSIGNED_TEACHER
                                   }
+                                  disabled={mapping.teacherId === UNASSIGNED_TEACHER}
                                   onChange={(event) => {
                                     setFormSubjectTeachers((current) => ({
                                       ...current,
                                       [mapping.subjectId]: event.target.value,
                                     }));
                                   }}
-                                  className="w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-3.5 pr-10 text-[11px] font-bold text-slate-700 transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
+                                  className="w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-3.5 pr-10 text-[11px] font-bold text-slate-700 transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                                 >
-                                  <option value={UNASSIGNED_TEACHER}>
-                                    Use class-level teacher/default
-                                  </option>
-
-                                  {teachers.map((teacher) => (
-                                    <option key={teacher.id} value={teacher.id}>
-                                      {teacher.name}
+                                  {mapping.teacherId === UNASSIGNED_TEACHER ? (
+                                    <option value={UNASSIGNED_TEACHER}>
+                                      No teacher available right now
                                     </option>
-                                  ))}
+                                  ) : (
+                                    <option value={mapping.teacherId}>
+                                      {mapping.teacherName || getTeacherName(mapping.teacherId)}
+                                    </option>
+                                  )}
                                 </select>
 
                                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
