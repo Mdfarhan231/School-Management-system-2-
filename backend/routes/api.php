@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\TeacherAttendanceController;
 use App\Http\Controllers\Api\NoticeController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\ClassController;//this are the import 
+use App\Http\Controllers\Api\SubjectController;
 
 // testing supabase bucket connection
 Route::get('/test-supabase-upload', [TeacherController::class, 'testSupabaseUpload']);
@@ -25,10 +26,20 @@ Route::post('/teachers', [TeacherController::class, 'store']);
 Route::delete('/teachers/{id}', [TeacherController::class, 'destroy']);
 
 // Route::get('/classes', [StudentController::class, 'classes']);
-Route::get('/classes/{id}/subjects', [StudentController::class, 'classSubjects']);
-Route::get('/students', [StudentController::class, 'index']);
-Route::post('/students', [StudentController::class, 'store']);
-Route::delete('/students/{id}', [StudentController::class, 'destroy']);
+// Route::get('/classes/{classId}/subjects', [SubjectController::class, 'classSubjects']);
+// Route::get('/classes/{id}/subjects', [StudentController::class, 'classSubjects']);
+// Route::get('/students', [StudentController::class, 'index']);
+// Route::post('/students', [StudentController::class, 'store']);
+// Route::delete('/students/{id}', [StudentController::class, 'destroy']);
+
+//7 line for the manage subjects. 
+Route::get('/subjects', [SubjectController::class, 'index']);
+Route::post('/subjects', [SubjectController::class, 'store']);
+Route::delete('/subjects/{id}', [SubjectController::class, 'destroy']);
+Route::get('/classes/{classId}/subjects', [SubjectController::class, 'classSubjects']);
+Route::post('/classes/{classId}/subjects', [SubjectController::class, 'assignSubjectToClass']);
+Route::put('/classes/{classId}/subjects/{subjectId}/teacher', [SubjectController::class, 'updateClassSubjectTeacher']);
+Route::delete('/classes/{classId}/subjects/{subjectId}', [SubjectController::class, 'removeSubjectFromClass']);
 
 Route::post('/teacher/signup', [TeacherAuthController::class, 'signup']);
 Route::post('/teacher/login', [TeacherAuthController::class, 'login']);
