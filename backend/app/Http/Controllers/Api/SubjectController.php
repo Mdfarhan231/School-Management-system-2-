@@ -142,39 +142,62 @@ class SubjectController extends Controller
         }
     }
 
-    public function classSubjects($classId)
-    {
-        $class = SchoolClass::query()
-            ->where('class_id', $classId)
-            ->first();
+  public function classSubjects($classId)
+{
+    $class = \App\Models\SchoolClass::query()
+        ->where('class_id', $classId)
+        ->first();
 
-        if (!$class) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Class not found.',
-            ], 404);
-        }
-
-        $subjects = DB::table('class_subjects')
-            ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.subject_id')
-            ->leftJoin('teachers', 'class_subjects.teacher_id', '=', 'teachers.teacher_id')
-            ->where('class_subjects.class_id', $classId)
-            ->select(
-                'class_subjects.id as class_subject_id',
-                'class_subjects.class_id',
-                'class_subjects.subject_id',
-                'class_subjects.teacher_id',
-                'subjects.subject_name',
-                'subjects.subject_code',
-                'teachers.name as teacher_name',
-                'teachers.email as teacher_email'
-            )
-            ->orderBy('subjects.subject_id')
-            ->get();
-
-        return response()->json($subjects);
+    if (!$class) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Class not found.',
+        ], 404);
     }
 
+    $subjects = \Illuminate\Support\Facades\DB::table('class_subjects')
+        ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.subject_id')
+        ->leftJoin('teachers', 'class_subjects.teacher_id', '=', 'teachers.teacher_id')
+        ->where('class_subjects.class_id', $classId)
+        ->select(
+            'class_subjects.id as class_subject_id',
+            'class_subjects.class_id',
+            'class_subjects.subject_id',
+            'class_subjects.teacher_id',
+            'subjects.subject_name',
+            'subjects.subject_code',
+            'teachers.name as teacher_name',
+            'teachers.email as teacher_email'
+        )
+        ->orderBy('subjects.subject_id')
+        ->get()
+        ->map(function ($item) {
+            $hasTeacher = !empty($item->teacher_id);
+
+            $item->teacher_status = $hasTeacher ? 'assigned' : 'not_assigned';
+            $item->teacher_label = $hasTeacher
+                ? $item->teacher_name
+                : 'No teacher assigned yet';
+
+            $item->available_teachers = $hasTeacher
+                ? [[
+                    'teacher_id' => $item->teacher_id,
+                    'name' => $item->teacher_name,
+                    'email' => $item->teacher_email,
+                ]]
+                : [];
+
+            return $item;
+        });
+
+    return response()->json([
+        'success' => true,
+        'message' => $subjects->count() > 0
+            ? 'Class subjects loaded successfully.'
+            : 'Create subject first.',
+        'subjects' => $subjects,
+    ]);
+}
     public function assignSubjectToClass(Request $request, $classId)
     {
         $validated = $request->validate([

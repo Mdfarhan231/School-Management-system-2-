@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\NoticeController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\Api\ClassController;//this are the import 
 use App\Http\Controllers\Api\SubjectController;
+use App\Http\Controllers\Api\SectionController;
+
 
 // testing supabase bucket connection
 Route::get('/test-supabase-upload', [TeacherController::class, 'testSupabaseUpload']);
@@ -41,6 +43,12 @@ Route::post('/classes/{classId}/subjects', [SubjectController::class, 'assignSub
 Route::put('/classes/{classId}/subjects/{subjectId}/teacher', [SubjectController::class, 'updateClassSubjectTeacher']);
 Route::delete('/classes/{classId}/subjects/{subjectId}', [SubjectController::class, 'removeSubjectFromClass']);
 
+// 4 lines Manage Sections
+Route::get('/sections', [SectionController::class, 'index']);
+Route::post('/sections', [SectionController::class, 'store']);
+Route::put('/sections/{id}', [SectionController::class, 'update']);
+Route::delete('/sections/{id}', [SectionController::class, 'destroy']);
+
 Route::post('/teacher/signup', [TeacherAuthController::class, 'signup']);
 Route::post('/teacher/login', [TeacherAuthController::class, 'login']);
 
@@ -55,9 +63,7 @@ Route::get('/exams', function () {
     return DB::table('exams')->get();
 });
 
-Route::get('/subjects', function () {
-    return DB::table('subjects')->get();
-});
+
 
 Route::get('/teacher/exam-routines/{teacherId}', [ExamRoutineController::class, 'teacherRoutine']);
 Route::get('/student/exam-routines/{studentId}', [ExamRoutineController::class, 'studentRoutine']);
