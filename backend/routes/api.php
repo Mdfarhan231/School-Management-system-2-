@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\DB;
 
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\TeacherController;
-use App\Http\Controllers\Api\StudentController;
+// use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\TeacherAuthController;
 use App\Http\Controllers\Api\StudentAuthController;
 use App\Http\Controllers\Api\ExamRoutineController;
@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\StudentMarkController;
 use App\Http\Controllers\Api\TeacherAttendanceController;
 use App\Http\Controllers\Api\NoticeController;
 use App\Http\Controllers\Api\SessionController;
+use App\Http\Controllers\Api\ClassController;//this are the import 
 
 // testing supabase bucket connection
 Route::get('/test-supabase-upload', [TeacherController::class, 'testSupabaseUpload']);
@@ -23,7 +24,7 @@ Route::get('/teachers', [TeacherController::class, 'index']);
 Route::post('/teachers', [TeacherController::class, 'store']);
 Route::delete('/teachers/{id}', [TeacherController::class, 'destroy']);
 
-Route::get('/classes', [StudentController::class, 'classes']);
+// Route::get('/classes', [StudentController::class, 'classes']);
 Route::get('/classes/{id}/subjects', [StudentController::class, 'classSubjects']);
 Route::get('/students', [StudentController::class, 'index']);
 Route::post('/students', [StudentController::class, 'store']);
@@ -84,6 +85,13 @@ Route::prefix('sessions')->group(function () {
     Route::delete('/{id}', [SessionController::class, 'destroy']);
     Route::patch('/{id}/restore', [SessionController::class, 'restore']);
 });
+//--routes for create class, update class, delete class and get all classes
+Route::get('/classes', [ClassController::class, 'index']);
+Route::post('/classes', [ClassController::class, 'store']);
+Route::put('/classes/{id}', [ClassController::class, 'update']);
+Route::delete('/classes/{id}', [ClassController::class, 'destroy']);
+
+
 // Dashboard stats
 Route::get('/dashboard/stats', function () {
     return response()->json([
