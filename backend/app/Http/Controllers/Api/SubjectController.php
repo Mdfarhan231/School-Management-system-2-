@@ -142,9 +142,9 @@ class SubjectController extends Controller
         }
     }
 
-  public function classSubjects($classId)
+public function classSubjects($classId)
 {
-    $class = \App\Models\SchoolClass::query()
+    $class = SchoolClass::query()
         ->where('class_id', $classId)
         ->first();
 
@@ -155,7 +155,7 @@ class SubjectController extends Controller
         ], 404);
     }
 
-    $subjects = \Illuminate\Support\Facades\DB::table('class_subjects')
+    $subjects = DB::table('class_subjects')
         ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.subject_id')
         ->leftJoin('teachers', 'class_subjects.teacher_id', '=', 'teachers.teacher_id')
         ->where('class_subjects.class_id', $classId)
@@ -174,18 +174,23 @@ class SubjectController extends Controller
         ->map(function ($item) {
             $hasTeacher = !empty($item->teacher_id);
 
+            $availableTeachers = DB::table('teacher_subject_interests')
+                ->join('teachers', 'teacher_subject_interests.teacher_id', '=', 'teachers.teacher_id')
+                ->where('teacher_subject_interests.subject_id', $item->subject_id)
+                ->select(
+                    'teachers.teacher_id',
+                    'teachers.name',
+                    'teachers.email'
+                )
+                ->orderBy('teachers.name')
+                ->get();
+
             $item->teacher_status = $hasTeacher ? 'assigned' : 'not_assigned';
             $item->teacher_label = $hasTeacher
                 ? $item->teacher_name
                 : 'No teacher assigned yet';
 
-            $item->available_teachers = $hasTeacher
-                ? [[
-                    'teacher_id' => $item->teacher_id,
-                    'name' => $item->teacher_name,
-                    'email' => $item->teacher_email,
-                ]]
-                : [];
+            $item->available_teachers = $availableTeachers;
 
             return $item;
         });
@@ -198,122 +203,136 @@ class SubjectController extends Controller
         'subjects' => $subjects,
     ]);
 }
-    public function assignSubjectToClass(Request $request, $classId)
-    {
-        $validated = $request->validate([
-            'subject_id' => 'required|integer|exists:subjects,subject_id',
-            'teacher_id' => 'nullable|integer|exists:teachers,teacher_id',
-        ]);
+  public function assignSubjectToClass(Request $request, $classId)
+{
+    $validated = $request->validate([
+        'subject_id' => 'required|integer|exists:subjects,subject_id',
+        'teacher_id' => 'nullable|integer|exists:teachers,teacher_id',
+    ]);
 
-        try {
-            $class = SchoolClass::query()
-                ->where('class_id', $classId)
-                ->first();
+    try {
+        $class = SchoolClass::query()
+            ->where('class_id', $classId)
+            ->first();
 
-            if (!$class) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Class not found.',
-                ], 404);
-            }
-
-            $exists = ClassSubject::query()
-                ->where('class_id', $classId)
-                ->where('subject_id', $validated['subject_id'])
-                ->exists();
-
-            if ($exists) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This subject is already assigned to this class.',
-                ], 422);
-            }
-
-            $mapping = ClassSubject::create([
-                'class_id' => $classId,
-                'subject_id' => $validated['subject_id'],
-                'teacher_id' => $validated['teacher_id'] ?? null,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Subject assigned to class successfully.',
-                'mapping' => [
-                    'id' => $mapping->id,
-                    'class_id' => $mapping->class_id,
-                    'subject_id' => $mapping->subject_id,
-                    'teacher_id' => $mapping->teacher_id,
-                    'created_at' => $mapping->created_at,
-                    'updated_at' => $mapping->updated_at,
-                ],
-            ], 201);
-        } catch (\Throwable $e) {
-            Log::error('Class subject assign failed', [
-                'class_id' => $classId,
-                'message' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile(),
-            ]);
-
+        if (!$class) {
             return response()->json([
                 'success' => false,
-                'message' => 'Subject assignment failed.',
-                'error' => $e->getMessage(),
-            ], 500);
+                'message' => 'Class not found.',
+            ], 404);
         }
-    }
 
-    public function updateClassSubjectTeacher(Request $request, $classId, $subjectId)
-    {
-        $validated = $request->validate([
-            'teacher_id' => 'nullable|integer|exists:teachers,teacher_id',
-        ]);
-
-        try {
-            $mapping = ClassSubject::query()
-                ->where('class_id', $classId)
-                ->where('subject_id', $subjectId)
-                ->first();
-
-            if (!$mapping) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Class subject mapping not found.',
-                ], 404);
-            }
-
-            $mapping->update([
-                'teacher_id' => $validated['teacher_id'] ?? null,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Teacher assignment updated successfully.',
-                'mapping' => [
-                    'id' => $mapping->id,
-                    'class_id' => $mapping->class_id,
-                    'subject_id' => $mapping->subject_id,
-                    'teacher_id' => $mapping->teacher_id,
-                    'created_at' => $mapping->created_at,
-                    'updated_at' => $mapping->updated_at,
-                ],
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Teacher assignment update failed', [
-                'class_id' => $classId,
-                'subject_id' => $subjectId,
-                'message' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile(),
-            ]);
-
+        if (!empty($validated['teacher_id']) && !$this->teacherHasSubjectInterest($validated['teacher_id'], $validated['subject_id'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Teacher assignment update failed.',
-                'error' => $e->getMessage(),
-            ], 500);
+                'message' => 'This teacher did not choose this subject as an interest subject.',
+            ], 422);
         }
+
+        $exists = ClassSubject::query()
+            ->where('class_id', $classId)
+            ->where('subject_id', $validated['subject_id'])
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This subject is already assigned to this class.',
+            ], 422);
+        }
+
+        $mapping = ClassSubject::create([
+            'class_id' => $classId,
+            'subject_id' => $validated['subject_id'],
+            'teacher_id' => $validated['teacher_id'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject assigned to class successfully.',
+            'mapping' => [
+                'id' => $mapping->id,
+                'class_id' => $mapping->class_id,
+                'subject_id' => $mapping->subject_id,
+                'teacher_id' => $mapping->teacher_id,
+                'created_at' => $mapping->created_at,
+                'updated_at' => $mapping->updated_at,
+            ],
+        ], 201);
+    } catch (\Throwable $e) {
+        Log::error('Class subject assign failed', [
+            'class_id' => $classId,
+            'message' => $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => $e->getFile(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Subject assignment failed.',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
+
+   public function updateClassSubjectTeacher(Request $request, $classId, $subjectId)
+{
+    $validated = $request->validate([
+        'teacher_id' => 'nullable|integer|exists:teachers,teacher_id',
+    ]);
+
+    try {
+        $mapping = ClassSubject::query()
+            ->where('class_id', $classId)
+            ->where('subject_id', $subjectId)
+            ->first();
+
+        if (!$mapping) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Class subject mapping not found.',
+            ], 404);
+        }
+
+        if (!empty($validated['teacher_id']) && !$this->teacherHasSubjectInterest($validated['teacher_id'], $subjectId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This teacher did not choose this subject as an interest subject.',
+            ], 422);
+        }
+
+        $mapping->update([
+            'teacher_id' => $validated['teacher_id'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Teacher assignment updated successfully.',
+            'mapping' => [
+                'id' => $mapping->id,
+                'class_id' => $mapping->class_id,
+                'subject_id' => $mapping->subject_id,
+                'teacher_id' => $mapping->teacher_id,
+                'created_at' => $mapping->created_at,
+                'updated_at' => $mapping->updated_at,
+            ],
+        ]);
+    } catch (\Throwable $e) {
+        Log::error('Teacher assignment update failed', [
+            'class_id' => $classId,
+            'subject_id' => $subjectId,
+            'message' => $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => $e->getFile(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Teacher assignment update failed.',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
 
     public function removeSubjectFromClass($classId, $subjectId)
     {
@@ -380,4 +399,11 @@ class SubjectController extends Controller
             ], 500);
         }
     }
+    private function teacherHasSubjectInterest($teacherId, $subjectId): bool
+{
+    return DB::table('teacher_subject_interests')
+        ->where('teacher_id', $teacherId)
+        ->where('subject_id', $subjectId)
+        ->exists();
+}
 }

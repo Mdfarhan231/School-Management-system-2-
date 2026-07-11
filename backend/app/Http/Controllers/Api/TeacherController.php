@@ -13,7 +13,47 @@ class TeacherController extends Controller
     public function index()
     {
         try {
-            $teachers = DB::table('teachers')->get();
+            $teachers = DB::table('teachers')
+                ->orderBy('teacher_id')
+                ->get();
+
+            $teacherIds = $teachers->pluck('teacher_id')->toArray();
+
+            $interests = empty($teacherIds)
+                ? collect()
+                : DB::table('teacher_subject_interests')
+                    ->join('subjects', 'teacher_subject_interests.subject_id', '=', 'subjects.subject_id')
+                    ->whereIn('teacher_subject_interests.teacher_id', $teacherIds)
+                    ->select(
+                        'teacher_subject_interests.teacher_id',
+                        'subjects.subject_id',
+                        'subjects.subject_name',
+                        'subjects.subject_code'
+                    )
+                    ->orderBy('subjects.subject_id')
+                    ->get()
+                    ->groupBy('teacher_id');
+
+            $teachers = $teachers->map(function ($teacher) use ($interests) {
+                $teacherInterests = $interests->get($teacher->teacher_id, collect());
+
+                $teacher->interest_subject_ids = $teacherInterests
+                    ->pluck('subject_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->values();
+
+                $teacher->interest_subjects = $teacherInterests
+                    ->map(function ($item) {
+                        return [
+                            'subject_id' => $item->subject_id,
+                            'subject_name' => $item->subject_name,
+                            'subject_code' => $item->subject_code,
+                        ];
+                    })
+                    ->values();
+
+                return $teacher;
+            });
 
             return response()->json($teachers);
         } catch (\Throwable $e) {
@@ -24,6 +64,7 @@ class TeacherController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch teachers',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -31,13 +72,37 @@ class TeacherController extends Controller
     public function store(Request $request)
     {
         try {
-            $request->validate([
-                'name' => 'required|string',
-                'email' => 'required|string',
-                'phone' => 'required|string',
-                'shift' => 'nullable|string',
-                'subjects' => 'required|string',
-                'designation' => 'nullable|string',
+            $rawSubjectIds = $request->input('subject_ids', []);
+
+            if (!is_array($rawSubjectIds)) {
+                $decoded = json_decode($rawSubjectIds, true);
+
+                if (is_array($decoded)) {
+                    $rawSubjectIds = $decoded;
+                } else {
+                    $rawSubjectIds = explode(',', (string) $rawSubjectIds);
+                }
+            }
+
+            $subjectIds = collect($rawSubjectIds)
+                ->filter(fn ($id) => $id !== null && $id !== '' && is_numeric($id))
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->toArray();
+
+            $request->merge([
+                'subject_ids' => $subjectIds,
+            ]);
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:150',
+                'email' => 'required|string|email|max:150',
+                'phone' => 'required|string|max:50',
+                'shift' => 'nullable|string|max:50',
+                'subject_ids' => 'required|array|min:1',
+                'subject_ids.*' => 'integer|exists:subjects,subject_id',
+                'designation' => 'nullable|string|max:100',
                 'joiningDate' => 'nullable|date',
                 'picture' => 'nullable|image|max:2048',
             ]);
@@ -52,12 +117,11 @@ class TeacherController extends Controller
                 $filePath = 'teachers/' . $fileName;
 
                 $fileContent = file_get_contents($file->getRealPath());
-                
-                $response = Http:: withHeaders([
+
+                $response = Http::withHeaders([
                     'Authorization' => 'Bearer ' . env('SUPABASE_KEY'),
                     'Content-Type' => $file->getMimeType(),
                 ])->withBody($fileContent, $file->getMimeType())->put(
-                    
                     env('SUPABASE_URL') . '/storage/v1/object/' . env('SUPABASE_BUCKET') . '/' . $filePath
                 );
 
@@ -77,23 +141,53 @@ class TeacherController extends Controller
                 $pictureUrl = env('SUPABASE_URL') . '/storage/v1/object/public/' . env('SUPABASE_BUCKET') . '/' . $filePath;
             }
 
+            $subjectNames = DB::table('subjects')
+                ->whereIn('subject_id', $validated['subject_ids'])
+                ->orderBy('subject_id')
+                ->pluck('subject_name')
+                ->toArray();
+
+            DB::beginTransaction();
+
             $id = DB::table('teachers')->insertGetId([
-                'name' => mb_convert_encoding(trim((string) $request->name), 'UTF-8', 'UTF-8'),
-                'email' => mb_convert_encoding(trim((string) $request->email), 'UTF-8', 'UTF-8'),
-                'phone' => mb_convert_encoding(trim((string) $request->phone), 'UTF-8', 'UTF-8'),
-                'shift' => $request->shift ? mb_convert_encoding(trim((string) $request->shift), 'UTF-8', 'UTF-8') : null,
-                'subjects' => mb_convert_encoding(trim((string) $request->subjects), 'UTF-8', 'UTF-8'),
-                'designation' => $request->designation ? mb_convert_encoding(trim((string) $request->designation), 'UTF-8', 'UTF-8') : null,
-                'joining_date' => $request->joiningDate ?: null,
+                'name' => mb_convert_encoding(trim((string) $validated['name']), 'UTF-8', 'UTF-8'),
+                'email' => mb_convert_encoding(trim((string) $validated['email']), 'UTF-8', 'UTF-8'),
+                'phone' => mb_convert_encoding(trim((string) $validated['phone']), 'UTF-8', 'UTF-8'),
+                'shift' => !empty($validated['shift'])
+                    ? mb_convert_encoding(trim((string) $validated['shift']), 'UTF-8', 'UTF-8')
+                    : null,
+                'subjects' => mb_convert_encoding(implode(',', $subjectNames), 'UTF-8', 'UTF-8'),
+                'designation' => !empty($validated['designation'])
+                    ? mb_convert_encoding(trim((string) $validated['designation']), 'UTF-8', 'UTF-8')
+                    : null,
+                'joining_date' => $validated['joiningDate'] ?? null,
                 'picture' => $pictureUrl,
             ], 'teacher_id');
+
+            $interestRows = collect($validated['subject_ids'])
+                ->map(function ($subjectId) use ($id) {
+                    return [
+                        'teacher_id' => $id,
+                        'subject_id' => $subjectId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                })
+                ->toArray();
+
+            DB::table('teacher_subject_interests')->insert($interestRows);
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
                 'teacher_id' => $id,
                 'picture' => $pictureUrl,
+                'interest_subject_ids' => $validated['subject_ids'],
             ]);
         } catch (\Throwable $e) {
+            DB::rollBack();
+
             Log::error('Teacher store failed', [
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
@@ -124,6 +218,7 @@ class TeacherController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Delete failed',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

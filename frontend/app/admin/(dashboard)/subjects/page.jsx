@@ -54,17 +54,32 @@ function normalizeSubject(item) {
       `SUB-${item.subject_id ?? item.id}`,
   };
 }
-
 function normalizeTeacher(item) {
+  const interestSubjectIds = Array.isArray(item.interest_subject_ids)
+    ? item.interest_subject_ids.map((id) => String(id))
+    : [];
+
   return {
     id: String(item.teacher_id ?? item.id),
     name: item.name ?? item.teacher_name ?? "Unnamed Teacher",
     email: item.email ?? "",
+    interestSubjectIds,
+    interestSubjects: Array.isArray(item.interest_subjects)
+      ? item.interest_subjects.map(normalizeSubject)
+      : [],
   };
 }
 
 function normalizeClassSubject(item, classId) {
   const subject = normalizeSubject(item);
+
+  const availableTeachers = Array.isArray(item.available_teachers)
+    ? item.available_teachers.map((teacher) => ({
+        id: String(teacher.teacher_id ?? teacher.id),
+        name: teacher.name ?? teacher.teacher_name ?? "Unnamed Teacher",
+        email: teacher.email ?? "",
+      }))
+    : [];
 
   return {
     id: String(
@@ -76,6 +91,8 @@ function normalizeClassSubject(item, classId) {
     classId: String(item.class_id ?? classId),
     subjectId: subject.id,
     teacherId: item.teacher_id ? String(item.teacher_id) : UNASSIGNED_TEACHER,
+    teacherLabel: item.teacher_label ?? "No teacher assigned yet",
+    availableTeachers,
     subject,
   };
 }
@@ -146,6 +163,21 @@ export default function SubjectManagementPage() {
     },
     [teachers]
   );
+  const teacherHasInterest = useCallback((teacher, subjectId) => {
+  return teacher.interestSubjectIds?.includes(String(subjectId));
+}, []);
+
+const getInterestedTeachersForSubject = useCallback(
+  (subjectId) => {
+    return teachers.filter((teacher) => teacherHasInterest(teacher, subjectId));
+  },
+  [teachers, teacherHasInterest]
+);
+
+const mappingInterestedTeachers = useMemo(() => {
+  if (!mappingSubjectId) return [];
+  return getInterestedTeachersForSubject(mappingSubjectId);
+}, [mappingSubjectId, getInterestedTeachersForSubject]);
 
   const clearMessages = () => {
     setError("");
@@ -240,6 +272,20 @@ export default function SubjectManagementPage() {
       loadClassSubjects(selectedClassId);
     }
   }, [selectedClassId, loadClassSubjects]);
+
+  useEffect(() => {
+    if (!mappingSubjectId) return;
+
+    if (mappingTeacherId === UNASSIGNED_TEACHER) return;
+
+    const allowed = mappingInterestedTeachers.some(
+      (teacher) => teacher.id === String(mappingTeacherId)
+    );
+
+    if (!allowed) {
+      setMappingTeacherId(UNASSIGNED_TEACHER);
+    }
+  }, [mappingSubjectId, mappingTeacherId, mappingInterestedTeachers]);
 
   const handleRefresh = async () => {
     await loadInitialData();
@@ -377,6 +423,14 @@ export default function SubjectManagementPage() {
       return;
     }
 
+    if (
+      mappingTeacherId !== UNASSIGNED_TEACHER &&
+      !mappingInterestedTeachers.some((teacher) => teacher.id === mappingTeacherId)
+    ) {
+      setMappingError("This teacher did not choose this subject as an interest subject.");
+      return;
+    }
+
     try {
       setIsSaving(true);
 
@@ -400,6 +454,16 @@ export default function SubjectManagementPage() {
   };
 
   const handleUpdateTeacher = async (subjectId, teacherId) => {
+    if (
+      teacherId !== UNASSIGNED_TEACHER &&
+      !getInterestedTeachersForSubject(subjectId).some(
+        (teacher) => teacher.id === String(teacherId)
+      )
+    ) {
+      showError("This teacher did not choose this subject as an interest subject.");
+      return;
+    }
+
     const previous = classSubjects;
 
     setClassSubjects((current) =>
@@ -715,14 +779,30 @@ export default function SubjectManagementPage() {
                                   className="w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-3 pr-8 text-xs font-bold text-slate-700 transition-all hover:border-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
                                 >
                                   <option value={UNASSIGNED_TEACHER}>
-                                    Choose Teacher Later
+                                    {getInterestedTeachersForSubject(mapping.subjectId).length > 0 ||
+                                    mapping.availableTeachers.length > 0
+                                      ? "Choose Teacher Later"
+                                      : "No interested teacher available"}
                                   </option>
 
-                                  {teachers.map((teacher) => (
-                                    <option key={teacher.id} value={teacher.id}>
-                                      {teacher.name}
-                                    </option>
-                                  ))}
+                                  {(() => {
+                                    const interestedTeachers =
+                                      mapping.availableTeachers.length > 0
+                                        ? mapping.availableTeachers
+                                        : getInterestedTeachersForSubject(mapping.subjectId);
+
+                                    return interestedTeachers.length > 0 ? (
+                                      interestedTeachers.map((teacher) => (
+                                        <option key={teacher.id} value={teacher.id}>
+                                          {teacher.name}
+                                        </option>
+                                      ))
+                                    ) : (
+                                      <option value={UNASSIGNED_TEACHER}>
+                                        No interested teacher available
+                                      </option>
+                                    );
+                                  })()}
                                 </select>
 
                                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
@@ -881,14 +961,22 @@ export default function SubjectManagementPage() {
                           className="w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-3.5 pr-10 text-xs font-bold text-slate-700 transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
                         >
                           <option value={UNASSIGNED_TEACHER}>
-                            Choose Teacher Later
+                            {mappingInterestedTeachers.length > 0
+                              ? "Choose Teacher Later"
+                              : "No interested teacher available"}
                           </option>
 
-                          {teachers.map((teacher) => (
-                            <option key={teacher.id} value={teacher.id}>
-                              {teacher.name}
+                          {mappingInterestedTeachers.length > 0 ? (
+                            mappingInterestedTeachers.map((teacher) => (
+                              <option key={teacher.id} value={teacher.id}>
+                                {teacher.name}
+                              </option>
+                            ))
+                          ) : (
+                            <option value={UNASSIGNED_TEACHER}>
+                              No interested teacher available
                             </option>
-                          ))}
+                          )}
                         </select>
 
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
