@@ -33,12 +33,12 @@ function cn(...classes) {
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
-  { label: "Students", icon: GraduationCap, href: "/admin/students" },
-  { label: "Manage Subjects", icon: BookOpen, href: "/admin/subjects" },
   { label: "Manage Classes", icon: Layers, href: "/admin/classes" },
+  { label: "Manage Subjects", icon: BookOpen, href: "/admin/subjects" },
   { label: "Manage Sections", icon: Layers, href: "/admin/sections" },
-  { label: "All Students", icon: ListChecks, href: "/admin/all-students" },
   { label: "Teachers", icon: Users, href: "/admin/teachers" },
+  { label: "Students", icon: GraduationCap, href: "/admin/students" },  
+  { label: "All Students", icon: ListChecks, href: "/admin/all-students" },
   { label: "All Teachers", icon: UserCheck, href: "/admin/all-teachers" },
   { label: "Exam Routine", icon: Calendar, href: "/admin/exam-routines" },
   { label: "Mark Approvals", icon: CheckSquare, href: "/admin/mark-approvals" },
