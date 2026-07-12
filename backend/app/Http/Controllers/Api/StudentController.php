@@ -21,15 +21,12 @@ class StudentController extends Controller
                     'students.name',
                     'students.father_name',
                     'students.mother_name',
-                    'students.parents_phone',
+                    'students.phone',
+                    'students.alt_phone',
                     'students.address',
                     'students.gender',
                     'students.dob',
                     'students.email',
-                    'students.parent_name',
-                    'students.phone',
-                    'students.alt_phone',
-                    'students.shift',
                     'students.roll',
                     'students.section',
                     'students.section_id',
@@ -66,35 +63,27 @@ class StudentController extends Controller
 
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'father_name' => 'required|string|max:100',
+            'mother_name' => 'required|string|max:100',
+            'phone' => 'required|string|max:20',
+            'alt_phone' => 'nullable|string|max:20',
+            'address' => 'required|string',
+
+            'gender' => 'nullable|in:Male,Female,Other',
+            'dob' => 'nullable|date',
+            'email' => 'nullable|email|max:150',
+
+            'class_id' => 'required|integer|exists:classes,class_id',
+            'section_id' => 'required|integer|exists:sections,section_id',
+            'roll' => 'required|integer|min:1',
+            'academic_session' => 'required|string|max:50',
+
+            'picture' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:2048',
+        ]);
+
         try {
-            // Request validation is temporarily disabled.
-            $validated = $request->all();
-
-            /*
-            $validated = $request->validate([
-                'name' => 'required|string|max:100',
-                'father_name' => 'required|string|max:100',
-                'mother_name' => 'required|string|max:100',
-                'parents_phone' => 'required|string|max:20',
-                'address' => 'required|string',
-                'gender' => 'nullable|in:Male,Female,Other',
-                'dob' => 'nullable|date',
-                'email' => 'nullable|email|max:150',
-
-                'parent_name' => 'required|string|max:100',
-                'phone' => 'required|string|max:20',
-                'alt_phone' => 'nullable|string|max:20',
-
-                'class_id' => 'required|integer|exists:classes,class_id',
-                'section_id' => 'required|integer|exists:sections,section_id',
-                'roll' => 'required|integer|min:1',
-                'academic_session' => 'nullable|string|max:50',
-
-                'picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-                'picture_url' => 'nullable|string',
-            ]);
-            */
-
             $section = DB::table('sections')
                 ->where('section_id', $validated['section_id'])
                 ->where('class_id', $validated['class_id'])
@@ -107,16 +96,14 @@ class StudentController extends Controller
                 ], 422);
             }
 
-            $rollQuery = DB::table('students')
+            $rollExists = DB::table('students')
                 ->where('class_id', $validated['class_id'])
                 ->where('section_id', $validated['section_id'])
-                ->where('roll', $validated['roll']);
+                ->where('academic_session', $validated['academic_session'])
+                ->where('roll', $validated['roll'])
+                ->exists();
 
-            if (!empty($validated['academic_session'])) {
-                $rollQuery->where('academic_session', $validated['academic_session']);
-            }
-
-            if ($rollQuery->exists()) {
+            if ($rollExists) {
                 return response()->json([
                     'success' => false,
                     'message' => 'This roll number is already taken for the selected class and section.',
@@ -124,15 +111,11 @@ class StudentController extends Controller
             }
 
             if (!empty($section->student_limit)) {
-                $capacityQuery = DB::table('students')
+                $currentCount = DB::table('students')
                     ->where('class_id', $validated['class_id'])
-                    ->where('section_id', $validated['section_id']);
-
-                if (!empty($validated['academic_session'])) {
-                    $capacityQuery->where('academic_session', $validated['academic_session']);
-                }
-
-                $currentCount = $capacityQuery->count();
+                    ->where('section_id', $validated['section_id'])
+                    ->where('academic_session', $validated['academic_session'])
+                    ->count();
 
                 if ($currentCount >= (int) $section->student_limit) {
                     return response()->json([
@@ -142,7 +125,7 @@ class StudentController extends Controller
                 }
             }
 
-            $pictureUrl = $validated['picture_url'] ?? null;
+            $pictureUrl = null;
 
             if ($request->hasFile('picture')) {
                 $pictureUrl = $this->uploadStudentPicture($request->file('picture'));
@@ -152,22 +135,23 @@ class StudentController extends Controller
                 'name' => $this->clean($validated['name']),
                 'father_name' => $this->clean($validated['father_name']),
                 'mother_name' => $this->clean($validated['mother_name']),
-                'parents_phone' => $this->clean($validated['parents_phone']),
+                'phone' => $this->clean($validated['phone']),
+                'alt_phone' => !empty($validated['alt_phone'])
+                    ? $this->clean($validated['alt_phone'])
+                    : null,
                 'address' => $this->clean($validated['address']),
 
                 'gender' => $validated['gender'] ?? null,
                 'dob' => $validated['dob'] ?? null,
-                'email' => !empty($validated['email']) ? $this->clean($validated['email']) : null,
-
-                'parent_name' => $this->clean($validated['parent_name']),
-                'phone' => $this->clean($validated['phone']),
-                'alt_phone' => !empty($validated['alt_phone']) ? $this->clean($validated['alt_phone']) : null,
+                'email' => !empty($validated['email'])
+                    ? $this->clean($validated['email'])
+                    : null,
 
                 'class_id' => $validated['class_id'],
                 'section_id' => $validated['section_id'],
                 'section' => $section->section_name,
                 'roll' => $validated['roll'],
-                'academic_session' => $validated['academic_session'] ?? null,
+                'academic_session' => $validated['academic_session'],
 
                 'shift' => null,
                 'picture' => $pictureUrl,
