@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\DB;
 
 use App\Http\Controllers\Api\AdminAuthController;
 use App\Http\Controllers\Api\TeacherController;
-// use App\Http\Controllers\Api\StudentController;
+use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\TeacherAuthController;
 use App\Http\Controllers\Api\StudentAuthController;
 use App\Http\Controllers\Api\ExamRoutineController;
@@ -33,7 +33,10 @@ Route::delete('/teachers/{id}', [TeacherController::class, 'destroy']);
 // Route::get('/students', [StudentController::class, 'index']);
 // Route::post('/students', [StudentController::class, 'store']);
 // Route::delete('/students/{id}', [StudentController::class, 'destroy']);
-
+//3line for the add students
+Route::get('/students', [StudentController::class, 'index']);
+Route::post('/students', [StudentController::class, 'store']);
+Route::delete('/students/{id}', [StudentController::class, 'destroy']);
 //7 line for the manage subjects. 
 Route::get('/subjects', [SubjectController::class, 'index']);
 Route::post('/subjects', [SubjectController::class, 'store']);

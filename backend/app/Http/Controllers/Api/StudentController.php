@@ -10,149 +10,175 @@ use Illuminate\Support\Facades\Log;
 
 class StudentController extends Controller
 {
-    public function classes()
-    {
-        $classes = DB::table('classes')
-            ->select('class_id', 'class_name')
-            ->orderBy('class_id')
-            ->get();
-
-        return response()->json($classes);
-    }
-
-    public function classSubjects($id)
-    {
-        $subjects = DB::table('class_subjects')
-            ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.subject_id')
-            ->where('class_subjects.class_id', $id)
-            ->select('subjects.subject_id', 'subjects.subject_name')
-            ->orderBy('subjects.subject_id')
-            ->get();
-
-        return response()->json($subjects);
-    }
-
     public function index()
     {
-        $students = DB::table('students')
-            ->join('classes', 'students.class_id', '=', 'classes.class_id')
-            ->select(
-                'students.student_id',
-                'students.name',
-                'students.father_name',
-                'students.mother_name',
-                'students.phone',
-                'students.address',
-                'students.shift',
-                'students.roll',
-                'students.section',
-                'students.picture',
-                'classes.class_id',
-                'classes.class_name'
-            )
-            ->orderBy('classes.class_id')
-            ->orderBy('students.shift')
-            ->orderBy('students.roll')
-            ->get();
+        try {
+            $students = DB::table('students')
+                ->join('classes', 'students.class_id', '=', 'classes.class_id')
+                ->leftJoin('sections', 'students.section_id', '=', 'sections.section_id')
+                ->select(
+                    'students.student_id',
+                    'students.name',
+                    'students.father_name',
+                    'students.mother_name',
+                    'students.parents_phone',
+                    'students.address',
+                    'students.gender',
+                    'students.dob',
+                    'students.email',
+                    'students.parent_name',
+                    'students.phone',
+                    'students.alt_phone',
+                    'students.shift',
+                    'students.roll',
+                    'students.section',
+                    'students.section_id',
+                    'students.academic_session',
+                    'students.picture',
+                    'classes.class_id',
+                    'classes.class_name',
+                    'sections.section_name',
+                    'sections.student_limit'
+                )
+                ->orderBy('classes.class_id')
+                ->orderBy('sections.section_name')
+                ->orderBy('students.roll')
+                ->get();
 
-        foreach ($students as $student) {
-            $subjectNames = DB::table('class_subjects')
-                ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.subject_id')
-                ->where('class_subjects.class_id', $student->class_id)
-                ->pluck('subjects.subject_name');
+            return response()->json([
+                'success' => true,
+                'students' => $students,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Student index failed', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
 
-            $student->subjects = $subjectNames;
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch students.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json($students);
     }
 
     public function store(Request $request)
     {
         try {
-            $request->validate([
+            $validated = $request->validate([
                 'name' => 'required|string|max:100',
-                'father_name' => 'nullable|string|max:100',
-                'mother_name' => 'nullable|string|max:100',
-                'phone' => 'nullable|string|max:20',
-                'address' => 'nullable|string',
+                'father_name' => 'required|string|max:100',
+                'mother_name' => 'required|string|max:100',
+                'parents_phone' => 'required|string|max:20',
+                'address' => 'required|string',
+                'gender' => 'nullable|in:Male,Female,Other',
+                'dob' => 'nullable|date',
+                'email' => 'nullable|email|max:150',
+
+                'parent_name' => 'required|string|max:100',
+                'phone' => 'required|string|max:20',
+                'alt_phone' => 'nullable|string|max:20',
+
                 'class_id' => 'required|integer|exists:classes,class_id',
-                'shift' => 'required|in:Morning,Day',
-                'roll' => 'required|integer|min:1|max:10',
+                'section_id' => 'required|integer|exists:sections,section_id',
+                'roll' => 'required|integer|min:1',
+                'academic_session' => 'nullable|string|max:50',
+
                 'picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+                'picture_url' => 'nullable|string',
             ]);
 
-            $section = ($request->roll >= 1 && $request->roll <= 5) ? 'A' : 'B';
+            $section = DB::table('sections')
+                ->where('section_id', $validated['section_id'])
+                ->where('class_id', $validated['class_id'])
+                ->first();
 
-            $exists = DB::table('students')
-                ->where('class_id', $request->class_id)
-                ->where('shift', $request->shift)
-                ->where('roll', $request->roll)
-                ->exists();
-
-            if ($exists) {
+            if (!$section) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This roll is already taken for the selected class and shift.'
+                    'message' => 'Selected section does not belong to the selected class.',
                 ], 422);
             }
 
-            $pictureUrl = null;
+            $rollQuery = DB::table('students')
+                ->where('class_id', $validated['class_id'])
+                ->where('section_id', $validated['section_id'])
+                ->where('roll', $validated['roll']);
 
-            if ($request->hasFile('picture')) {
-                $file = $request->file('picture');
+            if (!empty($validated['academic_session'])) {
+                $rollQuery->where('academic_session', $validated['academic_session']);
+            }
 
-                $extension = $file->getClientOriginalExtension();
-                $fileName = time() . '_' . uniqid() . '.' . $extension;
-                $filePath = 'students/' . $fileName;
+            if ($rollQuery->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This roll number is already taken for the selected class and section.',
+                ], 422);
+            }
 
-                $fileContent = file_get_contents($file->getRealPath());
+            if (!empty($section->student_limit)) {
+                $capacityQuery = DB::table('students')
+                    ->where('class_id', $validated['class_id'])
+                    ->where('section_id', $validated['section_id']);
 
-                $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . env('SUPABASE_KEY'),
-                    'Content-Type' => $file->getMimeType(),
-                ])->withBody($fileContent, $file->getMimeType())->put(
-                    env('SUPABASE_URL') . '/storage/v1/object/' . env('SUPABASE_BUCKET') . '/' . $filePath
-                );
-
-                if ($response->failed()) {
-                    Log::error('Student image upload failed', [
-                        'status' => $response->status(),
-                        'body' => $response->body(),
-                    ]);
-
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Image upload failed',
-                        'status' => $response->status(),
-                    ], 500);
+                if (!empty($validated['academic_session'])) {
+                    $capacityQuery->where('academic_session', $validated['academic_session']);
                 }
 
-                $pictureUrl = env('SUPABASE_URL') . '/storage/v1/object/public/' . env('SUPABASE_BUCKET') . '/' . $filePath;
+                $currentCount = $capacityQuery->count();
+
+                if ($currentCount >= (int) $section->student_limit) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This section has reached its student limit.',
+                    ], 422);
+                }
+            }
+
+            $pictureUrl = $validated['picture_url'] ?? null;
+
+            if ($request->hasFile('picture')) {
+                $pictureUrl = $this->uploadStudentPicture($request->file('picture'));
             }
 
             $studentId = DB::table('students')->insertGetId([
-                'name' => mb_convert_encoding(trim((string) $request->name), 'UTF-8', 'UTF-8'),
-                'father_name' => $request->father_name ? mb_convert_encoding(trim((string) $request->father_name), 'UTF-8', 'UTF-8') : null,
-                'mother_name' => $request->mother_name ? mb_convert_encoding(trim((string) $request->mother_name), 'UTF-8', 'UTF-8') : null,
-                'phone' => $request->phone ? mb_convert_encoding(trim((string) $request->phone), 'UTF-8', 'UTF-8') : null,
-                'address' => $request->address ? mb_convert_encoding(trim((string) $request->address), 'UTF-8', 'UTF-8') : null,
-                'class_id' => $request->class_id,
-                'shift' => mb_convert_encoding(trim((string) $request->shift), 'UTF-8', 'UTF-8'),
-                'roll' => $request->roll,
-                'section' => $section,
+                'name' => $this->clean($validated['name']),
+                'father_name' => $this->clean($validated['father_name']),
+                'mother_name' => $this->clean($validated['mother_name']),
+                'parents_phone' => $this->clean($validated['parents_phone']),
+                'address' => $this->clean($validated['address']),
+
+                'gender' => $validated['gender'] ?? null,
+                'dob' => $validated['dob'] ?? null,
+                'email' => !empty($validated['email']) ? $this->clean($validated['email']) : null,
+
+                'parent_name' => $this->clean($validated['parent_name']),
+                'phone' => $this->clean($validated['phone']),
+                'alt_phone' => !empty($validated['alt_phone']) ? $this->clean($validated['alt_phone']) : null,
+
+                'class_id' => $validated['class_id'],
+                'section_id' => $validated['section_id'],
+                'section' => $section->section_name,
+                'roll' => $validated['roll'],
+                'academic_session' => $validated['academic_session'] ?? null,
+
+                'shift' => null,
                 'picture' => $pictureUrl,
+
                 'created_at' => now(),
                 'updated_at' => now(),
             ], 'student_id');
 
             return response()->json([
                 'success' => true,
-                'message' => 'Student added successfully',
+                'message' => 'Student added successfully.',
                 'student_id' => $studentId,
-                'section' => $section,
+                'section_id' => $validated['section_id'],
+                'section' => $section->section_name,
                 'picture' => $pictureUrl,
-            ]);
+            ], 201);
         } catch (\Throwable $e) {
             Log::error('Student store failed', [
                 'message' => $e->getMessage(),
@@ -162,7 +188,7 @@ class StudentController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Student add failed',
+                'message' => 'Student add failed.',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -170,20 +196,69 @@ class StudentController extends Controller
 
     public function destroy($id)
     {
-        $student = DB::table('students')->where('student_id', $id)->first();
+        try {
+            $student = DB::table('students')
+                ->where('student_id', $id)
+                ->first();
 
-        if (!$student) {
+            if (!$student) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Student not found.',
+                ], 404);
+            }
+
+            DB::table('students')
+                ->where('student_id', $id)
+                ->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Student deleted successfully.',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Student delete failed', [
+                'student_id' => $id,
+                'message' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Student not found'
-            ], 404);
+                'message' => 'Delete failed.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function uploadStudentPicture($file): string
+    {
+        $extension = $file->getClientOriginalExtension();
+        $fileName = time() . '_' . uniqid() . '.' . $extension;
+        $filePath = 'students/' . $fileName;
+
+        $fileContent = file_get_contents($file->getRealPath());
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . env('SUPABASE_KEY'),
+            'Content-Type' => $file->getMimeType(),
+        ])->withBody($fileContent, $file->getMimeType())->put(
+            env('SUPABASE_URL') . '/storage/v1/object/' . env('SUPABASE_BUCKET') . '/' . $filePath
+        );
+
+        if ($response->failed()) {
+            Log::error('Student image upload failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw new \Exception('Image upload failed.');
         }
 
-        DB::table('students')->where('student_id', $id)->delete();
+        return env('SUPABASE_URL') . '/storage/v1/object/public/' . env('SUPABASE_BUCKET') . '/' . $filePath;
+    }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Student deleted successfully'
-        ]);
+    private function clean($value): string
+    {
+        return mb_convert_encoding(trim((string) $value), 'UTF-8', 'UTF-8');
     }
 }
