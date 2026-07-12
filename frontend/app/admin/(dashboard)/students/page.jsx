@@ -191,11 +191,7 @@ export default function StudentsPage() {
     return sections.find((item) => item.id === String(formSectionId));
   }, [sections, formSectionId]);
 
-  const validateTab = () => {
-    // Form validation is temporarily disabled.
-    return "";
-
-    /*
+  const validateTab = (tabId) => {
     if (tabId === "basic") {
       if (!formName.trim()) return "Student full name is required.";
       if (!formFatherName.trim()) return "Father's name is required.";
@@ -238,7 +234,6 @@ export default function StudentsPage() {
     }
 
     return "";
-    */
   };
 
   const handleTabChange = (targetTabId) => {
@@ -291,15 +286,19 @@ export default function StudentsPage() {
 
     if (!file) return;
 
-    /* File-size validation is temporarily disabled.
+    if (!file.type.startsWith("image/")) {
+      setValidationError("Invalid file type. Please upload a valid image file.");
+      return;
+    }
+
     if (file.size > 2 * 1024 * 1024) {
       setValidationError("Image file is too large. Please select a photo smaller than 2MB.");
       return;
     }
-    */
 
     setFormPhotoFile(file);
     setFormPhoto(URL.createObjectURL(file));
+    setValidationError("");
   };
 
   const resetForm = () => {
@@ -684,7 +683,6 @@ export default function StudentsPage() {
 
         <form
           onSubmit={handleSubmitEnrollment}
-          noValidate
           className="p-8 md:p-12 w-full max-w-4xl mx-auto space-y-10 z-10 relative"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/50">
@@ -1128,7 +1126,8 @@ export default function StudentsPage() {
               </button>
             ) : (
               <button
-                type="submit"
+                type="button"
+                onClick={handleSubmitEnrollment}
                 disabled={isSaving}
                 className="flex items-center gap-2.5 px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-emerald-600/10 hover:shadow-emerald-600/25 active:scale-[0.98] transition-all cursor-pointer"
               >
