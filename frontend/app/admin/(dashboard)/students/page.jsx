@@ -191,7 +191,11 @@ export default function StudentsPage() {
     return sections.find((item) => item.id === String(formSectionId));
   }, [sections, formSectionId]);
 
-  const validateTab = (tabId) => {
+  const validateTab = () => {
+    // Form validation is temporarily disabled.
+    return "";
+
+    /*
     if (tabId === "basic") {
       if (!formName.trim()) return "Student full name is required.";
       if (!formFatherName.trim()) return "Father's name is required.";
@@ -234,6 +238,7 @@ export default function StudentsPage() {
     }
 
     return "";
+    */
   };
 
   const handleTabChange = (targetTabId) => {
@@ -286,10 +291,12 @@ export default function StudentsPage() {
 
     if (!file) return;
 
+    /* File-size validation is temporarily disabled.
     if (file.size > 2 * 1024 * 1024) {
       setValidationError("Image file is too large. Please select a photo smaller than 2MB.");
       return;
     }
+    */
 
     setFormPhotoFile(file);
     setFormPhoto(URL.createObjectURL(file));
@@ -677,6 +684,7 @@ export default function StudentsPage() {
 
         <form
           onSubmit={handleSubmitEnrollment}
+          noValidate
           className="p-8 md:p-12 w-full max-w-4xl mx-auto space-y-10 z-10 relative"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/50">

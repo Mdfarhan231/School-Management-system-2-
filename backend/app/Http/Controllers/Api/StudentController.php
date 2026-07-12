@@ -67,6 +67,10 @@ class StudentController extends Controller
     public function store(Request $request)
     {
         try {
+            // Request validation is temporarily disabled.
+            $validated = $request->all();
+
+            /*
             $validated = $request->validate([
                 'name' => 'required|string|max:100',
                 'father_name' => 'required|string|max:100',
@@ -89,6 +93,7 @@ class StudentController extends Controller
                 'picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
                 'picture_url' => 'nullable|string',
             ]);
+            */
 
             $section = DB::table('sections')
                 ->where('section_id', $validated['section_id'])
