@@ -140,8 +140,8 @@ export default function AllStudentsPage() {
   });
 
   return (
-    <section className="flex flex-1 overflow-hidden bg-[#f1f5f9]">
-      <div className="flex w-full flex-col overflow-hidden lg:w-[58%] xl:w-[62%]">
+    <section className="flex h-[calc(100vh-80px)] min-h-0 flex-1 overflow-hidden bg-[#f1f5f9]">
+      <div className="flex min-h-0 w-full flex-col overflow-hidden lg:w-[58%] xl:w-[62%]">
         <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-6 py-4">
           <Link
             href="/admin/students"
@@ -169,7 +169,15 @@ export default function AllStudentsPage() {
           </div>
         )}
 
-        <div className="flex-1 overflow-auto">
+        <div
+          className="min-h-0 flex-1 overflow-y-auto overflow-x-auto pr-1
+            [&::-webkit-scrollbar]:w-1.5
+            [&::-webkit-scrollbar]:h-1.5
+            [&::-webkit-scrollbar-track]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            [&::-webkit-scrollbar-thumb]:bg-slate-300
+            hover:[&::-webkit-scrollbar-thumb]:bg-slate-400"
+        >
           <table className="w-full min-w-[620px] border-collapse text-sm">
             <thead className="sticky top-0 z-10 bg-white shadow-sm">
               <tr className="text-left text-xs font-bold uppercase tracking-wider text-slate-400">
