@@ -334,17 +334,17 @@ export default function AllStudentsPage() {
                 <InfoBlock label="Gender" value={selected.gender} />
                 <InfoBlock label="Date of Birth" value={selected.dob} />
                 <InfoBlock label="Email" value={selected.email} />
-                <InfoBlock label="Class" value={selected.class_name} />
+                {/* <InfoBlock label="Class" value={selected.class_name} /> */}
                 <InfoBlock label="Section" value={selected.section_name} />
                 <InfoBlock label="Roll" value={selected.roll} />
                 <InfoBlock
                   label="Session"
                   value={selected.academic_session}
                 />
-                <InfoBlock
+                {/* <InfoBlock
                   label="Section Limit"
                   value={selected.student_limit}
-                />
+                /> */}
               </div>
 
               {selected.address && (
