@@ -354,14 +354,14 @@ export default function TeacherManagementView({ session }) {
   const theme = getThemeClasses();
 
   return (
-    <div className="min-h-[76vh] flex flex-col lg:flex-row gap-6 lg:gap-8 items-stretch w-full transition-all duration-300">
+    <div className="h-[calc(100vh-80px)] min-h-0 flex flex-col lg:flex-row gap-6 lg:gap-8 items-stretch w-full transition-all duration-300">
       
       {/* ──────────────────────────────────────────────────────────
           SUB-SIDEBAR (SECTION TAB CATEGORIES NEXT TO MAIN SIDEBAR)
           ────────────────────────────────────────────────────────── */}
       <div className={`w-full lg:w-80 ${theme.tier2Bg} rounded-3xl border ${
         portalTheme === 'light' ? 'border-slate-200/70 shadow-xl' : 'border-slate-800/80 shadow-2xl shadow-slate-950/40'
-      } p-6 flex flex-col justify-between lg:h-[calc(100vh-140px)] lg:min-h-[550px] h-auto shrink-0 transition-all duration-300`}>
+      } p-6 flex flex-col justify-between lg:h-full min-h-0 h-auto shrink-0 transition-all duration-300`}>
         
         <div className="space-y-6">
           {/* Header context with theme selector */}
@@ -498,7 +498,7 @@ export default function TeacherManagementView({ session }) {
           ────────────────────────────────────────────────────────── */}
       <div className={`flex-1 ${theme.mainBg} rounded-3xl border ${
         portalTheme === 'light' ? 'border-slate-200/80 shadow-xl' : 'border-slate-800/80 shadow-2xl shadow-slate-950/40'
-      } flex flex-col lg:h-[calc(100vh-140px)] lg:min-h-[550px] h-auto relative overflow-hidden transition-all duration-300 z-10`}>
+      } flex flex-col lg:h-full min-h-0 h-auto relative overflow-hidden transition-all duration-300 z-10`}>
         
         {/* Absolute Background Gradient Grid Flare */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none z-0" />
