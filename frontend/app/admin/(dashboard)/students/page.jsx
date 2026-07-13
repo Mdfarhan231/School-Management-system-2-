@@ -503,7 +503,7 @@ export default function StudentManagementView({ session: propSession }) {
                 >
                   <div className="flex items-center gap-3">
                     <User className="h-4.5 w-4.5" />
-                    <span className="font-semibold">My Basic Info</span>
+                    <span className="font-semibold">Basic Info</span>
                   </div>
                   {validateTab('basic') === '' && formName.trim() && (
                     <span className="bg-emerald-500 text-white rounded-full p-0.5">
@@ -522,7 +522,7 @@ export default function StudentManagementView({ session: propSession }) {
                 >
                   <div className="flex items-center gap-3">
                     <GraduationCap className="h-4.5 w-4.5" />
-                    <span className="font-semibold">My Class & Section</span>
+                    <span className="font-semibold">Class & Section</span>
                   </div>
                   {validateTab('class') === '' && formClassId && (
                     <span className="bg-emerald-500 text-white rounded-full p-0.5">
@@ -543,7 +543,7 @@ export default function StudentManagementView({ session: propSession }) {
                 >
                   <div className="flex items-center gap-3">
                     <Image className="h-4.5 w-4.5" />
-                    <span className="font-semibold">My Photo Profile</span>
+                    <span className="font-semibold">Photo Profile</span>
                   </div>
                   <span className="text-[10px] opacity-60">Step 4</span>
                 </button>
