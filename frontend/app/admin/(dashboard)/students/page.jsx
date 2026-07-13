@@ -545,7 +545,7 @@ export default function StudentManagementView({ session: propSession }) {
                     <Image className="h-4.5 w-4.5" />
                     <span className="font-semibold">Photo Profile</span>
                   </div>
-                  <span className="text-[10px] opacity-60">Step 4</span>
+                  <span className="text-[10px] opacity-60">Step 3</span>
                 </button>
               </div>
             </div>
