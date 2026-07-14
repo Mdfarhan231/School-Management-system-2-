@@ -186,9 +186,12 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          <button className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700">
+          <Link
+            href="/admin/students"
+            className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700"
+          >
             New Registration
-          </button>
+          </Link>
         </div>
       </div>
 
