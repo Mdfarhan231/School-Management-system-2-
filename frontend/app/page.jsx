@@ -267,7 +267,7 @@ function HeaderAndNavbar() {
       {/* Portal buttons */}
       <div className="bg-[#F8F8F8]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-3 px-4 py-4">
-          <PillButton href="" label="Latest Notices" color="bg-slate-800" />
+          {/* <PillButton href="" label="Latest Notices" color="bg-slate-800" /> */}
           <PillButton href="/teacher/login" label="Teacher Portal" color="bg-emerald-500" />
           <PillButton href="/admin/login" label="Admin login" color="bg-orange-400" />
           <PillButton href="/student/login" label="Student Portal" color="bg-rose-500" />
