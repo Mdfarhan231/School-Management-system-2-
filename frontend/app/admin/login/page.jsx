@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiRequest }  from "@/lib/api";
 
@@ -86,12 +87,18 @@ export default function AdminLoginPage() {
             >
               {loading ? "Logging in..." : "Login"}
             </button>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-center text-xs text-slate-500">
+              Demo Username: <strong className="text-slate-800">demo</strong>
+              <span aria-hidden="true"> | </span>
+              Password: <strong className="text-slate-800">pharmadesk123</strong>
+            </div>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-600">
-            <a href="/" className="text-blue-600 hover:font-bold hover:text-black hover:underline">
+            <Link href="/" className="text-blue-600 hover:font-bold hover:text-black hover:underline">
               Back to Home
-            </a>
+            </Link>
           </p>
         </div>
       </section>
