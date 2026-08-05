@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-center text-xs text-slate-500">
               Demo Username: <strong className="text-slate-800">demo</strong>
               <span aria-hidden="true"> | </span>
-              Password: <strong className="text-slate-800">DEMO2431!3</strong>
+              Password: <strong className="text-slate-800">DEMO2431!</strong>
             </div>
           </form>
 
